@@ -36,9 +36,9 @@ ReturnPoint is a lost and found management system designed to help users report,
 
 ### Web Application
 - User registration with username, email, and password
-- User login with session management
+- User login authentication
 - Dashboard interface
-- JSON-based user storage
+- JSON-based user storage (requires persistent VM deployment)
 
 ### Desktop Application (Windows-only)
 - Camera-based photo capture with countdown timer
@@ -72,3 +72,5 @@ None specified yet.
 - The C# desktop application is not compatible with Replit's Linux environment
 - All web routes are served through Flask
 - Static files (HTML, CSS, JS) are served from the root directory
+- User data is stored in users.json file (requires VM deployment for persistence)
+- Deployment uses VM mode to maintain file-based storage across restarts
