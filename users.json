@@ -4,5 +4,11 @@
     "email": "test@example.com",
     "password": "password123",
     "profile_picture": null
+  },
+  {
+    "username": "Tordesillas",
+    "email": "jaydentordesillas222@gmail.com",
+    "password": "Ezez123!",
+    "profile_picture": "/uploads/profile_pictures/Tordesillas_IMG_20251001_065703_553.jpg"
   }
 ]
