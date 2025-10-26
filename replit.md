@@ -54,6 +54,11 @@ ReturnPoint is a lost and found management system designed to help users report,
 - **Desktop App**: C# .NET 6.0, Windows Forms (not runnable on Replit)
 
 ## Recent Changes
+- 2025-10-26: Added user profile features
+  - Implemented Flask session-based authentication
+  - Added profile editing (username change, profile picture upload)
+  - Created protected dashboard with user information display
+  - Added API endpoints for user management
 - 2025-10-26: Initial Replit setup
   - Installed Python 3.11 and Flask
   - Configured Flask to run on 0.0.0.0:5000
@@ -74,3 +79,9 @@ None specified yet.
 - Static files (HTML, CSS, JS) are served from the root directory
 - User data is stored in users.json file (requires VM deployment for persistence)
 - Deployment uses VM mode to maintain file-based storage across restarts
+
+## Security Considerations
+- **Important**: Set FLASK_SECRET_KEY environment variable before deployment for secure session management
+- User passwords are currently stored in plaintext (consider implementing password hashing for production use)
+- Profile pictures are validated for file type (png, jpg, jpeg, gif only)
+- All profile-related endpoints require authentication via Flask sessions
