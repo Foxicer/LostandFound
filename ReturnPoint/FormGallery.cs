@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace ReturnPoint
@@ -10,41 +11,95 @@ namespace ReturnPoint
         private Panel outerPanel;
         private FlowLayoutPanel galleryPanel;
         private Button openCameraButton;
+        private Button btnLogout;
         private string saveFolder;
+
+        // ... new fields for search / tagging ...
+        private Panel searchPanel;
+        private TextBox txtSearch;
+        private Button btnSearch;
+        private Button btnClearSearch;
+        private ListBox lstTags;
+        private TextBox txtNewTag;
+        private Button btnAddTag;
+        private Panel selectedCard;
 
         public FormGallery()
         {
+            if (!Directory.Exists(saveFolder))
+            {
+                saveFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages");
+                Directory.CreateDirectory(saveFolder);
+            }
+
             this.Text = "Gallery";
             this.WindowState = FormWindowState.Maximized;
-            this.BackColor = Color.SeaGreen; // 🌿 Main background green
-
-            saveFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages");
-            if (!Directory.Exists(saveFolder))
-                Directory.CreateDirectory(saveFolder);
+            // this.BackColor = Color.SeaGreen; // 🌿 Main background green
+            // apply app theme to gallery form
+            // Theme.Apply(this);
 
             // Outer panel (scroll area)
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
-                BackColor = Color.SeaGreen // same as form background
+                // BackColor = Color.SeaGreen // same as form background
+                // background will be set by Theme.Apply later
             };
 
-            // Inner panel (center gallery)
+            // Inner panel (left-aligned gallery)
             galleryPanel = new FlowLayoutPanel
             {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false,
-                BackColor = Color.SeaGreen
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                // BackColor = Color.SeaGreen,
+                // themed later
+                Padding = new Padding(20, 10, 20, 10),
+                Location = new Point(10, 10) // align to left
             };
 
+            // calculate width so exactly 3 columns fit:
+            int cardWidth = 220;            // must match card.Width in AddImageToGallery
+            int cardHorizontalMargin = 10 + 10; // card.Margin.Left + card.Margin.Right
+            int columns = 3;
+            int totalColumnWidth = columns * (cardWidth + cardHorizontalMargin);
+            galleryPanel.MaximumSize = new Size(totalColumnWidth + galleryPanel.Padding.Left + galleryPanel.Padding.Right, 0);
+
             outerPanel.Controls.Add(galleryPanel);
-            outerPanel.Resize += (s, e) =>
+
+            // Right floating search / tag panel (stationary)
+            searchPanel = new Panel
             {
-                galleryPanel.Left = (outerPanel.ClientSize.Width - galleryPanel.Width) / 2;
+                Dock = DockStyle.Right,
+                Width = 300,
+                // BackColor = Color.FromArgb(230, 240, 240),
+                // start neutral; we'll force white below after theming
+                Padding = new Padding(10)
             };
+
+            Label lblSearch = new Label { Text = "Search", AutoSize = true, Top = 6, Left = 10, Font = new Font("Arial", 10, FontStyle.Bold) };
+            txtSearch = new TextBox { Top = 30, Left = 10, Width = 260 };
+            btnSearch = new Button { Text = "Search", Top = 60, Left = 10, Width = 125 };
+            btnClearSearch = new Button { Text = "Clear", Top = 60, Left = 145, Width = 125 };
+
+            Label lblTags = new Label { Text = "Tags (selected)", AutoSize = true, Top = 100, Left = 10, Font = new Font("Arial", 10, FontStyle.Bold) };
+            lstTags = new ListBox { Top = 125, Left = 10, Width = 260, Height = 160 };
+            txtNewTag = new TextBox { Top = 295, Left = 10, Width = 180 };
+            btnAddTag = new Button { Text = "Add Tag", Top = 293, Left = 195, Width = 75 };
+
+            searchPanel.Controls.Add(lblSearch);
+            searchPanel.Controls.Add(txtSearch);
+            searchPanel.Controls.Add(btnSearch);
+            searchPanel.Controls.Add(btnClearSearch);
+            searchPanel.Controls.Add(lblTags);
+            searchPanel.Controls.Add(lstTags);
+            searchPanel.Controls.Add(txtNewTag);
+            searchPanel.Controls.Add(btnAddTag);
+
+            // add the search panel first so outerPanel (Dock=Fill) fills remaining area
+            this.Controls.Add(searchPanel);
 
             // Floating "+" button
             openCameraButton = new Button
@@ -52,8 +107,10 @@ namespace ReturnPoint
                 Text = "+",
                 Width = 60,
                 Height = 60,
-                BackColor = Color.Aqua, // ✅ aqua by default
-                ForeColor = Color.White,
+                // BackColor = Color.Aqua, // ✅ aqua by default
+                // ForeColor = Color.White,
+                BackColor = Theme.StrongAqua,
+                ForeColor = Theme.SoftWhite,
                 Font = new Font("Arial", 18, FontStyle.Bold),
                 FlatStyle = FlatStyle.Flat
             };
@@ -62,15 +119,18 @@ namespace ReturnPoint
             // hover effect → lighter aqua
             openCameraButton.MouseEnter += (s, e) =>
             {
-                openCameraButton.BackColor = Color.MediumAquamarine;
+                // openCameraButton.BackColor = Color.MediumAquamarine;
+                openCameraButton.BackColor = Theme.MediumAqua;
             };
             openCameraButton.MouseLeave += (s, e) =>
             {
-                openCameraButton.BackColor = Color.Aqua;
+                // openCameraButton.BackColor = Color.Aqua;
+                openCameraButton.BackColor = Theme.StrongAqua;
             };
 
             openCameraButton.Click += OpenCameraButton_Click;
 
+            // now add the scrollable gallery area (fills remaining area)
             this.Controls.Add(outerPanel);
             this.Controls.Add(openCameraButton);
 
@@ -83,6 +143,80 @@ namespace ReturnPoint
                 openCameraButton.Location = new Point(this.ClientSize.Width - 80, this.ClientSize.Height - 80);
                 outerPanel.PerformLayout();
             };
+
+            // wire up search / tag events
+            btnSearch.Click += (s, e) => PerformSearch(txtSearch.Text.Trim());
+            btnClearSearch.Click += (s, e) =>
+            {
+                txtSearch.Text = "";
+                foreach (Control c in galleryPanel.Controls) c.Visible = true;
+            };
+            btnAddTag.Click += (s, e) =>
+            {
+                if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
+                var tag = txtNewTag.Text.Trim();
+                if (string.IsNullOrEmpty(tag)) return;
+                SaveTagForCard((string)selectedCard.Tag, tag);
+                LoadTagsForCard(selectedCard);
+                txtNewTag.Text = "";
+            };
+
+            // logout button - place in top-right of the form but not overlapped by search panel
+            btnLogout = new Button
+            {
+                Text = "Logout",
+                Width = 100,
+                Height = 34,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            btnLogout.Click += (s, e) =>
+            {
+                if (MessageBox.Show("Logout and return to login?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    Application.Restart();
+                    Application.ExitThread();
+                }
+            };
+            // add to form and position relative to client area and searchPanel width
+            this.Controls.Add(btnLogout);
+            this.Load += (s, e) => PositionLogout();
+            this.Resize += (s, e) => PositionLogout();
+
+            void PositionLogout()
+            {
+                int rightMargin = 16;
+                // if searchPanel exists and is docked right, place logout slightly left of its left edge
+                int x = this.ClientSize.Width - btnLogout.Width - rightMargin;
+                if (searchPanel != null && searchPanel.Dock == DockStyle.Right)
+                {
+                    x = searchPanel.Left - btnLogout.Width - 8;
+                }
+                btnLogout.Location = new System.Drawing.Point(Math.Max(8, x), 8);
+                btnLogout.BringToFront();
+            }
+
+            // Apply theme after all controls exist so Theme.Apply can walk everything
+            Theme.Apply(this);
+
+            // Ensure the search-area is white with black text (override theme)
+            if (searchPanel != null)
+            {
+                searchPanel.BackColor = Color.White;
+                searchPanel.BorderStyle = BorderStyle.FixedSingle;
+                // force children to black-on-white where appropriate
+                txtSearch.BackColor = Color.White; txtSearch.ForeColor = Color.Black;
+                btnSearch.BackColor = Color.White; btnSearch.ForeColor = Color.Black; btnSearch.FlatStyle = FlatStyle.Flat;
+                btnClearSearch.BackColor = Color.White; btnClearSearch.ForeColor = Color.Black; btnClearSearch.FlatStyle = FlatStyle.Flat;
+                lstTags.BackColor = Color.White; lstTags.ForeColor = Color.Black;
+                txtNewTag.BackColor = Color.White; txtNewTag.ForeColor = Color.Black;
+                btnAddTag.BackColor = Color.White; btnAddTag.ForeColor = Color.Black; btnAddTag.FlatStyle = FlatStyle.Flat;
+            }
+
+            // Make sure logout button is visible and themed
+            btnLogout.BackColor = Theme.OuterRing;
+            btnLogout.ForeColor = Theme.SoftWhite;
+            btnLogout.FlatStyle = FlatStyle.Flat;
+            btnLogout.BringToFront();
 
             LoadSavedImages();
         }
@@ -118,18 +252,23 @@ namespace ReturnPoint
 
             Image img = Image.FromFile(filePath);
 
-            int displayWidth = 320;
+            int displayWidth = 200; // Base image width
             int displayHeight = (int)((double)img.Height / img.Width * displayWidth);
 
             Panel card = new Panel
             {
-                Width = displayWidth + 20,
+                Width = 220,     // Fixed card width to fit 3 columns
                 Height = displayHeight + 60,
                 BackColor = this.BackColor,
                 Margin = new Padding(10),
-                Padding = new Padding(0),
+                Padding = new Padding(10, 0, 10, 0), // Add horizontal padding inside card
                 BorderStyle = BorderStyle.None
             };
+
+            // store the filepath on the card for selection/search/tagging
+            card.Tag = filePath;
+            // selection on click (card or picture)
+            card.Click += (s, e) => SelectCard(card);
 
             PictureBox pic = new PictureBox
             {
@@ -137,8 +276,11 @@ namespace ReturnPoint
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Width = displayWidth,
                 Height = displayHeight,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                Location = new Point(10, 0) // Center the image in the card
             };
+
+            pic.Click += (s, e) => SelectCard(card);
 
             // Extract the info-display logic
             void ShowItemInfo()
@@ -369,11 +511,87 @@ namespace ReturnPoint
             card.Controls.Add(claimBtn);
             card.Controls.Add(infoBtn);
             galleryPanel.Controls.Add(card);
-
-            galleryPanel.Left = (outerPanel.ClientSize.Width - galleryPanel.Width) / 2;
         }
 
+        // ---- selection + tag helpers ----
+        private void SelectCard(Panel card)
+        {
+            if (selectedCard != null)
+            {
+                selectedCard.BorderStyle = BorderStyle.None;
+            }
+            selectedCard = card;
+            selectedCard.BorderStyle = BorderStyle.FixedSingle;
+            LoadTagsForCard(card);
+        }
 
+        private void stringToFileAppend(string path, string text)
+        {
+            File.AppendAllText(path, text + Environment.NewLine);
+        }
 
+        private void SaveTagForCard(string filePath, string tag)
+        {
+            try
+            {
+                string tagPath = Path.Combine(Path.GetDirectoryName(filePath),
+                    Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
+                // append if not already present
+                var existing = File.Exists(tagPath) ? File.ReadAllLines(tagPath) : Array.Empty<string>();
+                if (!existing.Any(t => string.Equals(t.Trim(), tag, StringComparison.OrdinalIgnoreCase)))
+                {
+                    File.AppendAllLines(tagPath, new[] { tag });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not save tag: " + ex.Message);
+            }
+        }
+
+        private void LoadTagsForCard(Panel card)
+        {
+            lstTags.Items.Clear();
+            if (card?.Tag is string filePath)
+            {
+                string tagPath = Path.Combine(Path.GetDirectoryName(filePath),
+                    Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
+                if (File.Exists(tagPath))
+                {
+                    foreach (var t in File.ReadAllLines(tagPath).Where(x => !string.IsNullOrWhiteSpace(x)))
+                        lstTags.Items.Add(t.Trim());
+                }
+            }
+        }
+
+        private void PerformSearch(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                foreach (Control c in galleryPanel.Controls) c.Visible = true;
+                return;
+            }
+            query = query.ToLowerInvariant();
+            foreach (Control c in galleryPanel.Controls)
+            {
+                bool match = false;
+                if (c is Panel card && card.Tag is string filePath)
+                {
+                    // match filename
+                    if (Path.GetFileName(filePath).ToLowerInvariant().Contains(query)) match = true;
+                    // match tags
+                    string tagPath = Path.Combine(Path.GetDirectoryName(filePath),
+                        Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
+                    if (!match && File.Exists(tagPath))
+                    {
+                        foreach (var t in File.ReadAllLines(tagPath))
+                        {
+                            if (t != null && t.ToLowerInvariant().Contains(query)) { match = true; break; }
+                        }
+                    }
+                }
+                c.Visible = match;
+            }
+        }
     }
 }
