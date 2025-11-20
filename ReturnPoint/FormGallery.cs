@@ -1,12 +1,13 @@
 using System;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
+using System.Reflection;
+using System.Linq;
 
 namespace ReturnPoint
 {
-    public class FormGallery : Form
+    public partial class FormGallery : Form
     {
         private Panel outerPanel;
         private FlowLayoutPanel galleryPanel;
@@ -223,9 +224,42 @@ namespace ReturnPoint
 
         private void OpenCameraButton_Click(object sender, EventArgs e)
         {
+            // automatically determine uploader from app/session (falls back to Windows user)
+            var uploader = GetLoggedInUser();
+
             FormCamera camForm = new FormCamera(saveFolder);
             camForm.PhotoSaved += (filePath) =>
             {
+                try
+                {
+                    // prompt for location and date (uploader and grade filled automatically)
+                    var meta = PromptForImageMetadata(uploader);
+                    // if user cancelled the metadata dialog, still add the image but do not write metadata
+                    if (meta == null)
+                    {
+                        AddImageToGallery(filePath, false);
+                        return;
+                    }
+
+                    // create or overwrite info file for this image with uploader metadata
+                    string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
+                        Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
+
+                    string uploaderName = !string.IsNullOrWhiteSpace(uploader?.Name) ? uploader.Name : Environment.UserName;
+                    string gradeSection = !string.IsNullOrWhiteSpace(uploader?.GradeSection) ? uploader.GradeSection : "N/A";
+
+                    var lines = new[]
+                    {
+                        $"Uploader: {uploaderName}",
+                        $"GradeSection: {gradeSection}",
+                        $"Location: {meta.Value.Location}",
+                        $"Date: {meta.Value.Date:yyyy-MM-dd HH:mm}"
+                    };
+
+                    File.WriteAllLines(infoPath, lines);
+                }
+                catch { /* non-fatal */ }
+
                 AddImageToGallery(filePath, false);
             };
             camForm.ShowDialog();
@@ -277,7 +311,7 @@ namespace ReturnPoint
                 Width = displayWidth,
                 Height = displayHeight,
                 Cursor = Cursors.Hand,
-                Location = new Point(10, 0) // Center the image in the card
+                Location = new Point(10, 0) 
             };
 
             pic.Click += (s, e) => SelectCard(card);
@@ -288,43 +322,79 @@ namespace ReturnPoint
                 string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
                     Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
 
-                if (File.Exists(infoPath))
-                {
-                    string[] lines = File.ReadAllLines(infoPath);
-
-                    Form infoForm = new Form
-                    {
-                        Text = "Item Information",
-                        StartPosition = FormStartPosition.CenterParent,
-                        Size = new Size(400, 250)
-                    };
-
-                    Label locationLabel = new Label
-                    {
-                        Text = lines.Length > 1 ? lines[1] : "Location: N/A",
-                        Top = 20,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-
-                    Label dateLabel = new Label
-                    {
-                        Text = lines.Length > 2 ? lines[2] : "Date Found: N/A",
-                        Top = 60,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-
-                    infoForm.Controls.Add(locationLabel);
-                    infoForm.Controls.Add(dateLabel);
-                    infoForm.ShowDialog();
-                }
-                else
+                if (!File.Exists(infoPath))
                 {
                     MessageBox.Show("No information available for this item.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
+
+                var lines = File.ReadAllLines(infoPath);
+                var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var ln in lines)
+                {
+                    var idx = ln.IndexOf(':');
+                    if (idx > -1)
+                    {
+                        var k = ln.Substring(0, idx).Trim();
+                        var v = ln.Substring(idx + 1).Trim();
+                        map[k] = v;
+                    }
+                }
+ 
+                string uploader = map.TryGetValue("Uploader", out var u) ? u : "N/A";
+                string gradeSection = map.TryGetValue("GradeSection", out var g) ? g : "N/A";
+                string location = map.TryGetValue("Location", out var l) ? l : "N/A";
+                // prefer "Date" key (new files). fall back to legacy "DateFound"
+                string dateFound = map.TryGetValue("Date", out var d) ? d : (map.TryGetValue("DateFound", out var d2) ? d2 : "N/A");
+ 
+                Form infoForm = new Form
+                {
+                    Text = "Item Information",
+                    StartPosition = FormStartPosition.CenterParent,
+                    Size = new Size(420, 260)
+                };
+ 
+                Label uploaderLabel = new Label
+                {
+                    Text = $"Uploader: {uploader}",
+                    Top = 16,
+                    Left = 20,
+                    AutoSize = true,
+                    Font = new Font("Arial", 11, FontStyle.Bold)
+                };
+ 
+                Label gradeLabel = new Label
+                {
+                    Text = $"Grade/Section: {gradeSection}",
+                    Top = 48,
+                    Left = 20,
+                    AutoSize = true,
+                    Font = new Font("Arial", 11, FontStyle.Bold)
+                };
+ 
+                Label locationLabel = new Label
+                {
+                    Text = $"Location: {location}",
+                    Top = 80,
+                    Left = 20,
+                    AutoSize = true,
+                    Font = new Font("Arial", 11, FontStyle.Bold)
+                };
+ 
+                Label dateLabel = new Label
+                {
+                    Text = $"Date Found: {dateFound}",
+                    Top = 112,
+                    Left = 20,
+                    AutoSize = true,
+                    Font = new Font("Arial", 11, FontStyle.Bold)
+                };
+ 
+                infoForm.Controls.Add(uploaderLabel);
+                infoForm.Controls.Add(gradeLabel);
+                infoForm.Controls.Add(locationLabel);
+                infoForm.Controls.Add(dateLabel);
+                infoForm.ShowDialog();
             }
 
             void ShowClaimantInfo()
@@ -447,23 +517,13 @@ namespace ReturnPoint
 
             pic.Click += (s, e) => ShowClaimantInfo();
 
-            Button claimBtn = new Button
-            {
-                Text = alreadyClaimed ? "Claimed" : "Claim",
-                Top = displayHeight + 5,
-                Width = displayWidth / 2 - 5,
-                Height = 40,
-                BackColor = Color.Aqua,
-                ForeColor = Color.White,
-                Enabled = !alreadyClaimed
-            };
-
+            // Single Info button (claim functionality removed)
             Button infoBtn = new Button
             {
                 Text = "Info",
                 Top = displayHeight + 5,
-                Left = displayWidth / 2 + 5,
-                Width = displayWidth / 2 - 5,
+                Left = 10,
+                Width = displayWidth,
                 Height = 40,
                 BackColor = Color.LightGray,
                 ForeColor = Color.Black
@@ -471,46 +531,9 @@ namespace ReturnPoint
 
             infoBtn.Click += (s, e) => ShowItemInfo();
 
-            claimBtn.Click += (s, e) =>
-            {
-                if (!alreadyClaimed)
-                {
-                    using (ClaimantInfoForm infoForm = new ClaimantInfoForm())
-                    {
-                        if (infoForm.ShowDialog() == DialogResult.OK)
-                        {
-                            string claimInfoPath = Path.Combine(Path.GetDirectoryName(filePath),
-                                Path.GetFileNameWithoutExtension(filePath) + "_claim.txt");
-
-                            File.WriteAllText(claimInfoPath,
-                                $"Name: {infoForm.ClaimantName}\nContact: {infoForm.Contact}\n" +
-                                $"Role: {infoForm.Role}\nGrade/Section: {infoForm.GradeSection}\nWhen Found: {infoForm.WhenFound}");
-
-                            // Open claim camera and save claimant photo in same folder
-                            FormClaimCamera claimCam = new FormClaimCamera(Path.GetDirectoryName(filePath));
-                            claimCam.FaceCaptured += (photoPath) =>
-                            {
-                                claimBtn.Text = "Claimed";
-                                claimBtn.Enabled = false;
-
-                                MessageBox.Show($"Claimant photo saved as:\n{photoPath}", 
-                                    "Photo Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            };
-                            claimCam.ShowDialog();
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("This item has already been claimed.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            };
-
-
             card.Controls.Add(pic);
-            card.Controls.Add(claimBtn);
             card.Controls.Add(infoBtn);
-            galleryPanel.Controls.Add(card);
+             galleryPanel.Controls.Add(card);
         }
 
         // ---- selection + tag helpers ----
@@ -591,6 +614,131 @@ namespace ReturnPoint
                     }
                 }
                 c.Visible = match;
+            }
+        }
+
+        // small helper type + prompt for uploader info
+        private class UploaderInfo { public string Name; public string GradeSection; }
+
+        private UploaderInfo PromptForUploaderInfo()
+        {
+            using (Form f = new Form())
+            {
+                f.Text = "Uploader Information";
+                f.StartPosition = FormStartPosition.CenterParent;
+                f.Size = new Size(360, 200);
+
+                Label lblName = new Label { Text = "Name:", Top = 16, Left = 12, AutoSize = true };
+                TextBox txtName = new TextBox { Top = 36, Left = 12, Width = 320 };
+
+                Label lblGrade = new Label { Text = "Grade / Section:", Top = 72, Left = 12, AutoSize = true };
+                TextBox txtGrade = new TextBox { Top = 92, Left = 12, Width = 320 };
+
+                Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Top = 130, Left = 170, Width = 75 };
+                Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Top = 130, Left = 255, Width = 75 };
+
+                f.Controls.Add(lblName); f.Controls.Add(txtName);
+                f.Controls.Add(lblGrade); f.Controls.Add(txtGrade);
+                f.Controls.Add(ok); f.Controls.Add(cancel);
+                f.AcceptButton = ok; f.CancelButton = cancel;
+
+                if (f.ShowDialog() == DialogResult.OK)
+                {
+                    return new UploaderInfo { Name = txtName.Text.Trim(), GradeSection = txtGrade.Text.Trim() };
+                }
+                return null;
+            }
+        }
+
+        private UploaderInfo GetLoggedInUser()
+        {
+            // 1) try a common static variable (Program.CurrentUser or Program.LoggedInUser)
+            try
+            {
+                var progType = Type.GetType("ReturnPoint.Program");
+                if (progType != null)
+                {
+                    var prop = progType.GetProperty("CurrentUser", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+                               ?? progType.GetProperty("LoggedInUser", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+                    if (prop != null)
+                    {
+                        var cur = prop.GetValue(null);
+                        if (cur != null)
+                        {
+                            var nameProp = cur.GetType().GetProperty("Name");
+                            var gradeProp = cur.GetType().GetProperty("GradeSection") ?? cur.GetType().GetProperty("Grade") ?? cur.GetType().GetProperty("Section");
+                            string name = nameProp?.GetValue(cur)?.ToString();
+                            string grade = gradeProp?.GetValue(cur)?.ToString();
+                            return new UploaderInfo { Name = name ?? Environment.UserName, GradeSection = grade ?? "N/A" };
+                        }
+                    }
+                }
+            }
+            catch { /* ignore reflection failures */ }
+ 
+            // 2) try a local current_user.txt file (optional)
+            try
+            {
+                var userFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_user.txt");
+                if (File.Exists(userFile))
+                {
+                    var map = File.ReadAllLines(userFile)
+                        .Select(l => { var i = l.IndexOf(':'); return i >= 0 ? new { k = l.Substring(0, i).Trim(), v = l.Substring(i + 1).Trim() } : null; })
+                        .Where(x => x != null)
+                        .ToDictionary(x => x.k, x => x.v, StringComparer.OrdinalIgnoreCase);
+ 
+                    map.TryGetValue("Name", out var name2);
+                    map.TryGetValue("GradeSection", out var grade2);
+                    return new UploaderInfo { Name = name2 ?? Environment.UserName, GradeSection = grade2 ?? "N/A" };
+                }
+            }
+            catch { }
+ 
+            // 3) fallback to Windows username
+            return new UploaderInfo { Name = Environment.UserName, GradeSection = "N/A" };
+        }
+
+        private (string Location, DateTime Date)? PromptForImageMetadata(UploaderInfo uploader)
+        {
+            using (Form f = new Form())
+            {
+                f.Text = "Item details";
+                f.StartPosition = FormStartPosition.CenterParent;
+                f.Size = new Size(380, 240);
+                f.FormBorderStyle = FormBorderStyle.FixedDialog;
+                f.MaximizeBox = false;
+                f.MinimizeBox = false;
+
+                Label lblUploader = new Label { Text = "Uploader:", Top = 12, Left = 12, AutoSize = true };
+                Label lblUploaderVal = new Label { Text = !string.IsNullOrWhiteSpace(uploader?.Name) ? uploader.Name : Environment.UserName, Top = 12, Left = 110, AutoSize = true, Font = new Font("Arial", 9, FontStyle.Bold) };
+
+                Label lblGrade = new Label { Text = "Grade / Section:", Top = 40, Left = 12, AutoSize = true };
+                Label lblGradeVal = new Label { Text = !string.IsNullOrWhiteSpace(uploader?.GradeSection) ? uploader.GradeSection : "N/A", Top = 40, Left = 110, AutoSize = true, Font = new Font("Arial", 9, FontStyle.Bold) };
+
+                Label lblLocation = new Label { Text = "Location:", Top = 72, Left = 12, AutoSize = true };
+                TextBox txtLocation = new TextBox { Top = 92, Left = 12, Width = 340 };
+
+                Label lblDate = new Label { Text = "Date / Time:", Top = 124, Left = 12, AutoSize = true };
+                DateTimePicker dtp = new DateTimePicker { Top = 144, Left = 12, Width = 220, Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm", Value = DateTime.Now };
+
+                Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Top = 180, Left = 190, Width = 75 };
+                Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Top = 180, Left = 275, Width = 75 };
+
+                f.Controls.Add(lblUploader); f.Controls.Add(lblUploaderVal);
+                f.Controls.Add(lblGrade); f.Controls.Add(lblGradeVal);
+                f.Controls.Add(lblLocation); f.Controls.Add(txtLocation);
+                f.Controls.Add(lblDate); f.Controls.Add(dtp);
+                f.Controls.Add(ok); f.Controls.Add(cancel);
+
+                f.AcceptButton = ok; f.CancelButton = cancel;
+
+                if (f.ShowDialog() == DialogResult.OK)
+                {
+                    var loc = txtLocation.Text.Trim();
+                    if (string.IsNullOrWhiteSpace(loc)) loc = "N/A";
+                    return (loc, dtp.Value);
+                }
+                return null;
             }
         }
     }

@@ -9,6 +9,16 @@ namespace ReturnPoint
         static void Main()
         {
             ApplicationConfiguration.Initialize();
+            // ensure relative paths (e.g. "users.json") resolve to the app's build output folder
+            // typically: ...\ReturnPoint\bin\Debug\net6.0-windows
+            try
+            {
+                Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            }
+            catch
+            {
+                // if setting the current directory fails, continue — relative paths may still work
+            }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -29,6 +39,7 @@ namespace ReturnPoint
                 }
                 else
                 {
+                    // UI design synchronized with index.html (visual parity only)
                     Application.Run(new FormGallery());
                 }
             }

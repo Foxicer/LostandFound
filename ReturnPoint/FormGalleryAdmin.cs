@@ -251,6 +251,22 @@ namespace ReturnPoint
             DateTime created = File.GetCreationTime(filePath);
             DateTime modified = File.GetLastWriteTime(filePath);
 
+            // try to extract an "AddedBy" entry from the info text if present
+            string addedBy = null;
+            if (!string.IsNullOrWhiteSpace(infoText))
+            {
+                var lines = infoText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (trimmed.StartsWith("AddedBy:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        addedBy = trimmed.Substring("AddedBy:".Length).Trim();
+                        break;
+                    }
+                }
+            }
+
             Form infoForm = new Form
             {
                 Text = "File Info",
@@ -267,6 +283,7 @@ namespace ReturnPoint
                        $"Path: {filePath}{Environment.NewLine}" +
                        $"Created: {created:g}{Environment.NewLine}" +
                        $"Last Modified: {modified:g}{Environment.NewLine}{Environment.NewLine}" +
+                       $"Added by: {(string.IsNullOrEmpty(addedBy) ? "(unknown)" : addedBy)}{Environment.NewLine}{Environment.NewLine}" +
                        $"Info file contents:{Environment.NewLine}{infoText}"
             };
 
@@ -288,20 +305,9 @@ namespace ReturnPoint
                 string dest = Path.Combine(deletedFolder, Path.GetFileName(filePath));
                 File.Move(filePath, dest);
 
-                // move related files: _tags.txt, _info.txt, _claim.txt, Claimants folder (if exists)
+                // move related files: _tags.txt, _info.txt
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_tags.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_tags.txt"));
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_info.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_info.txt"));
-                MoveIfExists(Path.Combine(Path.GetDirectoryName(filePath), Path.GetFileNameWithoutExtension(filePath) + "_claim.txt"),
-                             Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_claim.txt"));
-
-                string claimantFolder = Path.Combine(Path.GetDirectoryName(filePath), "Claimants");
-                if (Directory.Exists(claimantFolder))
-                {
-                    var claimantDestFolder = Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_Claimants");
-                    Directory.CreateDirectory(claimantDestFolder);
-                    foreach (var cf in Directory.GetFiles(claimantFolder, $"claimant_{Path.GetFileNameWithoutExtension(filePath)}*"))
-                        MoveIfExists(cf, Path.Combine(claimantDestFolder, Path.GetFileName(cf)));
-                }
 
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
@@ -328,20 +334,6 @@ namespace ReturnPoint
                 string baseName = Path.GetFileNameWithoutExtension(filePath);
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_tags.txt"), Path.Combine(saveFolder, baseName + "_tags.txt"));
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_info.txt"), Path.Combine(saveFolder, baseName + "_info.txt"));
-                MoveIfExists(Path.Combine(deletedFolder, baseName + "_claim.txt"), Path.Combine(saveFolder, baseName + "_claim.txt"));
-
-                // claimant subfolder variant
-                string claimantDeleted = Path.Combine(deletedFolder, baseName + "_Claimants");
-                if (Directory.Exists(claimantDeleted))
-                {
-                    var claimantRestore = Path.Combine(Path.Combine(saveFolder, "Claimants"));
-                    Directory.CreateDirectory(claimantRestore);
-                    foreach (var f in Directory.GetFiles(claimantDeleted))
-                    {
-                        MoveIfExists(f, Path.Combine(claimantRestore, Path.GetFileName(f)));
-                    }
-                    Directory.Delete(claimantDeleted, true);
-                }
 
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
@@ -367,14 +359,9 @@ namespace ReturnPoint
                 var related = new[]
                 {
                     Path.Combine(Path.GetDirectoryName(filePath), baseName + "_tags.txt"),
-                    Path.Combine(Path.GetDirectoryName(filePath), baseName + "_info.txt"),
-                    Path.Combine(Path.GetDirectoryName(filePath), baseName + "_claim.txt")
+                    Path.Combine(Path.GetDirectoryName(filePath), baseName + "_info.txt")
                 };
                 foreach (var r in related) if (File.Exists(r)) File.Delete(r);
-
-                // if there is a claimant folder variant in deleted folder remove it too
-                var claimantFolder = Path.Combine(Path.GetDirectoryName(filePath), baseName + "_Claimants");
-                if (Directory.Exists(claimantFolder)) Directory.Delete(claimantFolder, true);
 
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
