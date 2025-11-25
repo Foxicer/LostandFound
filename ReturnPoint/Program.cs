@@ -5,6 +5,8 @@ namespace ReturnPoint
 {
     static class Program
     {
+        public static Models.User? CurrentUser; // set at registration/login
+
         [STAThread]
         static void Main()
         {

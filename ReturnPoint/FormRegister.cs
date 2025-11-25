@@ -2,13 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Linq;
 using System.Windows.Forms;
+using ReturnPoint.Models;
 
 namespace ReturnPoint
 {
-    public class FormRegister : Form
+    public partial class FormRegister : Form
     {
-        private TextBox txtName;
+        private TextBox txtFirst;
+        private TextBox txtMiddle;
+        private TextBox txtLast;
         private TextBox txtEmail;
         private TextBox txtGradeSection;
         private TextBox txtPassword;
@@ -19,7 +23,7 @@ namespace ReturnPoint
         private Label lblMsg;
 
         // Expose the registered email so login form can prefill
-        public string RegisteredEmail { get; private set; }
+        public string RegisteredEmail { get; private set; } = "";
 
         public FormRegister()
         {
@@ -31,7 +35,11 @@ namespace ReturnPoint
             var labelFont = new System.Drawing.Font("Segoe UI", 12F);
             var inputFont = new System.Drawing.Font("Segoe UI", 12F);
 
-            txtName = new TextBox { Width = 520, Font = inputFont };
+            // split name fields
+            txtFirst = new TextBox { Width = 170, Font = inputFont, PlaceholderText = "First name" };
+            txtMiddle = new TextBox { Width = 170, Font = inputFont, PlaceholderText = "Middle name (optional)" };
+            txtLast = new TextBox { Width = 170, Font = inputFont, PlaceholderText = "Last name" };
+
             txtEmail = new TextBox { Width = 520, Font = inputFont };
             txtGradeSection = new TextBox { Width = 520, Font = inputFont };
             txtPassword = new TextBox { Width = 520, UseSystemPasswordChar = true, Font = inputFont };
@@ -45,7 +53,9 @@ namespace ReturnPoint
             btnCancel = new Button { Text = "Cancel", Width = 260, Height = 44, Font = labelFont };
             lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = System.Drawing.Color.Red, Font = inputFont };
 
-            var lblName = new Label { Text = "Full Name", AutoSize = true, Font = labelFont };
+            var lblFirst = new Label { Text = "First Name", AutoSize = true, Font = labelFont };
+            var lblMiddle = new Label { Text = "Middle Name", AutoSize = true, Font = labelFont };
+            var lblLast = new Label { Text = "Last Name", AutoSize = true, Font = labelFont };
             var lblEmail = new Label { Text = "Email (Gmail recommended)", AutoSize = true, Font = labelFont };
             var lblGrade = new Label { Text = "Grade and Section", AutoSize = true, Font = labelFont };
             var lblP = new Label { Text = "Password", AutoSize = true, Font = labelFont };
@@ -70,8 +80,24 @@ namespace ReturnPoint
                 Padding = new Padding(12)
             };
 
-            center.Controls.Add(lblName);
-            center.Controls.Add(txtName);
+            // Name row: show three inputs side-by-side
+            var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 560 };
+            var nameLabels = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 560 };
+            nameLabels.Controls.Add(lblFirst);
+            nameLabels.Controls.Add(new Label { Width = 24 }); // spacer
+            nameLabels.Controls.Add(lblMiddle);
+            nameLabels.Controls.Add(new Label { Width = 24 });
+            nameLabels.Controls.Add(lblLast);
+
+            nameRow.Controls.Add(txtFirst);
+            nameRow.Controls.Add(new Label { Width = 12 });
+            nameRow.Controls.Add(txtMiddle);
+            nameRow.Controls.Add(new Label { Width = 12 });
+            nameRow.Controls.Add(txtLast);
+
+            center.Controls.Add(nameLabels);
+            center.Controls.Add(nameRow);
+
             center.Controls.Add(lblEmail);
             center.Controls.Add(txtEmail);
             center.Controls.Add(lblGrade);
@@ -104,7 +130,12 @@ namespace ReturnPoint
         private void DoRegister()
         {
             lblMsg.Text = "";
-            var name = txtName.Text?.Trim();
+
+            var first = txtFirst.Text?.Trim() ?? "";
+            var middle = txtMiddle.Text?.Trim() ?? "";
+            var last = txtLast.Text?.Trim() ?? "";
+            var name = string.Join(" ", new[] { first, middle, last }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim();
+
             var email = txtEmail.Text?.Trim();
             var grade = txtGradeSection.Text?.Trim();
             var pass = txtPassword.Text ?? "";
@@ -149,7 +180,7 @@ namespace ReturnPoint
                 {
                     ["name"] = name,
                     ["email"] = email,
-                    ["grade_section"] = grade,
+                    ["grade_section"] = string.IsNullOrWhiteSpace(grade) ? "N/A" : grade,
                     ["password"] = pass,
                     ["profile_picture"] = null,
                     ["role"] = role
@@ -160,7 +191,7 @@ namespace ReturnPoint
                 var outJson = JsonSerializer.Serialize(users, writeOpts);
                 File.WriteAllText(path, outJson);
 
-                RegisteredEmail = email;
+                RegisteredEmail = email ?? "";
                 DialogResult = DialogResult.OK;
                 Close();
             }

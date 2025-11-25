@@ -4,6 +4,8 @@ using System.IO;
 using System.Windows.Forms;
 using System.Reflection;
 using System.Linq;
+using System.Text.Json;
+using Microsoft.VisualBasic;
 
 namespace ReturnPoint
 {
@@ -650,54 +652,7 @@ namespace ReturnPoint
             }
         }
 
-        private UploaderInfo GetLoggedInUser()
-        {
-            // 1) try a common static variable (Program.CurrentUser or Program.LoggedInUser)
-            try
-            {
-                var progType = Type.GetType("ReturnPoint.Program");
-                if (progType != null)
-                {
-                    var prop = progType.GetProperty("CurrentUser", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
-                               ?? progType.GetProperty("LoggedInUser", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-                    if (prop != null)
-                    {
-                        var cur = prop.GetValue(null);
-                        if (cur != null)
-                        {
-                            var nameProp = cur.GetType().GetProperty("Name");
-                            var gradeProp = cur.GetType().GetProperty("GradeSection") ?? cur.GetType().GetProperty("Grade") ?? cur.GetType().GetProperty("Section");
-                            string name = nameProp?.GetValue(cur)?.ToString();
-                            string grade = gradeProp?.GetValue(cur)?.ToString();
-                            return new UploaderInfo { Name = name ?? Environment.UserName, GradeSection = grade ?? "N/A" };
-                        }
-                    }
-                }
-            }
-            catch { /* ignore reflection failures */ }
- 
-            // 2) try a local current_user.txt file (optional)
-            try
-            {
-                var userFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_user.txt");
-                if (File.Exists(userFile))
-                {
-                    var map = File.ReadAllLines(userFile)
-                        .Select(l => { var i = l.IndexOf(':'); return i >= 0 ? new { k = l.Substring(0, i).Trim(), v = l.Substring(i + 1).Trim() } : null; })
-                        .Where(x => x != null)
-                        .ToDictionary(x => x.k, x => x.v, StringComparer.OrdinalIgnoreCase);
- 
-                    map.TryGetValue("Name", out var name2);
-                    map.TryGetValue("GradeSection", out var grade2);
-                    return new UploaderInfo { Name = name2 ?? Environment.UserName, GradeSection = grade2 ?? "N/A" };
-                }
-            }
-            catch { }
- 
-            // 3) fallback to Windows username
-            return new UploaderInfo { Name = Environment.UserName, GradeSection = "N/A" };
-        }
-
+        // prompt user for Location and Date when adding an image (uses uploader info for display)
         private (string Location, DateTime Date)? PromptForImageMetadata(UploaderInfo uploader)
         {
             using (Form f = new Form())
@@ -740,6 +695,80 @@ namespace ReturnPoint
                 }
                 return null;
             }
+        }
+
+        private UploaderInfo GetLoggedInUser()
+        {
+            // 1) try program-level CurrentUser (if your app sets it)
+            try
+            {
+                var progType = Type.GetType("ReturnPoint.Program");
+                if (progType != null)
+                {
+                    var prop = progType.GetProperty("CurrentUser", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (prop != null)
+                    {
+                        var cur = prop.GetValue(null);
+                        if (cur != null)
+                        {
+                            var nameProp = cur.GetType().GetProperty("Name");
+                            var gradeProp = cur.GetType().GetProperty("GradeSection") ?? cur.GetType().GetProperty("grade_section");
+                            string name = nameProp?.GetValue(cur)?.ToString();
+                            string grade = gradeProp?.GetValue(cur)?.ToString();
+                            return new UploaderInfo { Name = name ?? Environment.UserName, GradeSection = string.IsNullOrWhiteSpace(grade) ? "N/A" : grade };
+                        }
+                    }
+                }
+            }
+            catch { /* ignore reflection failures */ }
+
+            // 2) try current_user.txt that contains the logged-in email
+            try
+            {
+                var cuPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_user.txt");
+                if (File.Exists(cuPath))
+                {
+                    var email = File.ReadAllText(cuPath).Trim();
+                    if (!string.IsNullOrWhiteSpace(email))
+                    {
+                        var usersPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "users.json");
+                        if (File.Exists(usersPath))
+                        {
+                            var json = File.ReadAllText(usersPath);
+                            using (var doc = JsonDocument.Parse(json))
+                            {
+                                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var el in doc.RootElement.EnumerateArray())
+                                    {
+                                        if (el.TryGetProperty("email", out var em) && string.Equals(em.GetString(), email, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            string name = null;
+                                            if (el.TryGetProperty("name", out var n)) name = n.GetString();
+                                            else if (el.TryGetProperty("username", out var un)) name = un.GetString();
+
+                                            string grade = null;
+                                            if (el.TryGetProperty("grade_section", out var g)) grade = g.GetString();
+                                            else if (el.TryGetProperty("gradeSection", out var g2)) grade = g2.GetString();
+                                            else if (el.TryGetProperty("grade", out var g3)) grade = g3.GetString();
+
+                                            return new UploaderInfo
+                                            {
+                                                Name = !string.IsNullOrWhiteSpace(name) ? name : Environment.UserName,
+                                                GradeSection = !string.IsNullOrWhiteSpace(grade) ? grade : "N/A"
+                                            };
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { /* ignore json/read errors */ }
+
+            // fallback
+            return new UploaderInfo { Name = Environment.UserName, GradeSection = "N/A" };
         }
     }
 }
