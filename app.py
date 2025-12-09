@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, send_from_directory, session, redirec
 import os
 import json
 from werkzeug.utils import secure_filename
-
 app = Flask(__name__, static_folder='.', static_url_path='')
 
 if os.environ.get('REPLIT_DEPLOYMENT') == '1':
