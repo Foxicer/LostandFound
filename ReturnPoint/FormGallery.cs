@@ -28,9 +28,11 @@ namespace ReturnPoint
         private TextBox txtNewTag;
         private Button btnAddTag;
         private Panel selectedCard;
+        private Panel panelMain;
 
         public class RoundedPanel : Panel
         {
+            
             public int CornerRadius { get; set; } = 20;
 
             protected override void OnPaint(PaintEventArgs e)
@@ -65,6 +67,9 @@ namespace ReturnPoint
 
         public FormGallery()
         {
+
+            // make sure it’s behind all other controls
+
             // initialize saveFolder to a sensible default before using it
             if (string.IsNullOrWhiteSpace(saveFolder))
             {
@@ -82,6 +87,7 @@ namespace ReturnPoint
             // Theme.Apply(this);
 
             // Outer panel (scroll area)
+
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -98,7 +104,7 @@ namespace ReturnPoint
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = true,
                 Padding = new Padding(20, 10, 20, 10),
-                Location = new Point(10, 10) // align to left
+                Location = new Point(100, 100) // align to left
             };
 
             
@@ -118,21 +124,21 @@ namespace ReturnPoint
             searchPanel = new Panel
             {
                 Dock = DockStyle.Right,
-                Width = 300,
-                // BackColor = Color.FromArgb(230, 240, 240),
-                // start neutral; we'll force white below after theming
-                Padding = new Padding(10)
+                Width = 320,
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(15)
             };
 
-            Label lblSearch = new Label { Text = "Search", AutoSize = true, Top = 6, Left = 10, Font = new Font("Arial", 10, FontStyle.Bold) };
-            txtSearch = new TextBox { Top = 30, Left = 10, Width = 260 };
-            btnSearch = new Button { Text = "Search", Top = 60, Left = 10, Width = 125 };
-            btnClearSearch = new Button { Text = "Clear", Top = 60, Left = 145, Width = 125 };
+            Label lblSearch = new Label { Text = "Search Images", AutoSize = true, Top = 10, Left = 15, Font = new Font("Segoe UI", 12, FontStyle.Bold) };
+            txtSearch = new TextBox { Top = 35, Left = 15, Width = 270, Font = new Font("Segoe UI", 10) };
+            btnSearch = new Button { Text = "Search", Top = 65, Left = 15, Width = 130, Height = 35, Font = new Font("Segoe UI", 10) };
+            btnClearSearch = new Button { Text = "Clear", Top = 65, Left = 155, Width = 130, Height = 35, Font = new Font("Segoe UI", 10) };
 
-            Label lblTags = new Label { Text = "Tags (selected)", AutoSize = true, Top = 100, Left = 10, Font = new Font("Arial", 10, FontStyle.Bold) };
-            lstTags = new ListBox { Top = 125, Left = 10, Width = 260, Height = 160 };
-            txtNewTag = new TextBox { Top = 295, Left = 10, Width = 180 };
-            btnAddTag = new Button { Text = "Add Tag", Top = 293, Left = 195, Width = 75 };
+            Label lblTags = new Label { Text = "Tags (selected item)", AutoSize = true, Top = 115, Left = 15, Font = new Font("Segoe UI", 12, FontStyle.Bold) };
+            lstTags = new ListBox { Top = 140, Left = 15, Width = 270, Height = 150, Font = new Font("Segoe UI", 10) };
+            txtNewTag = new TextBox { Top = 300, Left = 15, Width = 190, Font = new Font("Segoe UI", 10) };
+            btnAddTag = new Button { Text = "Add Tag", Top = 298, Left = 215, Width = 70, Height = 30, Font = new Font("Segoe UI", 9) };
 
             searchPanel.Controls.Add(lblSearch);
             searchPanel.Controls.Add(txtSearch);
@@ -152,25 +158,21 @@ namespace ReturnPoint
                 Text = "+",
                 Width = 60,
                 Height = 60,
-                // BackColor = Color.Aqua, // ✅ aqua by default
-                // ForeColor = Color.White,
-                BackColor = Theme.StrongAqua,
+                BackColor = Theme.TealGreen,
                 ForeColor = Theme.SoftWhite,
                 Font = new Font("Arial", 18, FontStyle.Bold),
                 FlatStyle = FlatStyle.Flat
             };
             openCameraButton.FlatAppearance.BorderSize = 0;
 
-            // hover effect → lighter aqua
+            // hover effect → lighter blue
             openCameraButton.MouseEnter += (s, e) =>
             {
-                // openCameraButton.BackColor = Color.MediumAquamarine;
-                openCameraButton.BackColor = Theme.MediumAqua;
+                openCameraButton.BackColor = Theme.MediumTeal;
             };
             openCameraButton.MouseLeave += (s, e) =>
             {
-                // openCameraButton.BackColor = Color.Aqua;
-                openCameraButton.BackColor = Theme.StrongAqua;
+                openCameraButton.BackColor = Theme.TealGreen;
             };
 
             openCameraButton.Click += OpenCameraButton_Click;
@@ -242,6 +244,10 @@ namespace ReturnPoint
 
             // Apply theme after all controls exist so Theme.Apply can walk everything
             Theme.Apply(this);
+            galleryPanel.BackColor = Color.LightSeaGreen;
+            outerPanel.BackColor = Color.LightSeaGreen;
+            
+
 
             // Ensure the search-area is white with black text (override theme)
             if (searchPanel != null)
@@ -258,7 +264,7 @@ namespace ReturnPoint
             }
 
             // Make sure logout button is visible and themed
-            btnLogout.BackColor = Theme.OuterRing;
+            btnLogout.BackColor = Theme.TealGreen;
             btnLogout.ForeColor = Theme.SoftWhite;
             btnLogout.FlatStyle = FlatStyle.Flat;
             btnLogout.BringToFront();

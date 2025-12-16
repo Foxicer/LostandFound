@@ -35,7 +35,7 @@ namespace ReturnPoint
             Directory.CreateDirectory(saveFolder);
             Directory.CreateDirectory(deletedFolder);
 
-            // outer scrollable area
+
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -97,7 +97,7 @@ namespace ReturnPoint
             Controls.Add(rightPanel);
             Controls.Add(outerPanel);
 
-            // logout button placed inside rightPanel so it is always visible and themed with the panel
+            
             btnLogout = new Button
             {
                 Text = "Logout",
@@ -115,9 +115,9 @@ namespace ReturnPoint
                     Application.ExitThread();
                 }
             };
-            // add into rightPanel so docking doesn't obscure it
+           
             rightPanel.Controls.Add(btnLogout);
-            // reposition when rightPanel is resized
+          
             rightPanel.SizeChanged += (s, e) =>
             {
                 btnLogout.Left = Math.Max(10, rightPanel.ClientSize.Width - btnLogout.Width - 10);
@@ -129,9 +129,9 @@ namespace ReturnPoint
             btnRestore.Click += (s, e) => RestoreSelected();
             btnPermanentlyDelete.Click += (s, e) => PermanentlyDeleteSelected();
 
-            // apply app theme to admin gallery
+           
             Theme.Apply(this);
-            // ensure logout stands out (override if necessary) and visible on top
+           
             btnLogout.BackColor = OuterRingIsAvailable();
             btnLogout.ForeColor = Theme.SoftWhite;
             btnLogout.FlatStyle = FlatStyle.Flat;
@@ -139,8 +139,8 @@ namespace ReturnPoint
 
             Color OuterRingIsAvailable()
             {
-                // prefer OuterRing but fall back to StrongAqua
-                return Theme.OuterRing;
+                // use PrimaryBlue for modern theme
+                return Theme.TealGreen;
             }
 
             LoadImages(false);

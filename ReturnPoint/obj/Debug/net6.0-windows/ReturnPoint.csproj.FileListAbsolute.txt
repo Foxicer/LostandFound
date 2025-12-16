@@ -44,3 +44,8 @@ C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ref\R
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.FormClaimantInfo.resources
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.FormGallery.resources
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.csproj.GenerateResource.cache
+C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\OpenCvSharp.dll
+C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\runtimes\win-x64\native\OpenCvSharpExtern.dll
+C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\runtimes\win-x64\native\opencv_videoio_ffmpeg4110_64.dll
+C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\runtimes\win-x86\native\OpenCvSharpExtern.dll
+C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\runtimes\win-x86\native\opencv_videoio_ffmpeg4110.dll

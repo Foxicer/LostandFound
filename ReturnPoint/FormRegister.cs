@@ -32,13 +32,14 @@ namespace ReturnPoint
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
 
+            var titleFont = new System.Drawing.Font("Segoe UI", 24F, System.Drawing.FontStyle.Bold);
             var labelFont = new System.Drawing.Font("Segoe UI", 12F);
             var inputFont = new System.Drawing.Font("Segoe UI", 12F);
 
             // split name fields
-            txtFirst = new TextBox { Width = 170, Font = inputFont, PlaceholderText = "First name" };
-            txtMiddle = new TextBox { Width = 170, Font = inputFont, PlaceholderText = "Middle name (optional)" };
-            txtLast = new TextBox { Width = 170, Font = inputFont, PlaceholderText = "Last name" };
+            txtFirst = new TextBox { Width = 160, Font = inputFont, PlaceholderText = "First name" };
+            txtMiddle = new TextBox { Width = 160, Font = inputFont, PlaceholderText = "Middle name (optional)" };
+            txtLast = new TextBox { Width = 160, Font = inputFont, PlaceholderText = "Last name" };
 
             txtEmail = new TextBox { Width = 520, Font = inputFont };
             txtGradeSection = new TextBox { Width = 520, Font = inputFont };
@@ -49,10 +50,11 @@ namespace ReturnPoint
             cbRole.Items.AddRange(new[] { "user", "admin" });
             cbRole.SelectedIndex = 0;
 
-            btnRegister = new Button { Text = "Create Account", Width = 260, Height = 44, Font = labelFont };
-            btnCancel = new Button { Text = "Cancel", Width = 260, Height = 44, Font = labelFont };
-            lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = System.Drawing.Color.Red, Font = inputFont };
+            btnRegister = new Button { Text = "Create Account", Width = 180, Height = 44, Font = labelFont };
+            btnCancel = new Button { Text = "Cancel", Width = 180, Height = 44, Font = labelFont };
+            lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = Theme.DeepRed, Font = inputFont };
 
+            var lblTitle = new Label { Text = "Create New Account", AutoSize = true, Font = titleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter };
             var lblFirst = new Label { Text = "First Name", AutoSize = true, Font = labelFont };
             var lblMiddle = new Label { Text = "Middle Name", AutoSize = true, Font = labelFont };
             var lblLast = new Label { Text = "Last Name", AutoSize = true, Font = labelFont };
@@ -66,52 +68,65 @@ namespace ReturnPoint
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 34));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 33));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
 
             var center = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                Width = 560,
+                Width = 580,
                 AutoSize = true,
                 Anchor = AnchorStyles.None,
-                Padding = new Padding(12)
+                Padding = new Padding(20)
             };
 
-            // Name row: show three inputs side-by-side
-            var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 560 };
-            var nameLabels = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 560 };
+            center.Controls.Add(lblTitle);
+            center.Controls.Add(new Label { Height = 20 }); // Spacer
+
+            // Name section with better spacing
+            var nameSection = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Width = 580 };
+            var nameLabels = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 580 };
             nameLabels.Controls.Add(lblFirst);
-            nameLabels.Controls.Add(new Label { Width = 24 }); // spacer
+            nameLabels.Controls.Add(new Label { Width = 20 }); // spacer
             nameLabels.Controls.Add(lblMiddle);
-            nameLabels.Controls.Add(new Label { Width = 24 });
+            nameLabels.Controls.Add(new Label { Width = 20 });
             nameLabels.Controls.Add(lblLast);
 
+            var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 580 };
             nameRow.Controls.Add(txtFirst);
-            nameRow.Controls.Add(new Label { Width = 12 });
+            nameRow.Controls.Add(new Label { Width = 10 });
             nameRow.Controls.Add(txtMiddle);
-            nameRow.Controls.Add(new Label { Width = 12 });
+            nameRow.Controls.Add(new Label { Width = 10 });
             nameRow.Controls.Add(txtLast);
 
-            center.Controls.Add(nameLabels);
-            center.Controls.Add(nameRow);
+            nameSection.Controls.Add(nameLabels);
+            nameSection.Controls.Add(nameRow);
+            center.Controls.Add(nameSection);
+            center.Controls.Add(new Label { Height = 15 }); // Spacer
 
             center.Controls.Add(lblEmail);
             center.Controls.Add(txtEmail);
+            center.Controls.Add(new Label { Height = 10 }); // Spacer
             center.Controls.Add(lblGrade);
             center.Controls.Add(txtGradeSection);
+            center.Controls.Add(new Label { Height = 10 }); // Spacer
             center.Controls.Add(lblP);
             center.Controls.Add(txtPassword);
+            center.Controls.Add(new Label { Height = 10 }); // Spacer
             center.Controls.Add(lblC);
             center.Controls.Add(txtConfirm);
+            center.Controls.Add(new Label { Height = 10 }); // Spacer
             center.Controls.Add(lblR);
             center.Controls.Add(cbRole);
+            center.Controls.Add(new Label { Height = 10 }); // Spacer
             center.Controls.Add(lblMsg);
+            center.Controls.Add(new Label { Height = 15 }); // Spacer
 
             var btnRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
             btnRow.Controls.Add(btnRegister);
+            btnRow.Controls.Add(new Label { Width = 20 }); // Spacer
             btnRow.Controls.Add(btnCancel);
             center.Controls.Add(btnRow);
 
@@ -125,6 +140,10 @@ namespace ReturnPoint
             CancelButton = btnCancel;
 
             Theme.Apply(this);
+            BackColor = Color.LightSeaGreen;
+            main.BackColor = Color.LightSeaGreen;
+            btnRow.BackColor = Color.LightSeaGreen;
+            center.BackColor = Color.LightSeaGreen;
         }
 
         private void DoRegister()

@@ -49,7 +49,7 @@ namespace ReturnPoint
                 Height = 60,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font("Arial", 28, FontStyle.Bold),
-                ForeColor = Color.Red
+                ForeColor = Theme.DeepRed
             };
 
             this.Controls.Add(livePreview);
@@ -269,7 +269,7 @@ namespace ReturnPoint
                 Height = 60,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font("Arial", 28, FontStyle.Bold),
-                ForeColor = Color.Red
+                ForeColor = Theme.DeepRed
             };
 
             this.Controls.Add(livePreview);

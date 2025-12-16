@@ -7,26 +7,35 @@ namespace ReturnPoint
 {
     public static class Theme
     {
-        // Palette
-        public static Color SoftWhite => ColorTranslator.FromHtml("#FFFEFE");
-        public static Color OuterRing => ColorTranslator.FromHtml("#0EC1A9");
-        public static Color StrongAqua => ColorTranslator.FromHtml("#00C0A5");
-        public static Color MutedTurquoise => ColorTranslator.FromHtml("#26B295");
-        public static Color MediumAqua => ColorTranslator.FromHtml("#00B69A");
-        public static Color DeepTeal => ColorTranslator.FromHtml("#00A08A");
-        public static Color SlightlyDarkerTeal => ColorTranslator.FromHtml("#00A089");
-        public static Color DarkGray => ColorTranslator.FromHtml("#505346");
+        // Palette - ReturnPoint Theme
+        public static Color SoftWhite => ColorTranslator.FromHtml("#FFFFFF");
+        public static Color LightGray => ColorTranslator.FromHtml("#F5F5F5");
+        public static Color MediumGray => ColorTranslator.FromHtml("#E0E0E0");
+        public static Color DarkGray => ColorTranslator.FromHtml("#505050");
+        public static Color TealGreen => ColorTranslator.FromHtml("#00C0A0");
+        public static Color MediumTeal => ColorTranslator.FromHtml("#00B8A0");
+        public static Color DarkTeal => ColorTranslator.FromHtml("#00A088");
+        public static Color MutedTeal => ColorTranslator.FromHtml("#009880");
+        public static Color OuterRing = ColorTranslator.FromHtml("#009880"); 
+
+        public static Color NearBlack => ColorTranslator.FromHtml("#000000");
+        public static Color DeepRed => ColorTranslator.FromHtml("#980000");
+        public static Color CrimsonRed => ColorTranslator.FromHtml("#A00000");
+        public static Color DarkRoseRed => ColorTranslator.FromHtml("#984040");
+        public static Color GoldenYellow => ColorTranslator.FromHtml("#C09820");
+        public static Color WarmGold => ColorTranslator.FromHtml("#B89028");
+        public static Color AmberGold => ColorTranslator.FromHtml("#C08828");
+        public static Color PaperWhite => ColorTranslator.FromHtml("#FFFFFF");
+        public static Color DarkGrayBook => ColorTranslator.FromHtml("#2B2B2B");
 
         public static void Apply(Form form)
         {
+
             if (form == null) return;
-
-            // Form background only
-            form.BackColor = MutedTurquoise;
-
-            // Walk controls
+            form.BackColor = MutedTeal;
             foreach (Control c in form.Controls)
                 ApplyToControl(c);
+
         }
 
         private static bool IsLight(Color c)
@@ -41,40 +50,37 @@ namespace ReturnPoint
 
             bool bgIsLight = IsLight(c.BackColor);
 
-            if (c is Panel || c is GroupBox || c is FlowLayoutPanel || c is TableLayoutPanel)
+            if (c is Panel || c is GroupBox || c is FlowLayoutPanel)
             {
-                c.BackColor = SlightlyDarkerTeal;
-                c.ForeColor = SoftWhite;
+                c.BackColor = MediumGray;
+                c.ForeColor = NearBlack;
+            }
+            else if (c is TableLayoutPanel)
+            {
+                c.BackColor = MutedTeal;
+                c.ForeColor = NearBlack;
             }
             else if (c is Button btn)
             {
-                // keep action buttons teal by default; if background was light, prefer white button w/ black text
-                if (bgIsLight)
-                {
-                    btn.BackColor = Color.White;
-                    btn.ForeColor = Color.Black;
-                }
-                else
-                {
-                    btn.BackColor = StrongAqua;
-                    btn.ForeColor = SoftWhite;
-                }
+                // Use teal green for buttons
+                btn.BackColor = TealGreen;
+                btn.ForeColor = SoftWhite;
                 btn.FlatStyle = FlatStyle.Flat;
                 try { btn.FlatAppearance.BorderSize = 0; } catch { }
             }
             else if (c is TextBox || c is MaskedTextBox || c is RichTextBox)
             {
-                c.BackColor = Color.White;
-                c.ForeColor = Color.Black;
+                c.BackColor = SoftWhite;
+                c.ForeColor = NearBlack;
             }
             else if (c is ListBox || c is ComboBox)
             {
-                c.BackColor = Color.White;
-                c.ForeColor = Color.Black;
+                c.BackColor = SoftWhite;
+                c.ForeColor = NearBlack;
             }
             else if (c is Label)
             {
-                c.ForeColor = bgIsLight ? Color.Black : SoftWhite;
+                c.ForeColor = NearBlack;
                 c.BackColor = Color.Transparent;
             }
             else if (c is PictureBox)
@@ -83,7 +89,7 @@ namespace ReturnPoint
             }
             else
             {
-                c.ForeColor = bgIsLight ? Color.Black : SoftWhite;
+                c.ForeColor = NearBlack;
             }
 
             // recurse children
