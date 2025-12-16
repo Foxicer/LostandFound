@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Visual tokens tuned to match FormLogin / FormRegister */
+        :root{
+            --bg:#00ffdd;
+            --card:#ffffff;
+            --accent:#2196f3;
+            --muted:#6b7280;
+            --radius:10px;
+            --shadow: 0 6px 18px rgba(16,24,40,0.08);
+            --font: "Segoe UI", Roboto, Arial, sans-serif;
+        }
+        html,body{height:100%;margin:0;font-family:var(--font);background:var(--bg);color:#111;}
+        .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+        .auth-card{
+            width:380px;max-width:92%;
+            background:var(--card);
+            border-radius:var(--radius);
+            box-shadow:var(--shadow);
+            padding:28px 24px;
+            box-sizing:border-box;
+        }
+        .brand{
+            display:flex;align-items:center;margin-bottom:14px;
+        }
+        .brand-title{
+            font-size:20px;font-weight:600;margin-left:10px;
+        }
+        h2{margin:0 0 8px 0;font-size:18px;}
+        .desc{color:var(--muted);font-size:13px;margin-bottom:18px;}
+        .form-group{margin-bottom:12px;display:flex;flex-direction:column;}
+        label{font-size:13px;margin-bottom:6px;color:#222;}
+        input[type="text"], input[type="password"], input[type="email"]{
+            height:40px;padding:8px 10px;border:1px solid #e6e9ee;border-radius:8px;font-size:14px;
+            background:transparent;outline:none;box-sizing:border-box;
+        }
+        input:focus{box-shadow:0 0 0 3px rgba(33,150,243,0.08);border-color:rgba(33,150,243,0.35);}
+        .actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+        button.primary{
+            background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;
+            font-weight:600;
+        }
+        button.secondary{
+            background:transparent;border:1px solid #dfe6f2;color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer;
+        }
+        .register-btn{width:100%;margin-top:12px;background:#fff;border:1px solid #e6eefc;color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;}
+        .error-message{color:#b00020;font-size:13px;margin-top:8px;min-height:18px;}
+        .small{font-size:13px;color:var(--muted);}
+        .footer-note{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;}
+        @media (max-width:420px){ .auth-card{padding:18px} }
+    </style>
+</head>
+<body> 
+    <div class="center-wrap">
+        <div class="auth-card" role="main" aria-labelledby="login-heading">
+            <div class="brand" aria-hidden="true">
+                <!-- simple icon to match WinForms Title bar feel -->
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect width="24" height="24" rx="4" fill="#e6eefc"/>
+                    <path d="M7 12h10" stroke="#2196f3" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M7 8h10" stroke="#90caf9" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <div class="brand-title">Lost & Found</div>
+            </div>
+
+            <h2 id="login-heading">Sign in</h2>
+            <div class="desc">Enter your credentials to access the dashboard.</div>
+
+            <form id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="email">Gmail address</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+
+                <div class="error-message" id="errorMessage" aria-live="polite"></div>
+
+                <div class="actions">
+                    <button type="submit" class="primary">Login</button>
+                    <button type="button" class="secondary" onclick="document.getElementById('password').value = '';">Clear</button>
+                </div>
+            </form>
+
+            <button class="register-btn" onclick="window.location.href='register.html'">Create an account</button>
+
+            <div class="footer-note">By signing in you agree to the organization's usage policy.</div>
+        </div>
+    </div>
+
+    <!-- Inline validation to require a Gmail address; preserves existing #errorMessage and loginForm id -->
+    <script>
+        (function(){
+            var form = document.getElementById('loginForm');
+            var err = document.getElementById('errorMessage');
+            if (!form || !err) return;
+            form.addEventListener('submit', function(e){
+                // if external script handles submission asynchronously, this will run first;
+                // stop submission only when invalid Gmail is detected to avoid breaking existing flow.
+                var emailEl = document.getElementById('email');
+                if (!emailEl) return;
+                var val = (emailEl.value || '').trim();
+                if (val === '' || !val.toLowerCase().endsWith('@gmail.com')) {
+                    e.preventDefault();
+                    err.textContent = 'Please sign in with a valid Gmail address (example@gmail.com).';
+                    emailEl.focus();
+                    return false;
+                }
+                // clear previous error and allow submission to continue
+                err.textContent = '';
+            }, {capture: true});
+        })();
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
