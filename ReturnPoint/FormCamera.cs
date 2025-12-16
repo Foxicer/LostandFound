@@ -28,7 +28,11 @@ namespace ReturnPoint
             this.Size = new Size(800, 800);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
 
-            saveFolder = folderPath;
+            // ensure saveFolder is initialized from the provided argument (or default)
+            saveFolder = string.IsNullOrWhiteSpace(folderPath)
+                ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages")
+                : folderPath;
+
             if (!Directory.Exists(saveFolder))
                 Directory.CreateDirectory(saveFolder);
 
@@ -115,52 +119,88 @@ namespace ReturnPoint
         {
             if (lastFrame == null) return;
 
-            Bitmap capturedFrame = (Bitmap)lastFrame.Clone();
+            // pause live feed (NewFrame was already detached in the timer tick)
+            // create a cloned preview for dialog (so UI thread owns it)
+            Bitmap preview = (Bitmap)lastFrame.Clone();
 
-            this.Invoke((Action)(() =>
+            // show preview dialog: Save or Retake
+            bool savePhoto = false;
+            using (Form previewForm = new Form())
             {
-                livePreview.Image?.Dispose();
-                livePreview.Image = (Bitmap)capturedFrame.Clone();
+                previewForm.Text = "Is this photo correct?";
+                previewForm.StartPosition = FormStartPosition.CenterParent;
+                previewForm.Size = new Size(600, 800);
+                previewForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                previewForm.MaximizeBox = false;
+                previewForm.MinimizeBox = false;
 
-                DialogResult result = MessageBox.Show("Is this photo correct?", "Confirm Photo",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                PictureBox pic = new PictureBox
                 {
-                    string fileName = $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-                    string filePath = Path.Combine(saveFolder, fileName);
+                    Image = preview,
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Dock = DockStyle.Top,
+                    Height = 680
+                };
 
-                    try
-                    {
-                        SavePortraitPhoto(capturedFrame, filePath);
-                        PhotoSaved?.Invoke(filePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error saving photo: {ex.Message}");
-                    }
+                Button btnSave = new Button { Text = "Save", Width = 120, Height = 36, Left = 260, Top = 690, DialogResult = DialogResult.OK };
+                Button btnRetake = new Button { Text = "Retake", Width = 120, Height = 36, Left = 400, Top = 690, DialogResult = DialogResult.Retry };
 
-                    // Show input form after photo is saved
-                    using (FormInput inputForm = new FormInput(filePath, saveFolder))
-                    {
-                        inputForm.ShowDialog();
-                    }
+                previewForm.Controls.Add(pic);
+                previewForm.Controls.Add(btnSave);
+                previewForm.Controls.Add(btnRetake);
+                previewForm.AcceptButton = btnSave;
+                previewForm.CancelButton = btnRetake; // Escape acts like Retake
 
-                    this.Close();
-                }
-                else
+                var dr = previewForm.ShowDialog(this);
+                savePhoto = dr == DialogResult.OK;
+            }
+
+            if (!savePhoto)
+            {
+                // user chose retake: reattach frame handler and restart countdown for another capture
+                if (videoSource != null && !videoSource.IsRunning)
                 {
-                    if (videoSource != null && !videoSource.IsRunning)
-                    {
-                        videoSource.Start();
-                    }
-                    if (videoSource != null) videoSource.NewFrame += Video_NewFrame;
-
-                    countdownValue = 5;
-                    countdownLabel.Text = countdownValue.ToString();
-                    countdownTimer?.Start();
+                    // video source may still be running; ensure NewFrame handler attached
+                    videoSource.NewFrame -= Video_NewFrame;
+                    videoSource.NewFrame += Video_NewFrame;
                 }
-            }));
+                // reset countdown to allow re-capture
+                countdownValue = 5;
+                countdownLabel.Text = countdownValue.ToString();
+                if (countdownTimer == null)
+                {
+                    countdownTimer = new System.Windows.Forms.Timer();
+                    countdownTimer.Interval = 1000;
+                    countdownTimer.Tick += CountdownTimer_Tick;
+                }
+                countdownTimer?.Start();
+                preview.Dispose();
+                return;
+            }
+
+            // proceed to save the confirmed photo
+            string fileName = $"photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+            string folder = saveFolder;
+            string filePath = Path.Combine(folder, fileName);
+
+            try
+            {
+                // save the captured frame
+                SavePortraitPhoto(preview, filePath);
+
+                // raise event for subscribers
+                PhotoSaved?.Invoke(filePath);
+
+                MessageBox.Show($"Photo saved:\n{filePath}", "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save photo: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                preview.Dispose();
+            }
         }
 
         private void SavePortraitPhoto(Bitmap original, string filePath)

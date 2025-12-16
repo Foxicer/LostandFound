@@ -28,7 +28,7 @@ namespace ReturnPoint
                 Text = "Where was the item last found?",
                 Location = new Point(20, 20),
                 AutoSize = true,
-                Font = new Font("Arial", 12, FontStyle.Bold)
+                Font = new Font("Arial", 12, FontStyle.Bold),
             };
             locationTextBox = new TextBox
             {

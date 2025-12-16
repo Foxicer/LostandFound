@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Register</title>
     <style>
-         /* Visual tokens tuned to match FormLogin / FormRegister (same as index.html) */
         :root{
             --bg:#00ffdd;
             --card:#ffffff;
@@ -18,20 +16,9 @@
         }
         html,body{height:100%;margin:0;font-family:var(--font);background:var(--bg);color:#111;}
         .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-        .auth-card{
-            width:380px;max-width:92%;
-            background:var(--card);
-            border-radius:var(--radius);
-            box-shadow:var(--shadow);
-            padding:28px 24px;
-            box-sizing:border-box;
-        }
-        .brand{
-            display:flex;align-items:center;margin-bottom:14px;
-        }
-        .brand-title{
-            font-size:20px;font-weight:600;margin-left:10px;
-        }
+        .auth-card{ width:380px;max-width:92%; background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:28px 24px; box-sizing:border-box; }
+        .brand{display:flex;align-items:center;margin-bottom:14px;}
+        .brand-title{font-size:20px;font-weight:600;margin-left:10px;}
         h2{margin:0 0 8px 0;font-size:18px;}
         .desc{color:var(--muted);font-size:13px;margin-bottom:18px;}
         .form-group{margin-bottom:12px;display:flex;flex-direction:column;}
@@ -41,30 +28,21 @@
             background:transparent;outline:none;box-sizing:border-box;
         }
         input:focus{box-shadow:0 0 0 3px rgba(33,150,243,0.08);border-color:rgba(33,150,243,0.35);}
-        .actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
-        button.primary{
-            background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;
-            font-weight:600;
-        }
-        button.secondary{
-            background:transparent;border:1px solid #dfe6f2;color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer;
-        }
+        .actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:8px;}
+        button.primary{flex:1;background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;}
+        button.secondary{flex:1;background:transparent;border:1px solid #dfe6f2;color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer;}
         .back-btn{width:100%;margin-top:12px;background:#fff;border:1px solid #e6eefc;color:var(--accent);padding:10px;border-radius:8px;cursor:pointer;}
         .error-message{color:#b00020;font-size:13px;margin-top:8px;min-height:18px;}
-        .small{font-size:13px;color:var(--muted);}
         .footer-note{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;}
-        @media (max-width:420px){ .auth-card{padding:18px} }
+        .name-row { display:flex; gap:8px; }
+        .name-row input { flex:1; min-width:0; }
+        @media (max-width:420px){ .auth-card{padding:18px} .name-row{flex-direction:column} }
     </style>
 </head>
 <body>
     <div class="center-wrap">
         <div class="auth-card" role="main" aria-labelledby="register-heading">
             <div class="brand" aria-hidden="true">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect width="24" height="24" rx="4" fill="#e6eefc"/>
-                    <path d="M7 12h10" stroke="#2196f3" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M7 8h10" stroke="#90caf9" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
                 <div class="brand-title">Lost & Found</div>
             </div>
 
@@ -72,10 +50,14 @@
             <div class="desc">Register with your Gmail account to access the dashboard.</div>
 
             <form id="registerForm" novalidate>
-                <div class="form-group">
-                    <!-- keep username field for display name / backend compatibility -->
-                    <label for="username">Full name</label>
-                    <input type="text" id="username" name="username" required autocomplete="name" placeholder="Jane Doe">
+                <div class="form-group" aria-label="Full name">
+                    <label>Full name</label>
+                    <div class="name-row" aria-hidden="false">
+                        <input type="text" id="firstName" name="firstName" required autocomplete="given-name" placeholder="First name">
+                        <input type="text" id="middleName" name="middleName" autocomplete="additional-name" placeholder="Middle name (optional)">
+                        <input type="text" id="lastName" name="lastName" required autocomplete="family-name" placeholder="Last name">
+                    </div>
+                    <input type="hidden" id="username" name="username" value="">
                 </div>
 
                 <div class="form-group">
@@ -97,7 +79,7 @@
 
                 <div class="actions">
                     <button type="submit" class="primary">Register</button>
-                    <button type="button" class="secondary" onclick="document.getElementById('confirmPassword').value = ''; document.getElementById('password').value = '';">Clear</button>
+                    <button type="button" class="secondary" id="clearBtn">Clear</button>
                 </div>
             </form>
 
@@ -107,36 +89,90 @@
         </div>
     </div>
 
-    <!-- Validation: require Gmail and matching passwords; preserves existing #errorMessage and registerForm id -->
     <script>
-        (function(){
-            var form = document.getElementById('registerForm');
-            var err = document.getElementById('errorMessage');
-            if (!form || !err) return;
-            form.addEventListener('submit', function(e){
-                var emailEl = document.getElementById('email');
-                var pass = document.getElementById('password');
-                var confirm = document.getElementById('confirmPassword');
-                if (!emailEl || !pass || !confirm) return;
-                var email = (emailEl.value || '').trim().toLowerCase();
-                if (email === '' || !email.endsWith('@gmail.com')) {
-                    e.preventDefault();
-                    err.textContent = 'Please register with a valid Gmail address (example@gmail.com).';
-                    emailEl.focus();
-                    return false;
-                }
-                if (pass.value !== confirm.value) {
-                    e.preventDefault();
-                    err.textContent = 'Passwords do not match.';
-                    confirm.focus();
-                    return false;
-                }
-                // clear any previous error and allow external script to handle submission
-                err.textContent = '';
-            }, {capture: true});
-        })();
-    </script>
+(function(){
+  const form = document.getElementById('registerForm');
+  const err = document.getElementById('errorMessage');
+  const clearBtn = document.getElementById('clearBtn');
 
-    <script src="register.js"></script>
+  function showError(msg){ if(err) err.textContent = msg; }
+  clearBtn.addEventListener('click', () => {
+    document.getElementById('password').value = '';
+    document.getElementById('confirmPassword').value = '';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showError('');
+
+    const first = (document.getElementById('firstName').value || '').trim();
+    const middle = (document.getElementById('middleName').value || '').trim();
+    const last = (document.getElementById('lastName').value || '').trim();
+    const email = (document.getElementById('email').value || '').trim().toLowerCase();
+    const pass = document.getElementById('password').value || '';
+    const confirm = document.getElementById('confirmPassword').value || '';
+
+    if (!first || !last) { showError('Please enter first and last name'); return; }
+    if (!email || !email.endsWith('@gmail.com')) { showError('Please register with a valid Gmail address'); return; }
+    if (pass !== confirm) { showError('Passwords do not match'); return; }
+
+    const full = [first, middle, last].filter(Boolean).join(' ');
+    document.getElementById('username').value = full;
+
+    // Try server-side registration
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: full, email, password: pass })
+      });
+
+      if (res.ok) {
+        // auto-login to establish session on server
+        const loginRes = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: full, password: pass })
+        });
+
+        if (loginRes.ok) {
+          const userRes = await fetch('/api/user', { credentials: 'same-origin' });
+          if (userRes.ok) {
+            const user = await userRes.json();
+            localStorage.setItem('currentUser', JSON.stringify({ name: user.username || user.name || full, email: user.email || email }));
+            localStorage.setItem('currentUserEmail', user.email || email);
+            window.location.href = 'dashboard.html';
+            return;
+          }
+        }
+        // if any step above fails, set local and redirect as a fallback
+        localStorage.setItem('currentUser', JSON.stringify({ name: full, email }));
+        localStorage.setItem('currentUserEmail', email);
+        window.location.href = 'dashboard.html';
+        return;
+      } else {
+        const json = await res.json().catch(() => ({}));
+        showError(json.message || 'Server registration failed');
+        return;
+      }
+    } catch (ex) {
+      // server unreachable -> fallback to localStorage
+    }
+
+    // Fallback: persist locally in browser
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      if (users.find(u => (u.email||'').toLowerCase() === email)) { showError('Email already registered (local)'); return; }
+      users.push({ name: full, username: full, email, password: pass });
+      localStorage.setItem('users', JSON.stringify(users));
+      localStorage.setItem('currentUser', JSON.stringify({ name: full, email }));
+      localStorage.setItem('currentUserEmail', email);
+      window.location.href = 'dashboard.html';
+    } catch (e) {
+      showError('Registration failed: ' + (e && e.message ? e.message : e));
+    }
+  }, { capture: true });
+})();
+    </script>
 </body>
 </html>

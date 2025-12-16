@@ -6,6 +6,8 @@ using System.Reflection;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.VisualBasic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace ReturnPoint
 {
@@ -27,11 +29,49 @@ namespace ReturnPoint
         private Button btnAddTag;
         private Panel selectedCard;
 
+        public class RoundedPanel : Panel
+        {
+            public int CornerRadius { get; set; } = 20;
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                base.OnPaint(e);
+                using (Graphics g = e.Graphics)
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    using (Brush brush = new SolidBrush(this.BackColor))
+                    {
+                        var rect = new Rectangle(0, 0, this.Width, this.Height);
+                        var path = GetRoundedRect(rect, CornerRadius);
+                        g.FillPath(brush, path);
+                    }
+                }
+            }
+
+            private GraphicsPath GetRoundedRect(Rectangle rect, int radius)
+            {
+                int d = radius * 2;
+                GraphicsPath path = new GraphicsPath();
+                path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+                path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+                path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+                path.CloseFigure();
+                return path;
+            }
+        }
+        
+        
+
         public FormGallery()
         {
-            if (!Directory.Exists(saveFolder))
+            // initialize saveFolder to a sensible default before using it
+            if (string.IsNullOrWhiteSpace(saveFolder))
             {
                 saveFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages");
+            }
+            if (!Directory.Exists(saveFolder))
+            {
                 Directory.CreateDirectory(saveFolder);
             }
 
@@ -57,13 +97,15 @@ namespace ReturnPoint
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = true,
-                // BackColor = Color.SeaGreen,
-                // themed later
                 Padding = new Padding(20, 10, 20, 10),
                 Location = new Point(10, 10) // align to left
             };
 
+            
+
             // calculate width so exactly 3 columns fit:
+            int cornerRadius = 20;
+            var path = new GraphicsPath();
             int cardWidth = 220;            // must match card.Width in AddImageToGallery
             int cardHorizontalMargin = 10 + 10; // card.Margin.Left + card.Margin.Right
             int columns = 3;
@@ -271,15 +313,67 @@ namespace ReturnPoint
         {
             galleryPanel.Controls.Clear();
 
-            string[] files = Directory.GetFiles(saveFolder, "*.jpg");
+            // gather files with a best-effort Date (prefer _info.txt "Date" / "DateFound", fallback to file time)
+            var list = Directory.GetFiles(saveFolder, "*.jpg")
+                .Select(f =>
+                {
+                    DateTime dt;
+                    if (!TryGetDateFromInfo(f, out dt))
+                    {
+                        // fallback: file creation or last write time
+                        dt = File.GetCreationTimeUtc(f);
+                        if (dt == DateTime.MinValue) dt = File.GetLastWriteTimeUtc(f);
+                    }
+                    return new { File = f, Date = dt };
+                })
+                // newest first
+                .OrderByDescending(x => x.Date)
+                .ToList();
 
-            foreach (string file in files)
+            foreach (var item in list)
             {
-                bool claimed = File.Exists(Path.Combine(Path.GetDirectoryName(file),
-                    Path.GetFileNameWithoutExtension(file) + "_claim.txt"));
-
-                AddImageToGallery(file, claimed);
+                bool claimed = File.Exists(Path.Combine(Path.GetDirectoryName(item.File),
+                    Path.GetFileNameWithoutExtension(item.File) + "_claim.txt"));
+                AddImageToGallery(item.File, claimed);
             }
+        }
+
+        // try to parse Date/DateFound in the image info file (returns UTC)
+        private bool TryGetDateFromInfo(string imageFile, out DateTime when)
+        {
+            when = DateTime.MinValue;
+            try
+            {
+                var infoPath = Path.Combine(Path.GetDirectoryName(imageFile),
+                    Path.GetFileNameWithoutExtension(imageFile) + "_info.txt");
+                if (!File.Exists(infoPath)) return false;
+
+                foreach (var ln in File.ReadAllLines(infoPath))
+                {
+                    var idx = ln.IndexOf(':' );
+                    if (idx < 0) continue;
+                    var key = ln.Substring(0, idx).Trim();
+                    var val = ln.Substring(idx + 1).Trim();
+                    if (!key.Equals("Date", StringComparison.OrdinalIgnoreCase) &&
+                        !key.Equals("DateFound", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    // try common formats first
+                    string[] fmts = { "yyyy-MM-dd HH:mm", "yyyy-MM-dd H:mm", "yyyy-MM-ddTHH:mm:ss", "o" };
+                    if (DateTime.TryParseExact(val, fmts, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out var parsed))
+                    {
+                        when = parsed.ToUniversalTime();
+                        return true;
+                    }
+                    // last resort: generic parse
+                    if (DateTime.TryParse(val, out parsed))
+                    {
+                        when = parsed.ToUniversalTime();
+                        return true;
+                    }
+                }
+            }
+            catch { /* ignore parsing issues */ }
+            return false;
         }
 
         private void AddImageToGallery(string filePath, bool alreadyClaimed = false)
@@ -291,14 +385,14 @@ namespace ReturnPoint
             int displayWidth = 200; // Base image width
             int displayHeight = (int)((double)img.Height / img.Width * displayWidth);
 
-            Panel card = new Panel
+            var card = new RoundedPanel
             {
-                Width = 220,     // Fixed card width to fit 3 columns
+                Width = 220,
                 Height = displayHeight + 60,
                 BackColor = this.BackColor,
                 Margin = new Padding(10),
-                Padding = new Padding(10, 0, 10, 0), // Add horizontal padding inside card
-                BorderStyle = BorderStyle.None
+                Padding = new Padding(10, 0, 10, 0),
+                CornerRadius = 20
             };
 
             // store the filepath on the card for selection/search/tagging
@@ -313,7 +407,7 @@ namespace ReturnPoint
                 Width = displayWidth,
                 Height = displayHeight,
                 Cursor = Cursors.Hand,
-                Location = new Point(10, 0) 
+                Location = new Point(10, 0)  
             };
 
             pic.Click += (s, e) => SelectCard(card);
@@ -362,7 +456,8 @@ namespace ReturnPoint
                     Top = 16,
                     Left = 20,
                     AutoSize = true,
-                    Font = new Font("Arial", 11, FontStyle.Bold)
+                    Font = new Font("Arial", 11, FontStyle.Bold),
+                    
                 };
  
                 Label gradeLabel = new Label
@@ -528,7 +623,8 @@ namespace ReturnPoint
                 Width = displayWidth,
                 Height = 40,
                 BackColor = Color.LightGray,
-                ForeColor = Color.Black
+                ForeColor = Color.Black,
+                Font = new Font("Verdana", 10, FontStyle.Bold)
             };
 
             infoBtn.Click += (s, e) => ShowItemInfo();

@@ -171,13 +171,7 @@
 </div>
 
 <script>
-/*
-  Requirements:
-   - server endpoint GET /api/images -> JSON array [{ id, filename, url, tags:[], info:string }]
-   - POST /api/images/:id/tags { tag }  -> adds tag
-   - POST /api/logout -> logs out
-  If endpoints are not present the UI will fall back to trying to read /CapturedImages/*.jpg (handled as best-effort).
-*/
+
 
 const galleryEl = document.getElementById('gallery');
 const searchInput = document.getElementById('searchInput');
@@ -201,7 +195,7 @@ async function loadImages(){
         if (!res.ok) throw new Error('no api');
         images = await res.json();
     } catch (e) {
-        // fallback: try to load a few example images from CapturedImages folder
+        
         images = [];
         try {
             const folder = 'CapturedImages/';
@@ -253,7 +247,6 @@ function renderGallery(filter=''){
         card.appendChild(btnRow);
 
         card.onclick = (e)=>{
-            // selection visual
             Array.from(galleryEl.children).forEach(c=> c.style.outline = 'none');
             card.style.outline = '3px solid rgba(255,255,255,0.06)';
             selectedId = img.id;
