@@ -23,10 +23,11 @@ namespace ReturnPoint
 
         public FormCamera(string folderPath)
         {
-            this.Text = "Camera";
+            this.Text = "Capture Photo - ReturnPoint";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Size = new Size(800, 800);
+            this.Size = new Size(900, 700);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.BackColor = Theme.GetBackgroundTeal();
 
             // ensure saveFolder is initialized from the provided argument (or default)
             saveFolder = string.IsNullOrWhiteSpace(folderPath)
@@ -39,17 +40,19 @@ namespace ReturnPoint
             livePreview = new PictureBox
             {
                 Dock = DockStyle.Fill,
-                SizeMode = PictureBoxSizeMode.Zoom
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Theme.NearBlack
             };
 
             countdownLabel = new Label
             {
                 AutoSize = false,
                 Dock = DockStyle.Top,
-                Height = 60,
+                Height = 70,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Arial", 28, FontStyle.Bold),
-                ForeColor = Theme.DeepRed
+                Font = new Font("Segoe UI", 36, FontStyle.Bold),
+                ForeColor = Theme.DeepRed,
+                BackColor = Theme.GetBackgroundTeal()
             };
 
             this.Controls.Add(livePreview);

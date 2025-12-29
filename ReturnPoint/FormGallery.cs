@@ -80,20 +80,18 @@ namespace ReturnPoint
                 Directory.CreateDirectory(saveFolder);
             }
 
-            this.Text = "Gallery";
+            this.Text = "Gallery - ReturnPoint";
             this.WindowState = FormWindowState.Maximized;
-            // this.BackColor = Color.SeaGreen; // 🌿 Main background green
-            // apply app theme to gallery form
-            // Theme.Apply(this);
-
+            this.BackColor = Theme.GetBackgroundTeal();            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            this.BackgroundImageLayout = ImageLayout.Stretch;
             // Outer panel (scroll area)
-
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
-                // BackColor = Color.SeaGreen // same as form background
-                // background will be set by Theme.Apply later
+                BackColor = Theme.GetBackgroundTeal(),
+                BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
+                BackgroundImageLayout = ImageLayout.Stretch
             };
 
             // Inner panel (left-aligned gallery)
@@ -103,42 +101,122 @@ namespace ReturnPoint
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = true,
-                Padding = new Padding(20, 10, 20, 10),
-                Location = new Point(100, 100) // align to left
+                Padding = new Padding(30, 20, 30, 20),
+                Location = new Point(0, 0)
             };
 
-            
-
-            // calculate width so exactly 3 columns fit:
-            int cornerRadius = 20;
-            var path = new GraphicsPath();
-            int cardWidth = 220;            // must match card.Width in AddImageToGallery
-            int cardHorizontalMargin = 10 + 10; // card.Margin.Left + card.Margin.Right
-            int columns = 3;
+            // calculate width so exactly 4 columns fit for better spacing:
+            int cardWidth = 220;
+            int cardHorizontalMargin = 15 + 15;
+            int columns = 4;
             int totalColumnWidth = columns * (cardWidth + cardHorizontalMargin);
             galleryPanel.MaximumSize = new Size(totalColumnWidth + galleryPanel.Padding.Left + galleryPanel.Padding.Right, 0);
 
             outerPanel.Controls.Add(galleryPanel);
 
-            // Right floating search / tag panel (stationary)
+            // Modern search panel on the right
             searchPanel = new Panel
             {
                 Dock = DockStyle.Right,
-                Width = 320,
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
-                Padding = new Padding(15)
+                Width = 340,
+                BackColor = Theme.MediumTeal,
+                BorderStyle = BorderStyle.None,
+                Padding = new Padding(20),
+                Visible = true
             };
 
-            Label lblSearch = new Label { Text = "Search Images", AutoSize = true, Top = 10, Left = 15, Font = new Font("Segoe UI", 12, FontStyle.Bold) };
-            txtSearch = new TextBox { Top = 35, Left = 15, Width = 270, Font = new Font("Segoe UI", 10) };
-            btnSearch = new Button { Text = "Search", Top = 65, Left = 15, Width = 130, Height = 35, Font = new Font("Segoe UI", 10) };
-            btnClearSearch = new Button { Text = "Clear", Top = 65, Left = 155, Width = 130, Height = 35, Font = new Font("Segoe UI", 10) };
+            Label lblSearch = new Label 
+            { 
+                Text = "🔍 Search", 
+                AutoSize = true, 
+                Top = 20, 
+                Left = 20, 
+                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            txtSearch = new TextBox 
+            { 
+                Top = 50, 
+                Left = 20, 
+                Width = 290, 
+                Height = 38,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.LightGray,
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Theme.NearBlack
+            };
+            btnSearch = new Button 
+            { 
+                Text = "Search", 
+                Top = 95, 
+                Left = 20, 
+                Width = 135, 
+                Height = 36, 
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = Theme.TealGreen,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnSearch.FlatAppearance.BorderSize = 0;
+            
+            btnClearSearch = new Button 
+            { 
+                Text = "Clear", 
+                Top = 95, 
+                Left = 175, 
+                Width = 135, 
+                Height = 36, 
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnClearSearch.FlatAppearance.BorderSize = 0;
 
-            Label lblTags = new Label { Text = "Tags (selected item)", AutoSize = true, Top = 115, Left = 15, Font = new Font("Segoe UI", 12, FontStyle.Bold) };
-            lstTags = new ListBox { Top = 140, Left = 15, Width = 270, Height = 150, Font = new Font("Segoe UI", 10) };
-            txtNewTag = new TextBox { Top = 300, Left = 15, Width = 190, Font = new Font("Segoe UI", 10) };
-            btnAddTag = new Button { Text = "Add Tag", Top = 298, Left = 215, Width = 70, Height = 30, Font = new Font("Segoe UI", 9) };
+            Label lblTags = new Label 
+            { 
+                Text = "📌 Tags", 
+                AutoSize = true, 
+                Top = 145, 
+                Left = 20, 
+                Font = new Font("Segoe UI", 13, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            lstTags = new ListBox 
+            { 
+                Top = 175, 
+                Left = 20, 
+                Width = 290, 
+                Height = 140, 
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.LightGray,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            txtNewTag = new TextBox 
+            { 
+                Top = 325, 
+                Left = 20, 
+                Width = 200, 
+                Height = 36,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                ForeColor = Theme.NearBlack
+            };
+            btnAddTag = new Button 
+            { 
+                Text = "Add", 
+                Top = 325, 
+                Left = 230, 
+                Width = 80, 
+                Height = 36, 
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                BackColor = Theme.AccentBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnAddTag.FlatAppearance.BorderSize = 0;
 
             searchPanel.Controls.Add(lblSearch);
             searchPanel.Controls.Add(txtSearch);
@@ -149,10 +227,9 @@ namespace ReturnPoint
             searchPanel.Controls.Add(txtNewTag);
             searchPanel.Controls.Add(btnAddTag);
 
-            // add the search panel first so outerPanel (Dock=Fill) fills remaining area
             this.Controls.Add(searchPanel);
 
-            // Floating "+" button
+            // Modern floating "+" button
             openCameraButton = new Button
             {
                 Text = "+",
@@ -160,20 +237,13 @@ namespace ReturnPoint
                 Height = 60,
                 BackColor = Theme.TealGreen,
                 ForeColor = Theme.SoftWhite,
-                Font = new Font("Arial", 18, FontStyle.Bold),
-                FlatStyle = FlatStyle.Flat
+                Font = new Font("Arial", 20, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
             };
             openCameraButton.FlatAppearance.BorderSize = 0;
-
-            // hover effect → lighter blue
-            openCameraButton.MouseEnter += (s, e) =>
-            {
-                openCameraButton.BackColor = Theme.MediumTeal;
-            };
-            openCameraButton.MouseLeave += (s, e) =>
-            {
-                openCameraButton.BackColor = Theme.TealGreen;
-            };
+            openCameraButton.FlatAppearance.MouseDownBackColor = Theme.DarkTeal;
+            openCameraButton.FlatAppearance.MouseOverBackColor = Theme.MediumTeal;
 
             openCameraButton.Click += OpenCameraButton_Click;
 
@@ -183,11 +253,11 @@ namespace ReturnPoint
 
             openCameraButton.BringToFront();
             openCameraButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            openCameraButton.Location = new Point(this.ClientSize.Width - 80, this.ClientSize.Height - 80);
+            openCameraButton.Location = new Point(this.ClientSize.Width - 90, this.ClientSize.Height - 90);
 
             this.Resize += (s, e) =>
             {
-                openCameraButton.Location = new Point(this.ClientSize.Width - 80, this.ClientSize.Height - 80);
+                openCameraButton.Location = new Point(this.ClientSize.Width - 90, this.ClientSize.Height - 90);
                 outerPanel.PerformLayout();
             };
 
@@ -208,14 +278,20 @@ namespace ReturnPoint
                 txtNewTag.Text = "";
             };
 
-            // logout button - place in top-right of the form but not overlapped by search panel
+            // logout button - modern style
             btnLogout = new Button
             {
                 Text = "Logout",
                 Width = 100,
-                Height = 34,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right
+                Height = 36,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Theme.DeepRed,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Cursor = Cursors.Hand
             };
+            btnLogout.FlatAppearance.BorderSize = 0;
             btnLogout.Click += (s, e) =>
             {
                 if (MessageBox.Show("Logout and return to login?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
@@ -224,52 +300,26 @@ namespace ReturnPoint
                     Application.ExitThread();
                 }
             };
-            // add to form and position relative to client area and searchPanel width
+            
             this.Controls.Add(btnLogout);
             this.Load += (s, e) => PositionLogout();
             this.Resize += (s, e) => PositionLogout();
 
             void PositionLogout()
             {
-                int rightMargin = 16;
-                // if searchPanel exists and is docked right, place logout slightly left of its left edge
-                int x = this.ClientSize.Width - btnLogout.Width - rightMargin;
-                if (searchPanel != null && searchPanel.Dock == DockStyle.Right)
-                {
-                    x = searchPanel.Left - btnLogout.Width - 8;
-                }
-                btnLogout.Location = new System.Drawing.Point(Math.Max(8, x), 8);
+                int rightMargin = 20;
+                int x = searchPanel.Left - btnLogout.Width - 10;
+                btnLogout.Location = new System.Drawing.Point(Math.Max(20, x), 16);
                 btnLogout.BringToFront();
             }
 
-            // Apply theme after all controls exist so Theme.Apply can walk everything
-            Theme.Apply(this);
-            galleryPanel.BackColor = Color.LightSeaGreen;
-            outerPanel.BackColor = Color.LightSeaGreen;
-            
-
-
-            // Ensure the search-area is white with black text (override theme)
-            if (searchPanel != null)
-            {
-                searchPanel.BackColor = Color.White;
-                searchPanel.BorderStyle = BorderStyle.FixedSingle;
-                // force children to black-on-white where appropriate
-                txtSearch.BackColor = Color.White; txtSearch.ForeColor = Color.Black;
-                btnSearch.BackColor = Color.White; btnSearch.ForeColor = Color.Black; btnSearch.FlatStyle = FlatStyle.Flat;
-                btnClearSearch.BackColor = Color.White; btnClearSearch.ForeColor = Color.Black; btnClearSearch.FlatStyle = FlatStyle.Flat;
-                lstTags.BackColor = Color.White; lstTags.ForeColor = Color.Black;
-                txtNewTag.BackColor = Color.White; txtNewTag.ForeColor = Color.Black;
-                btnAddTag.BackColor = Color.White; btnAddTag.ForeColor = Color.Black; btnAddTag.FlatStyle = FlatStyle.Flat;
-            }
-
-            // Make sure logout button is visible and themed
-            btnLogout.BackColor = Theme.TealGreen;
-            btnLogout.ForeColor = Theme.SoftWhite;
-            btnLogout.FlatStyle = FlatStyle.Flat;
-            btnLogout.BringToFront();
+            galleryPanel.BackColor = Theme.GetBackgroundTeal();
+            outerPanel.BackColor = Theme.GetBackgroundTeal();
 
             LoadSavedImages();
+            
+            // Apply theme to all controls
+            Theme.Apply(this);
         }
 
         private void OpenCameraButton_Click(object sender, EventArgs e)
@@ -295,7 +345,16 @@ namespace ReturnPoint
                     string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
                         Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
 
-                    string uploaderName = !string.IsNullOrWhiteSpace(uploader?.Name) ? uploader.Name : Environment.UserName;
+                    // Use full name (FirstName MiddleName LastName) instead of just Name field
+                    string uploaderName = "Unknown";
+                    if (uploader != null)
+                    {
+                        var fullNameParts = new[] { uploader.FirstName, uploader.MiddleName, uploader.LastName }
+                            .Where(s => !string.IsNullOrWhiteSpace(s))
+                            .ToList();
+                        uploaderName = fullNameParts.Count > 0 ? string.Join(" ", fullNameParts) : uploader.Name ?? Environment.UserName;
+                    }
+                    
                     string gradeSection = !string.IsNullOrWhiteSpace(uploader?.GradeSection) ? uploader.GradeSection : "N/A";
 
                     var lines = new[]
@@ -722,7 +781,27 @@ namespace ReturnPoint
         }
 
         // small helper type + prompt for uploader info
-        private class UploaderInfo { public string Name; public string GradeSection; }
+        private class UploaderInfo { 
+            public string Name; 
+            public string FirstName;
+            public string MiddleName;
+            public string LastName;
+            public string GradeSection; 
+        }
+
+        // helper to parse full name into components
+        private void ParseFullName(string fullName, UploaderInfo info)
+        {
+            if (string.IsNullOrWhiteSpace(fullName)) return;
+            
+            var parts = fullName.Trim().Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 1)
+                info.FirstName = parts[0];
+            if (parts.Length >= 2)
+                info.MiddleName = parts[1];
+            if (parts.Length >= 3)
+                info.LastName = string.Join(" ", parts.Skip(2)); // handle multi-word last names
+        }
 
         private UploaderInfo PromptForUploaderInfo()
         {
@@ -767,7 +846,7 @@ namespace ReturnPoint
                 f.MinimizeBox = false;
 
                 Label lblUploader = new Label { Text = "Uploader:", Top = 12, Left = 12, AutoSize = true };
-                Label lblUploaderVal = new Label { Text = !string.IsNullOrWhiteSpace(uploader?.Name) ? uploader.Name : Environment.UserName, Top = 12, Left = 110, AutoSize = true, Font = new Font("Arial", 9, FontStyle.Bold) };
+                Label lblUploaderVal = new Label { Text = (uploader != null && !string.IsNullOrWhiteSpace(uploader.FirstName)) ? $"{uploader.FirstName} {uploader.MiddleName ?? ""} {uploader.LastName ?? ""}".Trim() : Environment.UserName, Top = 12, Left = 110, AutoSize = true, Font = new Font("Arial", 9, FontStyle.Bold) };
 
                 Label lblGrade = new Label { Text = "Grade / Section:", Top = 40, Left = 12, AutoSize = true };
                 Label lblGradeVal = new Label { Text = !string.IsNullOrWhiteSpace(uploader?.GradeSection) ? uploader.GradeSection : "N/A", Top = 40, Left = 110, AutoSize = true, Font = new Font("Arial", 9, FontStyle.Bold) };
@@ -814,10 +893,33 @@ namespace ReturnPoint
                         if (cur != null)
                         {
                             var nameProp = cur.GetType().GetProperty("Name");
+                            var firstNameProp = cur.GetType().GetProperty("FirstName");
+                            var middleNameProp = cur.GetType().GetProperty("MiddleName");
+                            var lastNameProp = cur.GetType().GetProperty("LastName");
                             var gradeProp = cur.GetType().GetProperty("GradeSection") ?? cur.GetType().GetProperty("grade_section");
+                            
                             string name = nameProp?.GetValue(cur)?.ToString();
+                            string firstName = firstNameProp?.GetValue(cur)?.ToString();
+                            string middleName = middleNameProp?.GetValue(cur)?.ToString();
+                            string lastName = lastNameProp?.GetValue(cur)?.ToString();
                             string grade = gradeProp?.GetValue(cur)?.ToString();
-                            return new UploaderInfo { Name = name ?? Environment.UserName, GradeSection = string.IsNullOrWhiteSpace(grade) ? "N/A" : grade };
+                            
+                            var result = new UploaderInfo 
+                            { 
+                                Name = name ?? Environment.UserName, 
+                                FirstName = firstName,
+                                MiddleName = middleName,
+                                LastName = lastName,
+                                GradeSection = string.IsNullOrWhiteSpace(grade) ? "N/A" : grade 
+                            };
+
+                            // If no separate name components, parse from full name
+                            if (string.IsNullOrWhiteSpace(result.FirstName) && !string.IsNullOrWhiteSpace(result.Name))
+                            {
+                                ParseFullName(result.Name, result);
+                            }
+
+                            return result;
                         }
                     }
                 }
@@ -849,16 +951,39 @@ namespace ReturnPoint
                                             if (el.TryGetProperty("name", out var n)) name = n.GetString();
                                             else if (el.TryGetProperty("username", out var un)) name = un.GetString();
 
+                                            string firstName = null;
+                                            if (el.TryGetProperty("firstName", out var fn)) firstName = fn.GetString();
+                                            else if (el.TryGetProperty("first_name", out var fn2)) firstName = fn2.GetString();
+
+                                            string middleName = null;
+                                            if (el.TryGetProperty("middleName", out var mn)) middleName = mn.GetString();
+                                            else if (el.TryGetProperty("middle_name", out var mn2)) middleName = mn2.GetString();
+
+                                            string lastName = null;
+                                            if (el.TryGetProperty("lastName", out var ln)) lastName = ln.GetString();
+                                            else if (el.TryGetProperty("last_name", out var ln2)) lastName = ln2.GetString();
+
                                             string grade = null;
                                             if (el.TryGetProperty("grade_section", out var g)) grade = g.GetString();
                                             else if (el.TryGetProperty("gradeSection", out var g2)) grade = g2.GetString();
                                             else if (el.TryGetProperty("grade", out var g3)) grade = g3.GetString();
 
-                                            return new UploaderInfo
+                                            var result = new UploaderInfo
                                             {
                                                 Name = !string.IsNullOrWhiteSpace(name) ? name : Environment.UserName,
+                                                FirstName = firstName,
+                                                MiddleName = middleName,
+                                                LastName = lastName,
                                                 GradeSection = !string.IsNullOrWhiteSpace(grade) ? grade : "N/A"
                                             };
+
+                                            // if no separate name components, parse from full name
+                                            if (string.IsNullOrWhiteSpace(result.FirstName) && !string.IsNullOrWhiteSpace(result.Name))
+                                            {
+                                                ParseFullName(result.Name, result);
+                                            }
+
+                                            return result;
                                         }
                                     }
                                 }
@@ -870,7 +995,14 @@ namespace ReturnPoint
             catch { /* ignore json/read errors */ }
 
             // fallback
-            return new UploaderInfo { Name = Environment.UserName, GradeSection = "N/A" };
+            return new UploaderInfo 
+            { 
+                Name = Environment.UserName, 
+                FirstName = null,
+                MiddleName = null,
+                LastName = null,
+                GradeSection = "N/A" 
+            };
         }
     }
 }

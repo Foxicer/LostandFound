@@ -7,6 +7,10 @@ namespace ReturnPoint.Models
         public string LastName { get; set; }
         // used by other code (GetLoggedInUser uses "Name")
         public string Name { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
         public string GradeSection { get; set; }
+        public string ProfilePicture { get; set; }
+        public string Role { get; set; }
     }
 }

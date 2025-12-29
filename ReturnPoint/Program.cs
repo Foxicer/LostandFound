@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using System.Windows.Forms;
+using ReturnPoint.Models;
 
 namespace ReturnPoint
 {
@@ -35,6 +37,21 @@ namespace ReturnPoint
                 }
 
                 var auth = login.AuthenticatedUser;
+                
+                // Parse full name into components if not already set
+                if (string.IsNullOrWhiteSpace(auth.FirstName) && !string.IsNullOrWhiteSpace(auth.Name))
+                {
+                    var parts = auth.Name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 1)
+                        auth.FirstName = parts[0];
+                    if (parts.Length >= 2)
+                        auth.MiddleName = parts[1];
+                    if (parts.Length >= 3)
+                        auth.LastName = string.Join(" ", parts.Skip(2));
+                }
+                
+                CurrentUser = auth;
+                
                 if (string.Equals(auth.Role ?? "user", "admin", StringComparison.OrdinalIgnoreCase))
                 {
                     Application.Run(new FormGalleryAdmin());

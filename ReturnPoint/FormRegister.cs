@@ -28,103 +28,132 @@ namespace ReturnPoint
         public FormRegister()
         {
             // Fullscreen, centered layout (matches other auth forms)
-            Text = "Register Account";
+            Text = "Create Account - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
+            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            this.BackgroundImageLayout = ImageLayout.Stretch;
 
-            var titleFont = new System.Drawing.Font("Segoe UI", 24F, System.Drawing.FontStyle.Bold);
-            var labelFont = new System.Drawing.Font("Segoe UI", 12F);
+            var titleFont = new System.Drawing.Font("Segoe UI", 32F, System.Drawing.FontStyle.Bold);
+            var subtitleFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Regular);
+            var labelFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular);
             var inputFont = new System.Drawing.Font("Segoe UI", 12F);
 
             // split name fields
-            txtFirst = new TextBox { Width = 160, Font = inputFont, PlaceholderText = "First name" };
-            txtMiddle = new TextBox { Width = 160, Font = inputFont, PlaceholderText = "Middle name (optional)" };
-            txtLast = new TextBox { Width = 160, Font = inputFont, PlaceholderText = "Last name" };
+            txtFirst = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "First name", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtMiddle = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "Middle", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtLast = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "Last name", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
 
-            txtEmail = new TextBox { Width = 520, Font = inputFont };
-            txtGradeSection = new TextBox { Width = 520, Font = inputFont };
-            txtPassword = new TextBox { Width = 520, UseSystemPasswordChar = true, Font = inputFont };
-            txtConfirm = new TextBox { Width = 520, UseSystemPasswordChar = true, Font = inputFont };
+            txtEmail = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtGradeSection = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtPassword = new TextBox { Width = 370, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtConfirm = new TextBox { Width = 370, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
 
-            cbRole = new ComboBox { Width = 240, DropDownStyle = ComboBoxStyle.DropDownList };
-            cbRole.Items.AddRange(new[] { "user", "admin" });
+            cbRole = new ComboBox { Width = 370, Height = 40, DropDownStyle = ComboBoxStyle.DropDownList, Font = inputFont, BackColor = Color.White };
+            cbRole.Items.AddRange(new[] { "Student", "Admin" });
             cbRole.SelectedIndex = 0;
 
-            btnRegister = new Button { Text = "Create Account", Width = 180, Height = 44, Font = labelFont };
-            btnCancel = new Button { Text = "Cancel", Width = 180, Height = 44, Font = labelFont };
-            lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = Theme.DeepRed, Font = inputFont };
+            btnRegister = new Button 
+            { 
+                Text = "Create Account", 
+                Width = 180, 
+                Height = 44, 
+                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold),
+                BackColor = Theme.TealGreen,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnRegister.FlatAppearance.BorderSize = 0;
+            
+            btnCancel = new Button 
+            { 
+                Text = "Back", 
+                Width = 180, 
+                Height = 44, 
+                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular),
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+            
+            lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = Theme.DeepRed, Font = inputFont, Visible = false };
 
-            var lblTitle = new Label { Text = "Create New Account", AutoSize = true, Font = titleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter };
-            var lblFirst = new Label { Text = "First Name", AutoSize = true, Font = labelFont };
-            var lblMiddle = new Label { Text = "Middle Name", AutoSize = true, Font = labelFont };
-            var lblLast = new Label { Text = "Last Name", AutoSize = true, Font = labelFont };
-            var lblEmail = new Label { Text = "Email (Gmail recommended)", AutoSize = true, Font = labelFont };
-            var lblGrade = new Label { Text = "Grade and Section", AutoSize = true, Font = labelFont };
-            var lblP = new Label { Text = "Password", AutoSize = true, Font = labelFont };
-            var lblC = new Label { Text = "Confirm Password", AutoSize = true, Font = labelFont };
-            var lblR = new Label { Text = "Role", AutoSize = true, Font = labelFont };
+            var lblTitle = new Label { Text = "Create Your Account", AutoSize = true, Font = titleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, ForeColor = Theme.NearBlack };
+            var lblSubtitle = new Label { Text = "Join ReturnPoint today", AutoSize = true, Font = subtitleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, ForeColor = Theme.DarkGray };
+            
+            var lblFirst = new Label { Text = "Full Name", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
+            var lblEmail = new Label { Text = "Email Address", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
+            var lblGrade = new Label { Text = "Grade and Section", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
+            var lblP = new Label { Text = "Password", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
+            var lblC = new Label { Text = "Confirm Password", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
+            var lblR = new Label { Text = "Account Type", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
 
             var main = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 3 };
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
+            main.BackColor = Theme.GetBackgroundTeal();
 
             var center = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                Width = 580,
+                Width = 400,
                 AutoSize = true,
                 Anchor = AnchorStyles.None,
-                Padding = new Padding(20)
+                Padding = new Padding(30),
+                BackColor = Color.White
             };
 
             center.Controls.Add(lblTitle);
-            center.Controls.Add(new Label { Height = 20 }); // Spacer
+            center.Controls.Add(lblSubtitle);
+            center.Controls.Add(new Label { Height = 28 }); // Spacer
 
-            // Name section with better spacing
-            var nameSection = new FlowLayoutPanel { FlowDirection = FlowDirection.TopDown, AutoSize = true, Width = 580 };
-            var nameLabels = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 580 };
-            nameLabels.Controls.Add(lblFirst);
-            nameLabels.Controls.Add(new Label { Width = 20 }); // spacer
-            nameLabels.Controls.Add(lblMiddle);
-            nameLabels.Controls.Add(new Label { Width = 20 });
-            nameLabels.Controls.Add(lblLast);
-
-            var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 580 };
+            // Name section
+            center.Controls.Add(lblFirst);
+            center.Controls.Add(new Label { Height = 6 });
+            var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 370 };
             nameRow.Controls.Add(txtFirst);
-            nameRow.Controls.Add(new Label { Width = 10 });
+            nameRow.Controls.Add(new Label { Width = 8 });
             nameRow.Controls.Add(txtMiddle);
-            nameRow.Controls.Add(new Label { Width = 10 });
+            nameRow.Controls.Add(new Label { Width = 8 });
             nameRow.Controls.Add(txtLast);
-
-            nameSection.Controls.Add(nameLabels);
-            nameSection.Controls.Add(nameRow);
-            center.Controls.Add(nameSection);
-            center.Controls.Add(new Label { Height = 15 }); // Spacer
+            center.Controls.Add(nameRow);
+            center.Controls.Add(new Label { Height = 14 }); // Spacer
 
             center.Controls.Add(lblEmail);
+            center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtEmail);
-            center.Controls.Add(new Label { Height = 10 }); // Spacer
+            center.Controls.Add(new Label { Height = 14 }); // Spacer
+            
             center.Controls.Add(lblGrade);
+            center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtGradeSection);
-            center.Controls.Add(new Label { Height = 10 }); // Spacer
+            center.Controls.Add(new Label { Height = 14 }); // Spacer
+            
             center.Controls.Add(lblP);
+            center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtPassword);
-            center.Controls.Add(new Label { Height = 10 }); // Spacer
+            center.Controls.Add(new Label { Height = 14 }); // Spacer
+            
             center.Controls.Add(lblC);
+            center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtConfirm);
-            center.Controls.Add(new Label { Height = 10 }); // Spacer
+            center.Controls.Add(new Label { Height = 14 }); // Spacer
+            
             center.Controls.Add(lblR);
+            center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(cbRole);
-            center.Controls.Add(new Label { Height = 10 }); // Spacer
+            center.Controls.Add(new Label { Height = 14 }); // Spacer
+            
             center.Controls.Add(lblMsg);
-            center.Controls.Add(new Label { Height = 15 }); // Spacer
+            center.Controls.Add(new Label { Height = 20 }); // Spacer
 
-            var btnRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true };
+            var btnRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 370 };
             btnRow.Controls.Add(btnRegister);
             btnRow.Controls.Add(new Label { Width = 20 }); // Spacer
             btnRow.Controls.Add(btnCancel);
@@ -140,10 +169,10 @@ namespace ReturnPoint
             CancelButton = btnCancel;
 
             Theme.Apply(this);
-            BackColor = Color.LightSeaGreen;
-            main.BackColor = Color.LightSeaGreen;
-            btnRow.BackColor = Color.LightSeaGreen;
-            center.BackColor = Color.LightSeaGreen;
+            BackColor = Theme.GetBackgroundTeal();
+            main.BackColor = Theme.GetBackgroundTeal();
+            btnRow.BackColor = Theme.GetBackgroundTeal();
+            center.BackColor = Theme.GetBackgroundTeal();
         }
 
         private void DoRegister()

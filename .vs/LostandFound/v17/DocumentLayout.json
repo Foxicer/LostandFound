@@ -33,7 +33,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 163,
+          "DockedWidth": 200,
           "SelectedChildIndex": 4,
           "Children": [
             {
@@ -50,8 +50,7 @@
               "RelativeToolTip": "LostandFound-main\\ReturnPoint\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAnAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-16T06:55:05.528Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-16T06:55:05.528Z"
             },
             {
               "$type": "Document",
@@ -63,8 +62,7 @@
               "RelativeToolTip": "ReturnPoint\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-16T06:54:48.705Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-16T06:54:48.705Z"
             },
             {
               "$type": "Bookmark",
@@ -78,7 +76,7 @@
               "RelativeDocumentMoniker": "ReturnPoint\\FormLogin.cs",
               "ToolTip": "C:\\Users\\jayde\\Downloads\\LostandFound\\ReturnPoint\\FormLogin.cs",
               "RelativeToolTip": "ReturnPoint\\FormLogin.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAAB0AAAAqAAAAAAAAAA==",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAAAwAAAAgAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-16T06:41:42.832Z",
               "EditorCaption": ""
@@ -93,8 +91,7 @@
               "RelativeToolTip": "ReturnPoint\\Theme.cs",
               "ViewState": "AgIAABIAAAAAAAAAAAAAACAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-16T06:37:35.136Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-16T06:37:35.136Z"
             },
             {
               "$type": "Document",
@@ -106,8 +103,7 @@
               "RelativeToolTip": "ReturnPoint\\FormGallery.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-16T06:37:30.12Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-16T06:37:30.12Z"
             },
             {
               "$type": "Document",
@@ -119,8 +115,7 @@
               "RelativeToolTip": "ReturnPoint\\FormCamera.cs",
               "ViewState": "AgIAAAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-16T06:37:21.628Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-16T06:37:21.628Z"
             }
           ]
         },

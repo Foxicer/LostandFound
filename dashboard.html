@@ -5,130 +5,337 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ReturnPoint — Gallery Dashboard</title>
 <style>
-    /* Palette from Theme.cs */
+    /* Palette from Theme.cs - Modern Teal Theme */
     :root{
-        --soft-white: #FFFEFE;
-        --outer-ring: #0EC1A9;
-        --strong-aqua: #00C0A5;
-        --muted-turquoise: #26B295;
-        --medium-aqua: #00B69A;
-        --deep-teal: #00A08A;
-        --darker-teal: #00A089;
-        --dark-gray: #505346;
-        --right-panel-w: 320px;
+        --soft-white: #FFFFFF;
+        --light-gray: #F8F9FA;
+        --medium-gray: #E9ECEF;
+        --dark-gray: #495057;
+        --teal-green: #00D9A3;
+        --medium-teal: #00C896;
+        --dark-teal: #009B7D;
+        --muted-teal: #007C63;
+        --near-black: #1A1A1A;
+        --accent-blue: #3498DB;
+        --deep-red: #DC3545;
+        --success: #27AE60;
+        --warm-gold: #E67E22;
+        --right-panel-w: 340px;
         --card-w: 220px;
     }
-    html,body{height:100%; margin:0; font-family:Segoe UI,Arial,sans-serif; background:var(--muted-turquoise); color:var(--soft-white);}
-    .app{
-        display:grid;
+    
+    html, body {
+        height: 100%;
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(180deg, var(--medium-teal) 0%, var(--dark-teal) 100%);
+        color: var(--near-black);
+        overflow: hidden;
+    }
+    
+    .app {
+        display: grid;
         grid-template-columns: 1fr var(--right-panel-w);
-        height:100vh;
-        gap:16px;
-        padding:16px;
-        box-sizing:border-box;
+        height: 100vh;
+        gap: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
 
     /* Top-right logout */
-    .top-actions{
-        position:fixed;
-        top:12px;
-        right:12px;
-        z-index:1200;
+    .top-actions {
+        position: fixed;
+        top: 16px;
+        right: 360px;
+        z-index: 1200;
+        display: flex;
+        gap: 8px;
     }
-    .btn{
-        border:0;
-        padding:10px 14px;
-        border-radius:6px;
-        cursor:pointer;
-        font-weight:600;
+    
+    .btn {
+        border: 0;
+        padding: 10px 14px;
+        border-radius: 0;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+        transition: all 0.2s ease;
     }
 
     /* Gallery area */
-    .gallery-wrap{
-        background:transparent;
-        overflow:auto;
-        padding:8px;
+    .gallery-wrap {
+        background: linear-gradient(180deg, var(--medium-teal) 0%, var(--dark-teal) 100%);
+        overflow: auto;
+        padding: 30px;
+        box-sizing: border-box;
     }
-    .gallery{
-        display:grid;
-        grid-template-columns: repeat(3, var(--card-w));
-        gap:18px;
-        justify-content:center;
-        align-content:flex-start;
-        padding:12px;
+    
+    .gallery {
+        display: grid;
+        grid-template-columns: repeat(4, var(--card-w));
+        gap: 30px;
+        justify-content: flex-start;
+        align-content: flex-start;
+        padding: 0;
     }
-    .card{
-        width:var(--card-w);
-        background:rgba(255,255,255,0.06);
-        border-radius:8px;
-        padding:8px;
-        box-shadow:0 6px 12px rgba(0,0,0,0.12);
-        color:var(--soft-white);
-        display:flex;
-        flex-direction:column;
-        align-items:stretch;
+    
+    .card {
+        width: var(--card-w);
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        color: var(--near-black);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
     }
-    .card img{ width:100%; height:160px; object-fit:cover; border-radius:6px; background:#eee; }
-    .card .btn-row{ display:flex; gap:8px; margin-top:8px; }
-    .card .btn-row button{ flex:1; padding:8px; border-radius:6px; font-weight:600; }
-    .btn-info{ background:#fff; color:#000; }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 6px;
+        background: #eee;
+    }
+    
+    .card .btn-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .card .btn-row button {
+        flex: 1;
+        padding: 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        border: 0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-info {
+        background: var(--teal-green);
+        color: var(--soft-white);
+    }
+    
+    .btn-info:hover {
+        background: var(--medium-teal);
+    }
 
     /* Right (search/tag) panel */
-    .panel{
-        background:#fff; /* white panel with black text as requested */
-        color:#000;
-        border-radius:8px;
-        padding:14px;
-        height:calc(100vh - 32px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        box-sizing:border-box;
+    .panel {
+        background: var(--medium-teal);
+        color: var(--near-black);
+        border-radius: 0;
+        padding: 20px;
+        height: 100vh;
+        box-shadow: none;
+        box-sizing: border-box;
+        overflow-y: auto;
+        border-left: 1px solid rgba(0, 0, 0, 0.1);
     }
-    .panel h3{ margin:0 0 8px 0; color:var(--dark-gray); }
-    .search-row{ display:flex; gap:8px; margin-bottom:12px; }
-    .search-row input[type="text"]{ flex:1; padding:10px; border:1px solid #ddd; border-radius:6px; }
-    .search-row button{ width:96px; border-radius:6px; border:1px solid #ddd; background:#fff; color:#000; padding:10px; cursor:pointer; }
-    .tag-list{ height:180px; overflow:auto; border:1px dashed #ddd; border-radius:6px; padding:6px; background:#fff; }
-    .tag-item{ display:inline-block; background:#f0f0f0; color:#111; padding:4px 8px; margin:6px 6px 0 0; border-radius:999px; font-size:13px; }
+    
+    .panel h3 {
+        margin: 0 0 12px 0;
+        color: var(--near-black);
+        font-size: 13px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .search-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .search-row input[type="text"] {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: var(--soft-white);
+        color: var(--near-black);
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 12px;
+    }
+    
+    .search-row button {
+        padding: 10px 14px;
+        border-radius: 4px;
+        border: 0;
+        background: var(--teal-green);
+        color: var(--soft-white);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .search-row button:hover {
+        background: var(--dark-teal);
+    }
+    
+    .clear-btn {
+        background: var(--dark-gray) !important;
+    }
+    
+    .clear-btn:hover {
+        background: #3a3f47 !important;
+    }
+    
+    .tag-list {
+        height: 140px;
+        overflow: auto;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.5);
+    }
+    
+    .tag-item {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.8);
+        color: var(--near-black);
+        padding: 4px 8px;
+        margin: 6px 6px 0 0;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
 
-    .new-tag-row{ display:flex; gap:8px; margin-top:12px; }
-    .new-tag-row input{ flex:1; padding:8px; border:1px solid #ddd; border-radius:6px; }
-    .new-tag-row button{ padding:8px 12px; border-radius:6px; background:#fff; color:#000; border:1px solid #ddd; }
+    .new-tag-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .new-tag-row input {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        background: var(--soft-white);
+        color: var(--near-black);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+    
+    .new-tag-row button {
+        padding: 8px 12px;
+        border-radius: 4px;
+        background: var(--accent-blue);
+        color: var(--soft-white);
+        border: 0;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .new-tag-row button:hover {
+        background: #2980ca;
+    }
 
     /* Floating camera button */
-    .fab{
-        position:fixed;
-        right:36px;
-        bottom:36px;
-        width:68px;
-        height:68px;
-        border-radius:50%;
-        background:var(--strong-aqua);
-        color:var(--soft-white);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:34px;
-        box-shadow:0 10px 24px rgba(0,0,0,0.25);
-        cursor:pointer;
-        z-index:1100;
-        border:4px solid rgba(255,255,255,0.06);
+    .fab {
+        position: fixed;
+        right: 370px;
+        bottom: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--teal-green);
+        color: var(--soft-white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        cursor: pointer;
+        z-index: 1100;
+        border: 0;
+        font-weight: bold;
+        transition: all 0.2s ease;
     }
-    .fab:hover{ background:var(--medium-aqua); }
+    
+    .fab:hover {
+        background: var(--dark-teal);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    }
 
     /* Info / claim modal */
-    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:2000; }
-    .modal .card{ width:720px; max-width:95%; background:#fff; color:#000; padding:16px; }
-    .modal h2{ margin:0 0 8px 0; color:var(--dark-gray); }
-    .muted{ color:#666; font-size:13px; margin-top:8px; }
+    .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+    }
+    
+    .modal .card {
+        width: 520px;
+        max-width: 95%;
+        background: var(--soft-white);
+        color: var(--near-black);
+        padding: 20px;
+        border-radius: 8px;
+    }
+    
+    .modal h2 {
+        margin: 0 0 12px 0;
+        color: var(--near-black);
+        font-size: 16px;
+    }
+    
+    .muted {
+        color: #666;
+        font-size: 13px;
+        margin-top: 8px;
+        line-height: 1.5;
+    }
 
     /* responsive: 2 cols on small screens, 1 on very small */
-    @media (max-width:1100px){ .gallery{ grid-template-columns: repeat(2, var(--card-w)); } }
-    @media (max-width:720px){ .app{ grid-template-columns: 1fr; } .panel{ position:fixed; right:8px; top:72px; width:88%; height:auto; max-height:60vh; } .fab{ right:18px; bottom:18px; } .gallery{ grid-template-columns: repeat(1, var(--card-w)); } }
+    @media (max-width: 1100px) {
+        .gallery {
+            grid-template-columns: repeat(2, var(--card-w));
+        }
+    }
+    
+    @media (max-width: 720px) {
+        .app {
+            grid-template-columns: 1fr;
+        }
+        .panel {
+            position: fixed;
+            right: 0;
+            top: 72px;
+            width: 88%;
+            height: auto;
+            max-height: 60vh;
+        }
+        .fab {
+            right: 18px;
+        }
+        .gallery {
+            grid-template-columns: repeat(1, var(--card-w));
+        }
+    }
 </style>
 </head>
 <body>
 <div class="top-actions">
-
+    <button id="btnLogout" class="btn" style="background: var(--deep-red); color: var(--soft-white);">Logout</button>
 </div>
 
 <div class="app">
@@ -139,13 +346,16 @@
     </div>
 
     <aside class="panel" id="rightPanel">
-        <h3>Search</h3>
+        <h3>🔍 Search</h3>
         <div class="search-row">
             <input id="searchInput" type="text" placeholder="Filename or tag..." />
+        </div>
+        <div class="search-row">
             <button id="btnSearch">Search</button>
+            <button id="btnClear" class="clear-btn">Clear</button>
         </div>
 
-        <h3 style="margin-top:12px">Tags (selected)</h3>
+        <h3 style="margin-top: 20px;">📌 Tags</h3>
         <div id="tagList" class="tag-list" aria-live="polite"></div>
 
         <div class="new-tag-row">
@@ -153,29 +363,29 @@
             <button id="btnAddTag">Add</button>
         </div>
 
-        <div style="margin-top:14px" class="muted">Select an image in the gallery to view/add tags and see item info.</div>
+        <div style="margin-top: 20px; font-size: 12px; color: rgba(0, 0, 0, 0.7);">Select an image in the gallery to view/add tags and see item info.</div>
     </aside>
 </div>
 
-
+<button id="btnCamera" class="fab" title="Refresh gallery">⟲</button>
 
 <!-- Info Modal -->
 <div id="modal" class="modal" role="dialog" aria-modal="true">
     <div class="card" id="modalCard">
         <h2 id="modalTitle">Item Info</h2>
         <div id="modalBody" class="muted"></div>
-        <div style="margin-top:12px; text-align:right;">
-            <button id="modalClose" class="btn" style="background:#ddd;color:#000;">Close</button>
+        <div style="margin-top: 16px; text-align: right;">
+            <button id="modalClose" class="btn" style="background: var(--dark-gray); color: var(--soft-white);">Close</button>
         </div>
     </div>
 </div>
 
 <script>
 
-
 const galleryEl = document.getElementById('gallery');
 const searchInput = document.getElementById('searchInput');
 const btnSearch = document.getElementById('btnSearch');
+const btnClear = document.getElementById('btnClear');
 const tagList = document.getElementById('tagList');
 const newTagInput = document.getElementById('newTagInput');
 const btnAddTag = document.getElementById('btnAddTag');
@@ -191,25 +401,100 @@ let selectedId = null;
 
 async function loadImages(){
     try {
+        // Try to load from API first
         const res = await fetch('/api/images');
-        if (!res.ok) throw new Error('no api');
-        images = await res.json();
-    } catch (e) {
+        if (res.ok) {
+            images = await res.json();
+            renderGallery();
+            return;
+        }
+    } catch (e) {}
+    
+    // Fallback: Load from CapturedImages folder (same as FormGallery.cs)
+    try {
+        const folder = 'CapturedImages/';
+        const response = await fetch(folder);
+        if (!response.ok) {
+            // If folder doesn't exist, show empty gallery
+            renderGallery();
+            return;
+        }
         
-        images = [];
+        // Parse HTML directory listing or use direct image loading
+        // For now, we'll use a common approach: list files via API or direct folder access
+        const imagesToLoad = [];
+        const possibleFiles = [];
+        
+        // Try to fetch a manifest file if it exists
         try {
-            const folder = 'CapturedImages/';
-            const sample = ['capture_20251114_075103.jpg','capture_20251114_075103_info.jpg'];
-            sample.forEach((f, i)=> images.push({
-                id: i+1,
-                filename: f,
-                url: folder + f,
-                tags: [],
-                info: ''
-            }));
-        } catch(err){}
+            const manifest = await fetch(folder + 'manifest.json');
+            if (manifest.ok) {
+                const data = await manifest.json();
+                images = data.map((img, idx) => ({
+                    id: idx + 1,
+                    filename: img.filename || img,
+                    url: folder + (img.filename || img),
+                    tags: img.tags || [],
+                    info: img.info || '',
+                    uploadedBy: img.uploadedBy || 'Unknown',
+                    timestamp: img.timestamp || ''
+                }));
+                renderGallery();
+                return;
+            }
+        } catch (e) {}
+        
+        // If no manifest, try to scan common image file extensions
+        // This is a simplified approach - in production, use an API endpoint
+        const commonImages = [];
+        for (let i = 1; i <= 50; i++) {
+            for (const ext of ['.jpg', '.jpeg', '.png', '.gif', '.webp']) {
+                commonImages.push(`capture_${String(i).padStart(5, '0')}${ext}`);
+            }
+        }
+        
+        // Test which files exist
+        for (const filename of commonImages) {
+            try {
+                const testFetch = await fetch(folder + filename, { method: 'HEAD' });
+                if (testFetch.ok) {
+                    // Read associated metadata if it exists
+                    let info = '';
+                    let uploadedBy = 'Unknown';
+                    let timestamp = '';
+                    let tags = [];
+                    
+                    try {
+                        const infoFile = await fetch(folder + filename.replace(/\.[^.]+$/, '') + '_info.txt');
+                        if (infoFile.ok) info = await infoFile.text();
+                    } catch (e) {}
+                    
+                    try {
+                        const tagsFile = await fetch(folder + filename.replace(/\.[^.]+$/, '') + '_tags.txt');
+                        if (tagsFile.ok) {
+                            const tagsText = await tagsFile.text();
+                            tags = tagsText.split('\n').filter(t => t.trim());
+                        }
+                    } catch (e) {}
+                    
+                    images.push({
+                        id: images.length + 1,
+                        filename: filename,
+                        url: folder + filename,
+                        tags: tags,
+                        info: info,
+                        uploadedBy: uploadedBy,
+                        timestamp: timestamp
+                    });
+                }
+            } catch (e) {}
+        }
+        
+        renderGallery();
+    } catch (err) {
+        console.error('Failed to load images:', err);
+        renderGallery();
     }
-    renderGallery();
 }
 
 function renderGallery(filter=''){
@@ -222,7 +507,7 @@ function renderGallery(filter=''){
         return false;
     });
     if (list.length===0){
-        galleryEl.innerHTML = '<div style="grid-column:1/-1; color:var(--soft-white); opacity:.9; padding:32px; text-align:center;">No images found</div>';
+        galleryEl.innerHTML = '<div style="grid-column:1/-1; color: rgba(0,0,0,0.7); opacity:.9; padding:32px; text-align:center;">No images found</div>';
         return;
     }
     list.forEach(img => {
@@ -233,6 +518,10 @@ function renderGallery(filter=''){
         const thumb = document.createElement('img');
         thumb.alt = img.filename;
         thumb.src = img.url;
+        thumb.onerror = () => {
+            // If image fails to load, show placeholder
+            thumb.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="160"%3E%3Crect width="200" height="160" fill="%23ddd"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3EImage not found%3C/text%3E%3C/svg%3E';
+        };
         card.appendChild(thumb);
 
         const btnRow = document.createElement('div');
@@ -248,7 +537,8 @@ function renderGallery(filter=''){
 
         card.onclick = (e)=>{
             Array.from(galleryEl.children).forEach(c=> c.style.outline = 'none');
-            card.style.outline = '3px solid rgba(255,255,255,0.06)';
+            card.style.outline = '3px solid var(--teal-green)';
+            card.style.outlineOffset = '-3px';
             selectedId = img.id;
             renderTagsFor(img);
         };
@@ -272,7 +562,13 @@ async function onSearch(){
     renderGallery(searchInput.value);
 }
 
+function onClear(){
+    searchInput.value = '';
+    renderGallery('');
+}
+
 btnSearch.addEventListener('click', onSearch);
+btnClear.addEventListener('click', onClear);
 searchInput.addEventListener('keyup', (e)=> { if(e.key==='Enter') onSearch(); });
 
 btnAddTag.addEventListener('click', async ()=>{
@@ -280,33 +576,67 @@ btnAddTag.addEventListener('click', async ()=>{
     if(!tag || !selectedId) return alert('Select an image and enter a tag');
     const img = images.find(x=>x.id==selectedId);
     if(!img) return;
+    
+    // Check if tag already exists
+    if (img.tags && img.tags.includes(tag)) {
+        alert('This tag already exists for this image');
+        return;
+    }
+    
     // optimistic update
     img.tags = img.tags||[];
-    if (img.tags.indexOf(tag)===-1) img.tags.push(tag);
+    img.tags.push(tag);
     renderTagsFor(img);
     newTagInput.value = '';
 
-    // send to server (best-effort)
+    // Save to server (best-effort)
     try {
+        // Try to save via API endpoint
         await fetch(`/api/images/${selectedId}/tags`, {
             method:'POST',
             headers:{'content-type':'application/json'},
             body:JSON.stringify({ tag })
         });
-    } catch(_) {}
+    } catch(_) {
+        // If API fails, try to save to file system
+        try {
+            const baseName = img.filename.replace(/\.[^.]+$/, '');
+            await fetch(`CapturedImages/${baseName}_tags.txt`, {
+                method:'PUT',
+                headers:{'content-type':'text/plain'},
+                body: img.tags.join('\n')
+            });
+        } catch(err) {
+            console.log('Tags saved locally but may not persist on page reload');
+        }
+    }
 });
 
 function openInfo(img){
     modalTitle.textContent = img.filename;
-    modalBody.textContent = img.info || '(no info available)';
+    
+    let infoContent = '';
+    if (img.timestamp) infoContent += `<div><strong>Date:</strong> ${img.timestamp}</div>`;
+    if (img.uploadedBy) infoContent += `<div><strong>Uploaded by:</strong> ${img.uploadedBy}</div>`;
+    if (img.tags && img.tags.length > 0) {
+        infoContent += `<div><strong>Tags:</strong> ${img.tags.join(', ')}</div>`;
+    }
+    if (img.info) {
+        infoContent += `<div><strong>Info:</strong> ${img.info}</div>`;
+    }
+    if (!infoContent) {
+        infoContent = '(no additional info available)';
+    }
+    
+    modalBody.innerHTML = infoContent;
     modal.style.display = 'flex';
 }
 modalClose.addEventListener('click', ()=> modal.style.display='none');
 modal.addEventListener('click', (e)=> { if (e.target===modal) modal.style.display='none'; });
 
 btnCamera.addEventListener('click', ()=>{
-    // placeholder: open camera page or server capture endpoint
-    window.location.href = '/camera';
+    // Since we're just a viewer, refresh to show new images added by FormGallery
+    loadImages();
 });
 
 btnLogout.addEventListener('click', async ()=>{
@@ -316,6 +646,11 @@ btnLogout.addEventListener('click', async ()=>{
 
 // initial load
 loadImages();
+
+// Auto-refresh every 5 seconds to detect new images added by FormGallery.cs
+setInterval(() => {
+    loadImages();
+}, 5000);
 </script>
 </body>
 </html>

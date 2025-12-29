@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Windows.Forms;
+using ReturnPoint.Models;
 
 namespace ReturnPoint
 {
@@ -24,37 +25,132 @@ namespace ReturnPoint
             panelMain = new Panel();
             {
                 Dock = DockStyle.Fill;
-                BackColor = System.Drawing.Color.LightSeaGreen;
+                BackColor = Theme.LightGray;
+                BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+                BackgroundImageLayout = ImageLayout.Stretch;
             }
             Controls.Add(panelMain);
             // Fullscreen, centered layout
-            Text = "Login";
+            Text = "Login - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
+            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            this.BackgroundImageLayout = ImageLayout.Stretch;
 
-            var titleFont = new System.Drawing.Font("Segoe UI", 24F, System.Drawing.FontStyle.Bold);
-            var labelFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular);
+            var titleFont = new System.Drawing.Font("Segoe UI", 32F, System.Drawing.FontStyle.Bold);
+            var subtitleFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Regular);
+            var labelFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular);
             var inputFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular);
 
-            txtEmail = new TextBox { Width = 520, Font = inputFont, Padding = new Padding(8) };
-            txtPass = new TextBox { Width = 520, UseSystemPasswordChar = true, Font = inputFont, Padding = new Padding(8) };
-            btnLogin = new Button { Text = "Login", Width = 160, Height = 44, Font = labelFont };
-            btnRegister = new Button { Text = "Register", Width = 160, Height = 44, Font = labelFont };
-            btnCancel = new Button { Text = "Cancel", Width = 160, Height = 44, Font = labelFont };
-            lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = Theme.DeepRed, Font = inputFont };
+            txtEmail = new TextBox 
+            { 
+                Width = 380, 
+                Height = 44,
+                Font = inputFont, 
+                Padding = new Padding(10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            txtPass = new TextBox 
+            { 
+                Width = 380,
+                Height = 44,
+                UseSystemPasswordChar = true, 
+                Font = inputFont, 
+                Padding = new Padding(10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            
+            btnLogin = new Button 
+            { 
+                Text = "Sign In", 
+                Width = 180, 
+                Height = 44, 
+                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold),
+                BackColor = Theme.TealGreen,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnLogin.FlatAppearance.BorderSize = 0;
+            
+            btnRegister = new Button 
+            { 
+                Text = "Create Account", 
+                Width = 180, 
+                Height = 44, 
+                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular),
+                BackColor = Theme.AccentBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnRegister.FlatAppearance.BorderSize = 0;
+            
+            btnCancel = new Button 
+            { 
+                Text = "Exit", 
+                Width = 180, 
+                Height = 44, 
+                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular),
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+            
+            lblMsg = new Label 
+            { 
+                AutoSize = false, 
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter, 
+                Height = 32, 
+                ForeColor = Theme.DeepRed, 
+                Font = labelFont,
+                Visible = false
+            };
 
-            var lblTitle = new Label { Text = "Welcome Back", AutoSize = true, Font = titleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter };
-            var lblEmail = new Label { Text = "Email (Gmail)", AutoSize = true, Font = labelFont };
-            var lblP = new Label { Text = "Password", AutoSize = true, Font = labelFont };
+            var lblTitle = new Label 
+            { 
+                Text = "Welcome Back", 
+                AutoSize = true, 
+                Font = titleFont, 
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                ForeColor = Theme.NearBlack
+            };
+            
+            var lblSubtitle = new Label 
+            { 
+                Text = "Sign in to your account", 
+                AutoSize = true, 
+                Font = subtitleFont, 
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                ForeColor = Theme.DarkGray
+            };
+            
+            var lblEmail = new Label 
+            { 
+                Text = "Email Address", 
+                AutoSize = true, 
+                Font = labelFont,
+                ForeColor = Theme.NearBlack
+            };
+            var lblP = new Label 
+            { 
+                Text = "Password", 
+                AutoSize = true, 
+                Font = labelFont,
+                ForeColor = Theme.NearBlack
+            };
 
             var main = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 3 };
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
             main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
-            main.BackColor = Color.LightSeaGreen; 
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
+            main.BackColor = Theme.LightGray; 
             panelMain.Controls.Add(main);
 
 
@@ -62,30 +158,48 @@ namespace ReturnPoint
             {
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                Width = 560,
+                Width = 420,
                 AutoSize = true,
                 Anchor = AnchorStyles.None,
-                Padding = new Padding(20),
-                BackColor = Color.LightSeaGreen // must also color this
+                Padding = new Padding(30),
+                BackColor = Color.White
             };
 
             centerPanel.Controls.Add(lblTitle);
-            centerPanel.Controls.Add(new Label { Height = 20 }); // Spacer
+            centerPanel.Controls.Add(lblSubtitle);
+            centerPanel.Controls.Add(new Label { Height = 30 }); // Spacer
             centerPanel.Controls.Add(lblEmail);
+            centerPanel.Controls.Add(new Label { Height = 6 }); 
             centerPanel.Controls.Add(txtEmail);
-            centerPanel.Controls.Add(new Label { Height = 10 }); // Spacer
+            centerPanel.Controls.Add(new Label { Height = 16 }); // Spacer
             centerPanel.Controls.Add(lblP);
+            centerPanel.Controls.Add(new Label { Height = 6 }); 
             centerPanel.Controls.Add(txtPass);
-            centerPanel.Controls.Add(new Label { Height = 10 }); // Spacer
+            centerPanel.Controls.Add(new Label { Height = 16 }); // Spacer
             centerPanel.Controls.Add(lblMsg);
-            centerPanel.Controls.Add(new Label { Height = 10 }); // Spacer
+            centerPanel.Controls.Add(new Label { Height = 20 }); // Spacer
 
-            var btnRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, WrapContents = false };
+            var btnRow = new FlowLayoutPanel 
+            { 
+                FlowDirection = FlowDirection.TopDown, 
+                AutoSize = true, 
+                WrapContents = false,
+                Width = 380
+            };
             btnRow.Controls.Add(btnLogin);
-            btnRow.Controls.Add(new Label { Width = 20 }); // Spacer
-            btnRow.Controls.Add(btnRegister);
-            btnRow.Controls.Add(new Label { Width = 20 }); // Spacer
-            btnRow.Controls.Add(btnCancel);
+            btnRow.Controls.Add(new Label { Height = 10 }); // Spacer
+            
+            var secondRowBtns = new FlowLayoutPanel 
+            { 
+                FlowDirection = FlowDirection.LeftToRight, 
+                AutoSize = true, 
+                WrapContents = false
+            };
+            secondRowBtns.Controls.Add(btnRegister);
+            secondRowBtns.Controls.Add(new Label { Width = 20 }); // Spacer
+            secondRowBtns.Controls.Add(btnCancel);
+            btnRow.Controls.Add(secondRowBtns);
+            
             centerPanel.Controls.Add(btnRow);
 
             main.Controls.Add(centerPanel, 1, 1);
@@ -108,10 +222,10 @@ namespace ReturnPoint
             CancelButton = btnCancel;
 
             Theme.Apply(this);
-            panelMain.BackColor = Color.LightSeaGreen;
-            main.BackColor = Color.LightSeaGreen;
-            centerPanel.BackColor = Color.LightSeaGreen;
-            btnRow.BackColor = Color.LightSeaGreen;
+            panelMain.BackColor = Theme.GetBackgroundTeal();
+            main.BackColor = Theme.GetBackgroundTeal();
+            centerPanel.BackColor = Theme.GetBackgroundTeal();
+            btnRow.BackColor = Theme.GetBackgroundTeal();
         }
 
         private void TryLogin()
@@ -165,15 +279,5 @@ namespace ReturnPoint
                 lblMsg.Text = "Login error: " + ex.Message;
             }
         }
-    }
-
-    public class User
-    {
-        public string? Name { get; set; }
-        public string? Email { get; set; }
-        public string? GradeSection { get; set; }
-        public string? Password { get; set; }
-        public string? ProfilePicture { get; set; }
-        public string? Role { get; set; }
     }
 }
