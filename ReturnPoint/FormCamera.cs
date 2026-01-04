@@ -17,12 +17,14 @@ namespace ReturnPoint
         private string saveFolder;
         private System.Windows.Forms.Timer? countdownTimer;
         private int countdownValue;
+        private string? selectedDeviceMoniker;
 
         public delegate void PhotoSavedHandler(string filePath);
         public event PhotoSavedHandler? PhotoSaved;
 
-        public FormCamera(string folderPath)
+        public FormCamera(string folderPath, string? deviceMoniker = null)
         {
+            selectedDeviceMoniker = deviceMoniker;
             this.Text = "Capture Photo - ReturnPoint";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Size = new Size(900, 700);
@@ -52,7 +54,8 @@ namespace ReturnPoint
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font("Segoe UI", 36, FontStyle.Bold),
                 ForeColor = Theme.DeepRed,
-                BackColor = Theme.GetBackgroundTeal()
+                BackColor = Theme.GetBackgroundTeal(),
+                Text = "Initializing camera..."
             };
 
             this.Controls.Add(livePreview);
@@ -64,25 +67,89 @@ namespace ReturnPoint
 
         private void FormCamera_Load(object? sender, EventArgs e)
         {
-            videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-            if (videoDevices.Count == 0)
+            try
             {
-                MessageBox.Show("No camera found!");
-                this.Close();
-                return;
+                videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                
+                // Debug: Log available devices
+                string deviceInfo = $"Found {videoDevices.Count} camera device(s):\n";
+                for (int i = 0; i < videoDevices.Count; i++)
+                {
+                    deviceInfo += $"  {i + 1}. {videoDevices[i].Name}\n";
+                }
+                System.Diagnostics.Debug.WriteLine(deviceInfo);
+                
+                if (videoDevices.Count == 0)
+                {
+                    MessageBox.Show(
+                        "No camera device found!\n\n" +
+                        "Please check:\n" +
+                        "• Camera is connected to the computer\n" +
+                        "• Camera drivers are installed\n" +
+                        "• This app has camera permissions in Windows settings\n\n" +
+                        deviceInfo,
+                        "Camera Error", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Error);
+                    this.Close();
+                    return;
+                }
+
+                // Determine which device to use
+                int deviceIndex = 0;
+                if (!string.IsNullOrEmpty(selectedDeviceMoniker))
+                {
+                    // Find the selected device
+                    for (int i = 0; i < videoDevices.Count; i++)
+                    {
+                        if (videoDevices[i].MonikerString == selectedDeviceMoniker)
+                        {
+                            deviceIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                videoSource = new VideoCaptureDevice(videoDevices[deviceIndex].MonikerString);
+                videoSource.NewFrame += Video_NewFrame;
+                
+                try
+                {
+                    videoSource.Start();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Failed to start camera: {ex.Message}\n\n" +
+                        $"Device: {videoDevices[deviceIndex].Name}\n\n" +
+                        "Please check:\n" +
+                        "• Camera is not in use by another application\n" +
+                        "• Camera permissions are granted in Windows settings\n" +
+                        "• Camera drivers are properly installed",
+                        "Camera Start Error", 
+                        MessageBoxButtons.OK, 
+                        MessageBoxIcon.Error);
+                    this.Close();
+                    return;
+                }
+
+                countdownValue = 5;
+                countdownLabel.Text = countdownValue.ToString();
+
+                countdownTimer = new System.Windows.Forms.Timer();
+                countdownTimer.Interval = 1000;
+                countdownTimer.Tick += CountdownTimer_Tick;
+                countdownTimer.Start();
             }
-
-            videoSource = new VideoCaptureDevice(videoDevices[0].MonikerString);
-            videoSource.NewFrame += Video_NewFrame;
-            videoSource.Start();
-
-            countdownValue = 5;
-            countdownLabel.Text = countdownValue.ToString();
-
-            countdownTimer = new System.Windows.Forms.Timer();
-            countdownTimer.Interval = 1000;
-            countdownTimer.Tick += CountdownTimer_Tick;
-            countdownTimer.Start();
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error initializing camera: {ex.Message}\n\n{ex.StackTrace}", 
+                    "Initialization Error", 
+                    MessageBoxButtons.OK, 
+                    MessageBoxIcon.Error);
+                this.Close();
+            }
         }
 
         private void CountdownTimer_Tick(object? sender, EventArgs e)
@@ -102,26 +169,91 @@ namespace ReturnPoint
                     videoSource.NewFrame -= Video_NewFrame;
                 }
 
+                // Wait a moment for the last frame to be captured
+                System.Threading.Thread.Sleep(100);
                 CapturePhoto();
             }
         }
 
         private void Video_NewFrame(object? sender, NewFrameEventArgs eventArgs)
         {
-            Bitmap frame = (Bitmap)eventArgs.Frame.Clone();
-            frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
+            try
+            {
+                if (eventArgs?.Frame == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Warning: eventArgs.Frame is null");
+                    return;
+                }
 
-            lastFrame?.Dispose();
-            lastFrame = (Bitmap)frame.Clone();
+                Bitmap frame = (Bitmap)eventArgs.Frame.Clone();
+                if (frame == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("Warning: frame clone is null");
+                    return;
+                }
 
-            livePreview.Image?.Dispose();
-            livePreview.Image = frame;
+                frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
+
+                lock (this)
+                {
+                    lastFrame?.Dispose();
+                    lastFrame = (Bitmap)frame.Clone();
+                }
+
+                // Update UI from the camera thread using Invoke
+                if (livePreview?.InvokeRequired == true)
+                {
+                    livePreview.Invoke(new Action(() =>
+                    {
+                        try
+                        {
+                            livePreview.Image?.Dispose();
+                            livePreview.Image = frame;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error updating UI with frame: {ex.Message}");
+                        }
+                    }));
+                }
+                else if (livePreview != null)
+                {
+                    try
+                    {
+                        livePreview.Image?.Dispose();
+                        livePreview.Image = frame;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error setting frame directly: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error in Video_NewFrame: {ex.Message}");
+            }
         }
 
         private void CapturePhoto()
         {
-            if (lastFrame == null) return;
-            Bitmap preview = (Bitmap)lastFrame.Clone();
+            Bitmap? preview = null;
+            lock (this)
+            {
+                if (lastFrame == null) return;
+                try
+                {
+                    preview = (Bitmap)lastFrame.Clone();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error cloning lastFrame: {ex.Message}");
+                    MessageBox.Show($"Error capturing photo: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            
+            if (preview == null) return;
             bool savePhoto = false;
             using (Form previewForm = new Form())
             {

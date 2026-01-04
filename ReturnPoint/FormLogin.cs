@@ -219,7 +219,8 @@ namespace ReturnPoint
             }
             try
             {
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "users.json");
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
+                path = Path.GetFullPath(path);
                 if (!File.Exists(path))
                 {
                     lblMsg.Text = "No users registered.";

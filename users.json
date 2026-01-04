@@ -1,26 +1,112 @@
 [
   {
-    "username": "Jayden Daza Tordesillas",
+    "username": "Jayden D. Tordesillas",
     "email": "jaydentordesillas222@gmail.com",
+    "password": "Bday033008",
+    "profile_picture": null,
+    "role": "admin"
+  },
+  {
+    "username": "UserJayden",
+    "email": "discordjayden2323@gmail.com",
+    "password": "Bday033008",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "Jayden D. Tordesillas",
+    "email": "palestin@gmail.com",
+    "grade_section": "12 - ICT",
     "password": "Password",
-    "profile_picture": null
+    "profile_picture": null,
+    "role": "admin"
   },
   {
-    "username": "Yohann Daza Tordesillas",
-    "email": "jaydentordesia@gmail.com",
+    "name": "Jayden D. Tordesillas",
+    "email": "ukraine@gmail.com",
+    "grade_section": "12 - ICT PYTHON",
     "password": "Password",
-    "profile_picture": null
+    "profile_picture": null,
+    "role": "user"
   },
   {
-    "username": "Ghilmar Teng Sanchez",
-    "email": "sanchezghilmar8@gmail.com",
-    "password": "okiekayo",
-    "profile_picture": null
+    "name": "Shindaime C. Tobias",
+    "email": "shinshin@gmail.com",
+    "grade_section": "12-Python",
+    "password": "D1kosasabihin",
+    "profile_picture": null,
+    "role": "user"
   },
   {
-    "username": "jimbotyzzyy",
-    "email": "redjha669@gmail.com",
-    "password": "jimbopogi",
-    "profile_picture": null
+    "name": "Nick Alison G. Villarias",
+    "email": "nickalisonvillarias@gmail.com",
+    "grade_section": "12 ICT - Python",
+    "password": "nickiscoolaf",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "Jayden Daza Tordesillas",
+    "email": "test acc part 1",
+    "grade_section": "12 - ICT PYTHON",
+    "password": "Password",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "Jayden Daza Tordesillas",
+    "email": "testaccountpart1@gmail.com",
+    "grade_section": "12-ICT PYTHON",
+    "password": "Password",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "Nick Alison Glorioso Villarias",
+    "email": "nickalisonvillarias2@gmail.com",
+    "grade_section": "12 ICT - Python",
+    "password": "titetite",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "xean guzman rafael",
+    "email": "qwerty1234@gmail.com",
+    "grade_section": "12-python",
+    "password": "ngipen123",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "Yolanda Sierra Madre",
+    "email": "yolandamapanghe@gmail.com",
+    "grade_section": "12-Python",
+    "password": "bagyonguwan",
+    "profile_picture": null,
+    "role": "admin"
+  },
+  {
+    "name": "xean guzman rafael",
+    "email": "qwerty@gmail.com",
+    "grade_section": "12-python",
+    "password": "ngipen123",
+    "profile_picture": null,
+    "role": "user"
+  },
+  {
+    "name": "Yohann Daza Tordesillas",
+    "email": "yoann@gmail.com",
+    "grade_section": "7 - Genesis",
+    "password": "Password",
+    "profile_picture": null,
+    "role": "Student"
+  },
+  {
+    "name": "Jayden Daza Tordesillas",
+    "email": "useronly@gmail.com",
+    "grade_section": "12 - PYTHON",
+    "password": "Password",
+    "profile_picture": null,
+    "role": "Student"
   }
 ]

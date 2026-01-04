@@ -45,59 +45,48 @@ document.addEventListener('DOMContentLoaded', function () {
     ev.preventDefault();
     showError('');
 
-    const id = (emailEl.value || '').trim();
+    const email = (emailEl.value || '').trim().toLowerCase();
     const password = passEl.value || '';
 
-    if (!id || !password) { showError('Enter email and password'); return; }
+    if (!email || !password) { showError('Enter email and password'); return; }
 
-    console.log('Login attempt for:', id);
+    console.log('Login attempt for:', email);
 
-    // 1) check localStorage users
     try {
-      const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      console.log('local users:', localUsers);
-      const foundLocal = (localUsers || []).find(u =>
-        ((u.email || '').toLowerCase() === id.toLowerCase()) || (u.username === id)
-      );
-      if (foundLocal) {
-        console.log('found in localStorage:', foundLocal);
-        if (foundLocal.password === password) {
-          localStorage.setItem('currentUser', JSON.stringify({ name: foundLocal.name || foundLocal.username || id, email: foundLocal.email || '' }));
-          localStorage.setItem('currentUserEmail', foundLocal.email || '');
-          return window.location.href = 'dashboard.html';
-        } else {
-          showError('Password does not match the stored account (check capitalization/spaces).');
-          return;
-        }
-      }
-    } catch (ex) { console.warn('localStorage parse error', ex); }
+      // Use Flask API for login - this will set the session cookie
+      const resp = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password: password })
+      });
 
-    // 2) check root users.json
-    try {
-      const resp = await fetch('users.json', { cache: 'no-store' });
       if (resp.ok) {
-        const users = await resp.json();
-        console.log('users.json contents:', users);
-        const found = (users || []).find(u =>
-          ((u.email || '').toLowerCase() === id.toLowerCase()) || (u.username === id)
-        );
-        if (found) {
-          console.log('found in users.json:', found);
-          if (found.password === password) {
-            localStorage.setItem('currentUser', JSON.stringify({ name: found.name || found.username || id, email: found.email || '' }));
-            localStorage.setItem('currentUserEmail', found.email || '');
-            return window.location.href = 'dashboard.html';
-          } else {
-            showError('Password does not match the account in users.json (check capitalization/spaces).');
-            return;
-          }
+        console.log('Login successful via API');
+        const result = await resp.json();
+        
+        // Get user info and store in localStorage
+        const userResp = await fetch('/api/user');
+        if (userResp.ok) {
+          const userInfo = await userResp.json();
+          localStorage.setItem('currentUser', JSON.stringify({ 
+            name: userInfo.username || email, 
+            email: userInfo.email || email 
+          }));
+          localStorage.setItem('currentUserEmail', userInfo.email || email);
         }
+        
+        // Redirect to dashboard
+        window.location.href = 'dashboard.html';
+        return;
       } else {
-        console.warn('Could not fetch users.json:', resp.status);
+        const error = await resp.json();
+        showError(error.message || 'Invalid email or password');
+        return;
       }
-    } catch (ex) { console.warn('users.json fetch error', ex); }
-
-    showError('Invalid username/email or password');
+    } catch (ex) { 
+      console.error('Login error:', ex);
+      showError('Login failed: ' + (ex.message || ex));
+    }
   });
 });
   </script>

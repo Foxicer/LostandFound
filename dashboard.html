@@ -83,13 +83,13 @@
     .card {
         width: var(--card-w);
         background: rgba(255, 255, 255, 0.95);
-        border-radius: 8px;
-        padding: 8px;
+        border-radius: 20px;
+        padding: 10px;
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         color: var(--near-black);
         display: flex;
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         cursor: pointer;
     }
@@ -100,11 +100,12 @@
     }
     
     .card img {
-        width: 100%;
-        height: 160px;
-        object-fit: cover;
+        width: 200px;
+        height: 200px;
+        object-fit: contain;
         border-radius: 6px;
         background: #eee;
+        display: block;
     }
     
     .card .btn-row {
@@ -212,38 +213,23 @@
         border-radius: 12px;
         font-size: 12px;
         font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    
+    .tag-item:hover {
+        background: var(--teal-green);
+        color: var(--soft-white);
+        transform: translateY(-1px);
+    }
+    
+    .tag-item.active {
+        background: var(--teal-green);
+        color: var(--soft-white);
+        border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
-    .new-tag-row {
-        display: flex;
-        gap: 8px;
-        margin-top: 12px;
-    }
-    
-    .new-tag-row input {
-        flex: 1;
-        padding: 8px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        background: var(--soft-white);
-        color: var(--near-black);
-        font-family: "Segoe UI", Arial, sans-serif;
-    }
-    
-    .new-tag-row button {
-        padding: 8px 12px;
-        border-radius: 4px;
-        background: var(--accent-blue);
-        color: var(--soft-white);
-        border: 0;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    
-    .new-tag-row button:hover {
-        background: #2980ca;
-    }
 
     /* Floating camera button */
     .fab {
@@ -355,15 +341,10 @@
             <button id="btnClear" class="clear-btn">Clear</button>
         </div>
 
-        <h3 style="margin-top: 20px;">📌 Tags</h3>
+        <h3 style="margin-top: 20px;">📌 Available Tags</h3>
         <div id="tagList" class="tag-list" aria-live="polite"></div>
 
-        <div class="new-tag-row">
-            <input id="newTagInput" type="text" placeholder="New tag" />
-            <button id="btnAddTag">Add</button>
-        </div>
-
-        <div style="margin-top: 20px; font-size: 12px; color: rgba(0, 0, 0, 0.7);">Select an image in the gallery to view/add tags and see item info.</div>
+        <div style="margin-top: 20px; font-size: 12px; color: rgba(0, 0, 0, 0.7);">Click tags to filter gallery. Select an image to view details.</div>
     </aside>
 </div>
 
@@ -387,8 +368,6 @@ const searchInput = document.getElementById('searchInput');
 const btnSearch = document.getElementById('btnSearch');
 const btnClear = document.getElementById('btnClear');
 const tagList = document.getElementById('tagList');
-const newTagInput = document.getElementById('newTagInput');
-const btnAddTag = document.getElementById('btnAddTag');
 const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
 const modalBody = document.getElementById('modalBody');
@@ -398,114 +377,102 @@ const btnLogout = document.getElementById('btnLogout');
 
 let images = []; // loaded from server or fallback
 let selectedId = null;
+let selectedTag = null;
 
 async function loadImages(){
     try {
-        // Try to load from API first
+        // Load from API - gets images from FormGallery.cs build directory
         const res = await fetch('/api/images');
         if (res.ok) {
-            images = await res.json();
-            renderGallery();
-            return;
-        }
-    } catch (e) {}
-    
-    // Fallback: Load from CapturedImages folder (same as FormGallery.cs)
-    try {
-        const folder = 'CapturedImages/';
-        const response = await fetch(folder);
-        if (!response.ok) {
-            // If folder doesn't exist, show empty gallery
-            renderGallery();
-            return;
-        }
-        
-        // Parse HTML directory listing or use direct image loading
-        // For now, we'll use a common approach: list files via API or direct folder access
-        const imagesToLoad = [];
-        const possibleFiles = [];
-        
-        // Try to fetch a manifest file if it exists
-        try {
-            const manifest = await fetch(folder + 'manifest.json');
-            if (manifest.ok) {
-                const data = await manifest.json();
-                images = data.map((img, idx) => ({
-                    id: idx + 1,
-                    filename: img.filename || img,
-                    url: folder + (img.filename || img),
-                    tags: img.tags || [],
-                    info: img.info || '',
-                    uploadedBy: img.uploadedBy || 'Unknown',
-                    timestamp: img.timestamp || ''
-                }));
-                renderGallery();
-                return;
-            }
-        } catch (e) {}
-        
-        // If no manifest, try to scan common image file extensions
-        // This is a simplified approach - in production, use an API endpoint
-        const commonImages = [];
-        for (let i = 1; i <= 50; i++) {
-            for (const ext of ['.jpg', '.jpeg', '.png', '.gif', '.webp']) {
-                commonImages.push(`capture_${String(i).padStart(5, '0')}${ext}`);
-            }
-        }
-        
-        // Test which files exist
-        for (const filename of commonImages) {
-            try {
-                const testFetch = await fetch(folder + filename, { method: 'HEAD' });
-                if (testFetch.ok) {
-                    // Read associated metadata if it exists
-                    let info = '';
-                    let uploadedBy = 'Unknown';
-                    let timestamp = '';
-                    let tags = [];
-                    
-                    try {
-                        const infoFile = await fetch(folder + filename.replace(/\.[^.]+$/, '') + '_info.txt');
-                        if (infoFile.ok) info = await infoFile.text();
-                    } catch (e) {}
-                    
-                    try {
-                        const tagsFile = await fetch(folder + filename.replace(/\.[^.]+$/, '') + '_tags.txt');
-                        if (tagsFile.ok) {
-                            const tagsText = await tagsFile.text();
-                            tags = tagsText.split('\n').filter(t => t.trim());
-                        }
-                    } catch (e) {}
-                    
-                    images.push({
-                        id: images.length + 1,
-                        filename: filename,
-                        url: folder + filename,
-                        tags: tags,
-                        info: info,
-                        uploadedBy: uploadedBy,
-                        timestamp: timestamp
-                    });
+            const data = await res.json();
+            // Handle both old format (array) and new format (object with images and available_tags)
+            if (Array.isArray(data)) {
+                images = data;
+            } else {
+                images = data.images || [];
+                // Store available tags for display
+                if (data.available_tags) {
+                    window.availableTags = data.available_tags;
                 }
-            } catch (e) {}
+            }
+            renderAllTags();
+            renderGallery();
+            return;
         }
-        
-        renderGallery();
-    } catch (err) {
-        console.error('Failed to load images:', err);
-        renderGallery();
+    } catch (e) {
+        console.error('Error loading images from API:', e);
     }
+    
+    // If API fails, show empty gallery
+    renderGallery();
+}
+
+function getAllTags() {
+    // If we have available_tags from the API, use those first
+    if (window.availableTags && window.availableTags.length > 0) {
+        return window.availableTags;
+    }
+    
+    // Otherwise extract from images (fallback)
+    const tagSet = new Set();
+    images.forEach(img => {
+        (img.tags || []).forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+}
+
+function renderAllTags() {
+    tagList.innerHTML = '';
+    const allTags = getAllTags();
+    
+    if (allTags.length === 0) {
+        tagList.innerHTML = '<div style="padding: 8px; color: rgba(0,0,0,0.5); font-size: 12px;">No tags yet</div>';
+        return;
+    }
+    
+    allTags.forEach(tag => {
+        const el = document.createElement('span');
+        el.className = 'tag-item';
+        el.textContent = tag;
+        el.onclick = (e) => {
+            e.stopPropagation();
+            if (selectedTag === tag) {
+                selectedTag = null;
+                el.classList.remove('active');
+            } else {
+                // Remove active class from all tags
+                Array.from(tagList.children).forEach(t => t.classList.remove('active'));
+                selectedTag = tag;
+                el.classList.add('active');
+            }
+            renderGallery();
+        };
+        tagList.appendChild(el);
+    });
 }
 
 function renderGallery(filter=''){
     galleryEl.innerHTML = '';
     const q = (filter||'').toLowerCase().trim();
     const list = images.filter(img => {
-        if (!q) return true;
-        if ((img.filename||'').toLowerCase().includes(q)) return true;
-        if ((img.tags||[]).some(t=>t.toLowerCase().includes(q))) return true;
-        return false;
+        // Apply search filter
+        if (q) {
+            if (!(img.filename||'').toLowerCase().includes(q) && 
+                !(img.tags||[]).some(t=>t.toLowerCase().includes(q))) {
+                return false;
+            }
+        }
+        
+        // Apply tag filter
+        if (selectedTag) {
+            if (!(img.tags||[]).includes(selectedTag)) {
+                return false;
+            }
+        }
+        
+        return true;
     });
+    
     if (list.length===0){
         galleryEl.innerHTML = '<div style="grid-column:1/-1; color: rgba(0,0,0,0.7); opacity:.9; padding:32px; text-align:center;">No images found</div>';
         return;
@@ -540,21 +507,9 @@ function renderGallery(filter=''){
             card.style.outline = '3px solid var(--teal-green)';
             card.style.outlineOffset = '-3px';
             selectedId = img.id;
-            renderTagsFor(img);
         };
 
         galleryEl.appendChild(card);
-    });
-}
-
-function renderTagsFor(img){
-    tagList.innerHTML = '';
-    if (!img) return;
-    (img.tags||[]).forEach(t=>{
-        const el = document.createElement('span');
-        el.className='tag-item';
-        el.textContent = t;
-        tagList.appendChild(el);
     });
 }
 
@@ -564,6 +519,8 @@ async function onSearch(){
 
 function onClear(){
     searchInput.value = '';
+    selectedTag = null;
+    Array.from(tagList.children).forEach(t => t.classList.remove('active'));
     renderGallery('');
 }
 
@@ -571,61 +528,55 @@ btnSearch.addEventListener('click', onSearch);
 btnClear.addEventListener('click', onClear);
 searchInput.addEventListener('keyup', (e)=> { if(e.key==='Enter') onSearch(); });
 
-btnAddTag.addEventListener('click', async ()=>{
-    const tag = (newTagInput.value||'').trim();
-    if(!tag || !selectedId) return alert('Select an image and enter a tag');
-    const img = images.find(x=>x.id==selectedId);
-    if(!img) return;
-    
-    // Check if tag already exists
-    if (img.tags && img.tags.includes(tag)) {
-        alert('This tag already exists for this image');
-        return;
-    }
-    
-    // optimistic update
-    img.tags = img.tags||[];
-    img.tags.push(tag);
-    renderTagsFor(img);
-    newTagInput.value = '';
-
-    // Save to server (best-effort)
-    try {
-        // Try to save via API endpoint
-        await fetch(`/api/images/${selectedId}/tags`, {
-            method:'POST',
-            headers:{'content-type':'application/json'},
-            body:JSON.stringify({ tag })
-        });
-    } catch(_) {
-        // If API fails, try to save to file system
-        try {
-            const baseName = img.filename.replace(/\.[^.]+$/, '');
-            await fetch(`CapturedImages/${baseName}_tags.txt`, {
-                method:'PUT',
-                headers:{'content-type':'text/plain'},
-                body: img.tags.join('\n')
-            });
-        } catch(err) {
-            console.log('Tags saved locally but may not persist on page reload');
-        }
-    }
-});
-
 function openInfo(img){
     modalTitle.textContent = img.filename;
     
-    let infoContent = '';
-    if (img.timestamp) infoContent += `<div><strong>Date:</strong> ${img.timestamp}</div>`;
-    if (img.uploadedBy) infoContent += `<div><strong>Uploaded by:</strong> ${img.uploadedBy}</div>`;
-    if (img.tags && img.tags.length > 0) {
-        infoContent += `<div><strong>Tags:</strong> ${img.tags.join(', ')}</div>`;
-    }
+    // Parse info text similar to FormGallery.cs
+    const infoMap = {};
     if (img.info) {
-        infoContent += `<div><strong>Info:</strong> ${img.info}</div>`;
+        const lines = img.info.split('\n');
+        lines.forEach(line => {
+            const colonIdx = line.indexOf(':');
+            if (colonIdx > -1) {
+                const key = line.substring(0, colonIdx).trim();
+                const value = line.substring(colonIdx + 1).trim();
+                infoMap[key] = value;
+            }
+        });
     }
-    if (!infoContent) {
-        infoContent = '(no additional info available)';
+    
+    // Extract fields like FormGallery.cs does
+    const uploader = infoMap['Uploader'] || 'N/A';
+    const gradeSection = infoMap['GradeSection'] || 'N/A';
+    const location = infoMap['Location'] || 'N/A';
+    const dateFound = infoMap['Date'] || infoMap['DateFound'] || 'N/A';
+    
+    let infoContent = `
+        <div style="margin-bottom: 12px;">
+            <strong style="display: block; color: var(--dark-teal); margin-bottom: 2px;">Uploader</strong>
+            <div style="color: var(--dark-gray);">${uploader}</div>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="display: block; color: var(--dark-teal); margin-bottom: 2px;">Grade/Section</strong>
+            <div style="color: var(--dark-gray);">${gradeSection}</div>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="display: block; color: var(--dark-teal); margin-bottom: 2px;">Location</strong>
+            <div style="color: var(--dark-gray);">${location}</div>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <strong style="display: block; color: var(--dark-teal); margin-bottom: 2px;">Date Found</strong>
+            <div style="color: var(--dark-gray);">${dateFound}</div>
+        </div>
+    `;
+    
+    if (img.tags && img.tags.length > 0) {
+        infoContent += `
+        <div style="margin-bottom: 12px;">
+            <strong style="display: block; color: var(--dark-teal); margin-bottom: 2px;">Tags</strong>
+            <div style="color: var(--dark-gray);">${img.tags.join(', ')}</div>
+        </div>
+        `;
     }
     
     modalBody.innerHTML = infoContent;

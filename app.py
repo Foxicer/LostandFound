@@ -13,10 +13,17 @@ else:
 
 USERS_FILE = 'users.json'
 UPLOAD_FOLDER = 'uploads/profile_pictures'
+# app.py is in C:\Users\jayde\Downloads\LostandFound
+# CapturedImages is in C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\CapturedImages
+CAPTURED_IMAGES_FOLDER = os.path.join(os.path.dirname(__file__), 'ReturnPoint', 'bin', 'Debug', 'net6.0-windows', 'CapturedImages')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+# Ensure captured images folder exists
+if not os.path.exists(CAPTURED_IMAGES_FOLDER):
+    os.makedirs(CAPTURED_IMAGES_FOLDER)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -64,9 +71,19 @@ def register():
 def login():
     data = request.json
     users = load_users()
-    user = next((u for u in users if u['username'] == data['username'] and u['password'] == data['password']), None)
+    username_or_email = data.get('username', '').lower()
+    password = data.get('password', '')
+    
+    # Find user by username or email
+    user = None
+    for u in users:
+        if (u.get('username', '').lower() == username_or_email or 
+            u.get('email', '').lower() == username_or_email) and u.get('password') == password:
+            user = u
+            break
+    
     if user:
-        session['username'] = user['username']
+        session['username'] = user.get('username') or user.get('email')
         return jsonify({'message': 'Login successful'})
     return jsonify({'message': 'Invalid username or password'}), 401
 
@@ -81,11 +98,20 @@ def get_user():
         return jsonify({'message': 'Not logged in'}), 401
     
     users = load_users()
-    user = next((u for u in users if u['username'] == session['username']), None)
+    username_or_email = session.get('username', '')
+    
+    # Find user by username or email
+    user = None
+    for u in users:
+        if (u.get('username', '').lower() == username_or_email.lower() or 
+            u.get('email', '').lower() == username_or_email.lower()):
+            user = u
+            break
+    
     if user:
         return jsonify({
-            'username': user['username'],
-            'email': user['email'],
+            'username': user.get('username') or user.get('email'),
+            'email': user.get('email'),
             'profile_picture': user.get('profile_picture')
         })
     return jsonify({'message': 'User not found'}), 404
@@ -151,6 +177,142 @@ def upload_profile_picture():
 @app.route('/uploads/profile_pictures/<filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+@app.route('/api/images', methods=['GET'])
+def get_images():
+    """Fetch all images from the CapturedImages folder"""
+    try:
+        if not os.path.exists(CAPTURED_IMAGES_FOLDER):
+            return jsonify({'images': [], 'available_tags': []})
+        
+        images = []
+        image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+        
+        for filename in os.listdir(CAPTURED_IMAGES_FOLDER):
+            if filename.lower().endswith(image_extensions):
+                filepath = os.path.join(CAPTURED_IMAGES_FOLDER, filename)
+                # Get file metadata
+                stat_info = os.stat(filepath)
+                timestamp = stat_info.st_mtime
+                
+                # Try to load associated metadata
+                info_file = filepath.replace(os.path.splitext(filename)[1], '_info.txt')
+                info = ''
+                if os.path.exists(info_file):
+                    try:
+                        with open(info_file, 'r') as f:
+                            info = f.read()
+                    except:
+                        pass
+                
+                # Try to load tags
+                tags_file = filepath.replace(os.path.splitext(filename)[1], '_tags.txt')
+                tags = []
+                if os.path.exists(tags_file):
+                    try:
+                        with open(tags_file, 'r') as f:
+                            tags = [tag.strip() for tag in f.readlines() if tag.strip()]
+                    except:
+                        pass
+                
+                images.append({
+                    'id': len(images) + 1,
+                    'filename': filename,
+                    'url': f'/api/images/{filename}',
+                    'tags': tags,
+                    'info': info,
+                    'timestamp': timestamp
+                })
+        
+        # Load available tags from global tags.txt file
+        available_tags = []
+        global_tags_file = os.path.join(os.path.dirname(CAPTURED_IMAGES_FOLDER), 'tags.txt')
+        if os.path.exists(global_tags_file):
+            try:
+                with open(global_tags_file, 'r') as f:
+                    available_tags = [tag.strip() for tag in f.readlines() if tag.strip()]
+            except:
+                pass
+        
+        # Also extract tags from individual images in case they're not in global file
+        image_tags = set()
+        for img in images:
+            for tag in img.get('tags', []):
+                image_tags.add(tag)
+        
+        # Combine and deduplicate
+        all_tags = list(set(available_tags + list(image_tags)))
+        all_tags.sort()
+        
+        return jsonify({
+            'images': images,
+            'available_tags': all_tags
+        })
+    except Exception as e:
+        print(f"Error loading images: {e}")
+        return jsonify({'images': [], 'available_tags': []})
+
+@app.route('/api/images/<filename>', methods=['GET'])
+def get_image(filename):
+    """Serve a specific image from CapturedImages folder"""
+    try:
+        # Security: prevent directory traversal
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({'message': 'Invalid filename'}), 400
+        return send_from_directory(CAPTURED_IMAGES_FOLDER, filename)
+    except Exception as e:
+        return jsonify({'message': 'Image not found'}), 404
+
+@app.route('/api/images/<filename>/info', methods=['GET', 'POST'])
+def image_info(filename):
+    """Get or save image info and tags"""
+    try:
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({'message': 'Invalid filename'}), 400
+        
+        filepath = os.path.join(CAPTURED_IMAGES_FOLDER, filename)
+        if not os.path.exists(filepath):
+            return jsonify({'message': 'Image not found'}), 404
+        
+        if request.method == 'GET':
+            # Return current info and tags
+            info_file = filepath.replace(os.path.splitext(filename)[1], '_info.txt')
+            tags_file = filepath.replace(os.path.splitext(filename)[1], '_tags.txt')
+            
+            info = ''
+            tags = []
+            
+            if os.path.exists(info_file):
+                with open(info_file, 'r') as f:
+                    info = f.read()
+            
+            if os.path.exists(tags_file):
+                with open(tags_file, 'r') as f:
+                    tags = [tag.strip() for tag in f.readlines() if tag.strip()]
+            
+            return jsonify({'info': info, 'tags': tags})
+        
+        elif request.method == 'POST':
+            # Save info and tags
+            data = request.json
+            info = data.get('info', '')
+            tags = data.get('tags', [])
+            
+            info_file = filepath.replace(os.path.splitext(filename)[1], '_info.txt')
+            tags_file = filepath.replace(os.path.splitext(filename)[1], '_tags.txt')
+            
+            with open(info_file, 'w') as f:
+                f.write(info)
+            
+            with open(tags_file, 'w') as f:
+                for tag in tags:
+                    f.write(tag + '\n')
+            
+            return jsonify({'message': 'Image info saved successfully'})
+    
+    except Exception as e:
+        print(f"Error handling image info: {e}")
+        return jsonify({'message': 'Error processing request'}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

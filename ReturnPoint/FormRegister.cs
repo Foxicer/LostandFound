@@ -167,7 +167,8 @@ namespace ReturnPoint
             }
             try
             {
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "users.json");
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
+                path = Path.GetFullPath(path);
                 var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 List<Dictionary<string, object>> users = new();
                 if (File.Exists(path))

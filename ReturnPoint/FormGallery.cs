@@ -279,7 +279,47 @@ namespace ReturnPoint
         private void OpenCameraButton_Click(object sender, EventArgs e)
         {
             var uploader = GetLoggedInUser();
-            FormCamera camForm = new FormCamera(saveFolder);
+            
+            // Show device selection dialog
+            string? selectedDevice = null;
+            try
+            {
+                var videoDevices = new AForge.Video.DirectShow.FilterInfoCollection(AForge.Video.DirectShow.FilterCategory.VideoInputDevice);
+                
+                if (videoDevices.Count == 0)
+                {
+                    MessageBox.Show("No camera devices found!", "Camera Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                if (videoDevices.Count > 1)
+                {
+                    // Show device selection dialog if multiple devices
+                    using (var selectForm = new FormSelectCamera(videoDevices))
+                    {
+                        if (selectForm.ShowDialog(this) == DialogResult.OK)
+                        {
+                            selectedDevice = selectForm.SelectedDeviceMoniker;
+                        }
+                        else
+                        {
+                            return; // User cancelled
+                        }
+                    }
+                }
+                else
+                {
+                    // Use the only device available
+                    selectedDevice = videoDevices[0].MonikerString;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error detecting cameras: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            FormCamera camForm = new FormCamera(saveFolder, selectedDevice);
             camForm.PhotoSaved += (filePath) =>
             {
                 try
@@ -779,7 +819,8 @@ namespace ReturnPoint
                     var email = File.ReadAllText(cuPath).Trim();
                     if (!string.IsNullOrWhiteSpace(email))
                     {
-                        var usersPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "users.json");
+                        var usersPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
+                        usersPath = Path.GetFullPath(usersPath);
                         if (File.Exists(usersPath))
                         {
                             var json = File.ReadAllText(usersPath);
