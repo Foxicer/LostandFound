@@ -3,7 +3,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-
 namespace ReturnPoint
 {
     public class FormGalleryAdmin : Form
@@ -21,11 +20,9 @@ namespace ReturnPoint
         private Button btnImageDetails;
         private Button btnTagManager;
         private Button btnLogout;
-
         private string saveFolder;
         private string deletedFolder;
         private Panel selectedCard;
-
         public FormGalleryAdmin()
         {
             Text = "Gallery Admin - ReturnPoint";
@@ -33,12 +30,10 @@ namespace ReturnPoint
             BackColor = Theme.GetBackgroundTeal();
             this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
             this.BackgroundImageLayout = ImageLayout.Stretch;
-
             saveFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages");
             deletedFolder = Path.Combine(saveFolder, "Deleted");
             Directory.CreateDirectory(saveFolder);
             Directory.CreateDirectory(deletedFolder);
-
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -47,7 +42,6 @@ namespace ReturnPoint
                 BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
                 BackgroundImageLayout = ImageLayout.Stretch
             };
-
             galleryPanel = new FlowLayoutPanel
             {
                 AutoSize = true,
@@ -58,17 +52,12 @@ namespace ReturnPoint
                 Padding = new Padding(30, 20, 30, 20),
                 Location = new Point(0, 0)
             };
-
-            // limit width so 4 columns are enforced
             int cardWidth = 220;
             int cardHorizontalMargin = 30;
             int columns = 4;
             int totalColumnWidth = columns * (cardWidth + cardHorizontalMargin);
             galleryPanel.MaximumSize = new Size(totalColumnWidth + galleryPanel.Padding.Left + galleryPanel.Padding.Right, 0);
-
             outerPanel.Controls.Add(galleryPanel);
-
-            // Right side panel with search and info
             rightPanel = new Panel
             {
                 Dock = DockStyle.Right,
@@ -78,7 +67,6 @@ namespace ReturnPoint
                 Padding = new Padding(15),
                 AutoScroll = true
             };
-
             Label lblSearchTitle = new Label
             {
                 Text = "🔍 Search",
@@ -88,7 +76,6 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
-
             TextBox txtSearch = new TextBox
             {
                 Top = 45,
@@ -99,7 +86,6 @@ namespace ReturnPoint
                 BackColor = Theme.SoftWhite,
                 ForeColor = Theme.NearBlack
             };
-
             Label lblSelected = new Label
             {
                 Text = "Selected File",
@@ -109,7 +95,6 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
-
             lblSelectedFile = new Label
             {
                 Text = "(none)",
@@ -124,7 +109,6 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 10),
                 Padding = new Padding(8)
             };
-
             lblDateAdded = new Label
             {
                 Text = "📅 Added: N/A",
@@ -137,7 +121,6 @@ namespace ReturnPoint
                 ForeColor = Theme.NearBlack,
                 BackColor = Color.Transparent
             };
-
             btnDelete = new Button
             {
                 Text = "🗑️ Delete",
@@ -152,7 +135,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnDelete.FlatAppearance.BorderSize = 0;
-
             btnRestore = new Button
             {
                 Text = "✓ Restore",
@@ -168,7 +150,6 @@ namespace ReturnPoint
                 Enabled = false
             };
             btnRestore.FlatAppearance.BorderSize = 0;
-
             btnPermanentlyDelete = new Button
             {
                 Text = "❌ Delete Permanently",
@@ -183,7 +164,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnPermanentlyDelete.FlatAppearance.BorderSize = 0;
-
             btnRefresh = new Button
             {
                 Text = "🔄 Refresh",
@@ -198,7 +178,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnRefresh.FlatAppearance.BorderSize = 0;
-
             btnImageDetails = new Button
             {
                 Text = "📋 Image Details",
@@ -213,7 +192,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnImageDetails.FlatAppearance.BorderSize = 0;
-
             btnTagManager = new Button
             {
                 Text = "🏷️ Manage Tags",
@@ -228,7 +206,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnTagManager.FlatAppearance.BorderSize = 0;
-
             cbViewMode = new ComboBox
             {
                 Top = 510,
@@ -241,7 +218,6 @@ namespace ReturnPoint
             };
             cbViewMode.Items.AddRange(new[] { "Active Items", "Deleted Items" });
             cbViewMode.SelectedIndex = 0;
-
             btnLogout = new Button
             {
                 Text = "🚪 Logout",
@@ -264,7 +240,6 @@ namespace ReturnPoint
                     Application.ExitThread();
                 }
             };
-
             rightPanel.Controls.Add(lblSearchTitle);
             rightPanel.Controls.Add(txtSearch);
             rightPanel.Controls.Add(lblSelected);
@@ -278,10 +253,8 @@ namespace ReturnPoint
             rightPanel.Controls.Add(btnTagManager);
             rightPanel.Controls.Add(cbViewMode);
             rightPanel.Controls.Add(btnLogout);
-
             Controls.Add(rightPanel);
             Controls.Add(outerPanel);
-
             cbViewMode.SelectedIndexChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1);
             btnRefresh.Click += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1);
             btnDelete.Click += (s, e) => DeleteSelected();
@@ -289,10 +262,8 @@ namespace ReturnPoint
             btnPermanentlyDelete.Click += (s, e) => PermanentlyDeleteSelected();
             btnImageDetails.Click += (s, e) => OpenImageDetailsForm();
             btnTagManager.Click += (s, e) => OpenTagManager();
-
             LoadImages(false);
         }
-
         private void LoadImages(bool showDeleted)
         {
             galleryPanel.Controls.Clear();
@@ -302,19 +273,14 @@ namespace ReturnPoint
             btnRestore.Enabled = false;
             btnDelete.Enabled = true;
             btnPermanentlyDelete.Enabled = false;
-
             string folder = showDeleted ? deletedFolder : saveFolder;
             if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-
             string[] files = Directory.GetFiles(folder, "*.jpg").OrderByDescending(f => File.GetCreationTime(f)).ToArray();
-
             foreach (var f in files) AddImageToGalleryAdmin(f, showDeleted);
         }
-
         private void AddImageToGalleryAdmin(string filePath, bool isDeletedView)
         {
             if (!File.Exists(filePath)) return;
-
             Image img;
             try
             {
@@ -329,10 +295,8 @@ namespace ReturnPoint
             {
                 return;
             }
-
             int displayWidth = 200;
             int displayHeight = (int)((double)img.Height / img.Width * displayWidth);
-
             Panel card = new Panel
             {
                 Width = 220,
@@ -343,7 +307,6 @@ namespace ReturnPoint
                 BorderStyle = BorderStyle.None,
                 Tag = filePath
             };
-
             PictureBox pic = new PictureBox
             {
                 Image = img,
@@ -353,10 +316,8 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand,
                 Location = new Point(10, 0)
             };
-
             pic.Click += (s, e) => SelectAdminCard(card);
             card.Click += (s, e) => SelectAdminCard(card);
-
             Button btnInfo = new Button
             {
                 Text = "Info",
@@ -367,38 +328,30 @@ namespace ReturnPoint
                 ForeColor = Color.Black
             };
             btnInfo.Click += (s, e) => ShowFileInfo(filePath);
-
             card.Controls.Add(pic);
             card.Controls.Add(btnInfo);
             galleryPanel.Controls.Add(card);
         }
-
         private void SelectAdminCard(Panel card)
         {
             if (selectedCard != null) selectedCard.BorderStyle = BorderStyle.None;
             selectedCard = card;
             selectedCard.BorderStyle = BorderStyle.FixedSingle;
-
             string filePath = (string)card.Tag;
             lblSelectedFile.Text = $"Selected: {Path.GetFileName(filePath)}";
             lblDateAdded.Text = "Date Added: " + File.GetCreationTime(filePath).ToString("g");
-
             bool viewingDeleted = cbViewMode.SelectedIndex == 1;
             btnRestore.Enabled = viewingDeleted;
             btnDelete.Enabled = !viewingDeleted;
             btnPermanentlyDelete.Enabled = true;
         }
-
         private void ShowFileInfo(string filePath)
         {
             string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
                 Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
-
             string infoText = File.Exists(infoPath) ? File.ReadAllText(infoPath) : "(no info file)";
             DateTime created = File.GetCreationTime(filePath);
             DateTime modified = File.GetLastWriteTime(filePath);
-
-            // try to extract an "AddedBy" entry from the info text if present
             string addedBy = null;
             if (!string.IsNullOrWhiteSpace(infoText))
             {
@@ -413,14 +366,12 @@ namespace ReturnPoint
                     }
                 }
             }
-
             Form infoForm = new Form
             {
                 Text = "File Info",
                 Size = new Size(480, 360),
                 StartPosition = FormStartPosition.CenterParent
             };
-
             TextBox tb = new TextBox
             {
                 Multiline = true,
@@ -433,29 +384,22 @@ namespace ReturnPoint
                        $"Added by: {(string.IsNullOrEmpty(addedBy) ? "(unknown)" : addedBy)}{Environment.NewLine}{Environment.NewLine}" +
                        $"Info file contents:{Environment.NewLine}{infoText}"
             };
-
             infoForm.Controls.Add(tb);
             infoForm.ShowDialog();
         }
-
         private void DeleteSelected()
         {
             if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
             var filePath = (string)selectedCard.Tag;
             if (!File.Exists(filePath)) return;
-
             if (MessageBox.Show($"Move '{Path.GetFileName(filePath)}' to Deleted folder?", "Confirm", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
-
             try
             {
                 Directory.CreateDirectory(deletedFolder);
                 string dest = Path.Combine(deletedFolder, Path.GetFileName(filePath));
                 File.Move(filePath, dest);
-
-                // move related files: _tags.txt, _info.txt
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_tags.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_tags.txt"));
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_info.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_info.txt"));
-
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
             catch (Exception ex)
@@ -463,25 +407,19 @@ namespace ReturnPoint
                 MessageBox.Show("Delete failed: " + ex.Message);
             }
         }
-
         private void RestoreSelected()
         {
             if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
             var filePath = (string)selectedCard.Tag;
             if (!File.Exists(filePath)) return;
-
             if (MessageBox.Show($"Restore '{Path.GetFileName(filePath)}' back to active folder?", "Confirm", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
-
             try
             {
                 string dest = Path.Combine(saveFolder, Path.GetFileName(filePath));
                 File.Move(filePath, dest);
-
-                // restore related files if present in deleted folder
                 string baseName = Path.GetFileNameWithoutExtension(filePath);
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_tags.txt"), Path.Combine(saveFolder, baseName + "_tags.txt"));
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_info.txt"), Path.Combine(saveFolder, baseName + "_info.txt"));
-
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
             catch (Exception ex)
@@ -489,19 +427,15 @@ namespace ReturnPoint
                 MessageBox.Show("Restore failed: " + ex.Message);
             }
         }
-
         private void PermanentlyDeleteSelected()
         {
             if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
             var filePath = (string)selectedCard.Tag;
             if (!File.Exists(filePath)) return;
-
             if (MessageBox.Show($"Permanently delete '{Path.GetFileName(filePath)}'? This cannot be undone.", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
-
             try
             {
                 File.Delete(filePath);
-
                 string baseName = Path.GetFileNameWithoutExtension(filePath);
                 var related = new[]
                 {
@@ -509,7 +443,6 @@ namespace ReturnPoint
                     Path.Combine(Path.GetDirectoryName(filePath), baseName + "_info.txt")
                 };
                 foreach (var r in related) if (File.Exists(r)) File.Delete(r);
-
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
             catch (Exception ex)
@@ -517,7 +450,6 @@ namespace ReturnPoint
                 MessageBox.Show("Permanent delete failed: " + ex.Message);
             }
         }
-
         private void MoveIfExists(string src, string dst)
         {
             try
@@ -528,9 +460,8 @@ namespace ReturnPoint
                     File.Move(src, dst);
                 }
             }
-            catch { /* ignore individual failures */ }
+            catch {  }
         }
-
         private void OpenImageDetailsForm()
         {
             Form detailsForm = new Form
@@ -543,7 +474,6 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 11),
                 Owner = this
             };
-
             DataGridView dgv = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -561,8 +491,6 @@ namespace ReturnPoint
                     Font = new Font("Segoe UI", 11, FontStyle.Bold)
                 }
             };
-
-            // Add columns: Item | Finder | Date Found | Claimant (Editable) | Date Claimed | Grade and Section (Editable)
             dgv.Columns.AddRange(
                 new DataGridViewColumn[]
                 {
@@ -574,35 +502,26 @@ namespace ReturnPoint
                     new DataGridViewTextBoxColumn { HeaderText = "Grade & Section", DataPropertyName = "GradeSection", Width = 130, ReadOnly = false }
                 }
             );
-
-            // Load data from both active and deleted folders
             List<ImageDetailRow> rows = new List<ImageDetailRow>();
             LoadImageDetailsData(saveFolder, "Active", rows);
             LoadImageDetailsData(deletedFolder, "Deleted", rows);
-
-            // Bind data sorted by date found (newest first)
             foreach (var row in rows.OrderByDescending(r => r.DateFoundObj))
             {
                 dgv.Rows.Add(row.Item, row.Finder, row.DateFound, row.Claimant, row.DateClaimed, row.GradeSection);
             }
-
-            // Handle cell value changes to save claimant info
             dgv.CellValueChanged += (s, e) =>
             {
-                if (e.ColumnIndex >= 3 && e.RowIndex >= 0)  // Claimant, DateClaimed, or GradeSection columns
+                if (e.ColumnIndex >= 3 && e.RowIndex >= 0)  
                 {
                     SaveClaimantInfo(dgv, e.RowIndex, rows);
                 }
             };
-
             detailsForm.Controls.Add(dgv);
             detailsForm.ShowDialog(this);
         }
-
         private void LoadImageDetailsData(string folder, string status, List<ImageDetailRow> rows)
         {
             if (!Directory.Exists(folder)) return;
-
             string[] files = Directory.GetFiles(folder, "*.jpg");
             foreach (var filePath in files)
             {
@@ -612,15 +531,12 @@ namespace ReturnPoint
                     string infoPath = Path.Combine(folder, baseName + "_info.txt");
                     string tagsPath = Path.Combine(folder, baseName + "_tags.txt");
                     string claimantPath = Path.Combine(folder, baseName + "_claimant.txt");
-
                     string finder = "Unknown";
                     string itemName = "Unknown Item";
                     DateTime dateFound = File.GetCreationTime(filePath);
                     string claimant = "";
                     string dateClaimed = "";
                     string claimantGradeSection = "";
-
-                    // Read info file for finder details
                     if (File.Exists(infoPath))
                     {
                         string[] infoLines = File.ReadAllLines(infoPath);
@@ -636,8 +552,6 @@ namespace ReturnPoint
                             }
                         }
                     }
-
-                    // Use first two tags as item name
                     if (File.Exists(tagsPath))
                     {
                         string[] tags = File.ReadAllLines(tagsPath).Where(t => !string.IsNullOrWhiteSpace(t)).ToArray();
@@ -646,8 +560,6 @@ namespace ReturnPoint
                         else if (tags.Length == 1)
                             itemName = tags[0];
                     }
-
-                    // Read claimant file if it exists
                     if (File.Exists(claimantPath))
                     {
                         string[] claimantLines = File.ReadAllLines(claimantPath);
@@ -661,7 +573,6 @@ namespace ReturnPoint
                                 claimantGradeSection = line.Split(new[] { "GradeSection:" }, StringSplitOptions.None)[1].Trim();
                         }
                     }
-
                     rows.Add(new ImageDetailRow
                     {
                         FilePath = filePath,
@@ -681,7 +592,6 @@ namespace ReturnPoint
                 }
             }
         }
-
         private void SaveClaimantInfo(DataGridView dgv, int rowIndex, List<ImageDetailRow> rows)
         {
             if (rowIndex >= 0 && rowIndex < rows.Count)
@@ -690,23 +600,18 @@ namespace ReturnPoint
                 string claimant = dgv.Rows[rowIndex].Cells[3].Value?.ToString() ?? "";
                 string dateClaimed = dgv.Rows[rowIndex].Cells[4].Value?.ToString() ?? "";
                 string gradeSection = dgv.Rows[rowIndex].Cells[5].Value?.ToString() ?? "";
-
                 row.Claimant = claimant;
                 row.DateClaimed = dateClaimed;
                 row.GradeSection = gradeSection;
-
-                // Save to claimant info file
                 string baseName = Path.GetFileNameWithoutExtension(row.FilePath);
                 string folderPath = Path.GetDirectoryName(row.FilePath);
                 string claimantPath = Path.Combine(folderPath, baseName + "_claimant.txt");
-
                 var claimantLines = new[]
                 {
                     $"Claimant: {claimant}",
                     $"DateClaimed: {dateClaimed}",
                     $"GradeSection: {gradeSection}"
                 };
-
                 try
                 {
                     File.WriteAllLines(claimantPath, claimantLines);
@@ -718,7 +623,6 @@ namespace ReturnPoint
                 }
             }
         }
-
         private class ImageDetailRow
         {
             public string FilePath { get; set; }
@@ -731,7 +635,6 @@ namespace ReturnPoint
             public string GradeSection { get; set; }
             public string Status { get; set; }
         }
-
         private void OpenTagManager()
         {
             Form tagForm = new Form
@@ -744,8 +647,6 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 11),
                 Owner = this
             };
-
-            // Create tags list
             Label lblAvailableTags = new Label
             {
                 Text = "Available Tags:",
@@ -754,7 +655,6 @@ namespace ReturnPoint
                 AutoSize = true,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
-
             ListBox lbTags = new ListBox
             {
                 Top = 35,
@@ -764,8 +664,6 @@ namespace ReturnPoint
                 BackColor = Theme.SoftWhite,
                 ForeColor = Theme.NearBlack
             };
-
-            // Create new tag section
             Label lblNewTag = new Label
             {
                 Text = "Create New Tag:",
@@ -774,7 +672,6 @@ namespace ReturnPoint
                 AutoSize = true,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
-
             TextBox txtNewTag = new TextBox
             {
                 Top = 270,
@@ -785,7 +682,6 @@ namespace ReturnPoint
                 BackColor = Theme.SoftWhite,
                 ForeColor = Theme.NearBlack
             };
-
             Button btnCreateTag = new Button
             {
                 Text = "➕ Create Tag",
@@ -800,7 +696,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnCreateTag.FlatAppearance.BorderSize = 0;
-
             Button btnDeleteTag = new Button
             {
                 Text = "🗑️ Delete Selected",
@@ -815,7 +710,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnDeleteTag.FlatAppearance.BorderSize = 0;
-
             Button btnAssignTag = new Button
             {
                 Text = "🏷️ Assign to Selected Image",
@@ -830,7 +724,6 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnAssignTag.FlatAppearance.BorderSize = 0;
-
             Label lblInfo = new Label
             {
                 Text = "The first two tags on an image will display as the Item name",
@@ -843,7 +736,6 @@ namespace ReturnPoint
                 ForeColor = Theme.MediumTeal,
                 BackColor = Color.Transparent
             };
-
             Button btnClose = new Button
             {
                 Text = "Close",
@@ -859,11 +751,7 @@ namespace ReturnPoint
             };
             btnClose.FlatAppearance.BorderSize = 0;
             btnClose.Click += (s, e) => tagForm.Close();
-
-            // Load existing tags
             LoadAllTagsIntoListBox(lbTags);
-
-            // Create new tag event
             btnCreateTag.Click += (s, e) =>
             {
                 string tagName = txtNewTag.Text.Trim();
@@ -871,7 +759,6 @@ namespace ReturnPoint
                 {
                     string tagsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tags.txt");
                     var tags = File.Exists(tagsFile) ? File.ReadAllLines(tagsFile).ToList() : new List<string>();
-                    
                     if (!tags.Contains(tagName))
                     {
                         tags.Add(tagName);
@@ -890,8 +777,6 @@ namespace ReturnPoint
                     MessageBox.Show("Please enter a tag name.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             };
-
-            // Delete tag event
             btnDeleteTag.Click += (s, e) =>
             {
                 if (lbTags.SelectedItem != null)
@@ -911,8 +796,6 @@ namespace ReturnPoint
                     MessageBox.Show("Please select a tag to delete.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             };
-
-            // Assign tag to selected image
             btnAssignTag.Click += (s, e) =>
             {
                 if (selectedCard == null)
@@ -920,19 +803,16 @@ namespace ReturnPoint
                     MessageBox.Show("Please select an image first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-
                 if (lbTags.SelectedItem == null)
                 {
                     MessageBox.Show("Please select a tag to assign.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-
                 string filePath = (string)selectedCard.Tag;
                 string selectedTag = lbTags.SelectedItem.ToString();
                 AddTagToImage(filePath, selectedTag);
                 MessageBox.Show($"Tag '{selectedTag}' added to image!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             };
-
             tagForm.Controls.Add(lblAvailableTags);
             tagForm.Controls.Add(lbTags);
             tagForm.Controls.Add(lblNewTag);
@@ -942,10 +822,8 @@ namespace ReturnPoint
             tagForm.Controls.Add(btnAssignTag);
             tagForm.Controls.Add(lblInfo);
             tagForm.Controls.Add(btnClose);
-
             tagForm.ShowDialog(this);
         }
-
         private void LoadAllTagsIntoListBox(ListBox listBox)
         {
             listBox.Items.Clear();
@@ -959,7 +837,6 @@ namespace ReturnPoint
                 }
             }
         }
-
         private void AddTagToImage(string filePath, string tagName)
         {
             try
@@ -967,9 +844,7 @@ namespace ReturnPoint
                 string baseName = Path.GetFileNameWithoutExtension(filePath);
                 string folderPath = Path.GetDirectoryName(filePath);
                 string tagsPath = Path.Combine(folderPath, baseName + "_tags.txt");
-
                 var tags = File.Exists(tagsPath) ? File.ReadAllLines(tagsPath).ToList() : new List<string>();
-                
                 if (!tags.Contains(tagName))
                 {
                     tags.Add(tagName);

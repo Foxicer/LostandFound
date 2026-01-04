@@ -2,7 +2,6 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-
 namespace ReturnPoint
 {
     public class FormClaim : Form
@@ -13,7 +12,6 @@ namespace ReturnPoint
         private string photoPath;
         private string saveFolder;
         private string claimantPhotoPath;
-
         public FormClaim(string photoFilePath, string folderPath, string facePhotoPath)
         {
             this.Text = "Claim Item - ReturnPoint";
@@ -21,15 +19,12 @@ namespace ReturnPoint
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.BackColor = Theme.GetBackgroundTeal();
-
             photoPath = photoFilePath;
             saveFolder = folderPath;
             claimantPhotoPath = facePhotoPath;
-
             var titleFont = new Font("Segoe UI", 18F, FontStyle.Bold);
             var labelFont = new Font("Segoe UI", 11F);
             var inputFont = new Font("Segoe UI", 12F);
-
             Label titleLabel = new Label
             {
                 Text = "Claim This Item",
@@ -38,7 +33,6 @@ namespace ReturnPoint
                 Font = titleFont,
                 ForeColor = Theme.NearBlack
             };
-
             Label nameLabel = new Label
             {
                 Text = "Your Full Name:",
@@ -56,7 +50,6 @@ namespace ReturnPoint
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
-
             Label contactLabel = new Label
             {
                 Text = "Contact Information:",
@@ -74,7 +67,6 @@ namespace ReturnPoint
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
-
             saveButton = new Button
             {
                 Text = "Confirm Claim",
@@ -89,7 +81,6 @@ namespace ReturnPoint
             };
             saveButton.FlatAppearance.BorderSize = 0;
             saveButton.Click += SaveButton_Click;
-
             Button cancelButton = new Button
             {
                 Text = "Cancel",
@@ -104,7 +95,6 @@ namespace ReturnPoint
             };
             cancelButton.FlatAppearance.BorderSize = 0;
             cancelButton.Click += (s, e) => this.Close();
-
             this.Controls.Add(titleLabel);
             this.Controls.Add(nameLabel);
             this.Controls.Add(nameTextBox);
@@ -113,21 +103,17 @@ namespace ReturnPoint
             this.Controls.Add(saveButton);
             this.Controls.Add(cancelButton);
         }
-
         private void SaveButton_Click(object? sender, EventArgs e)
         {
             string name = nameTextBox.Text.Trim();
             string contact = contactTextBox.Text.Trim();
-
             if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(contact))
             {
                 MessageBox.Show("Please enter both name and contact information.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-
             string claimFileName = Path.GetFileNameWithoutExtension(photoPath) + "_claimed.txt";
             string claimFilePath = Path.Combine(saveFolder, claimFileName);
-
             try
             {
                 File.WriteAllText(claimFilePath,
@@ -136,7 +122,6 @@ namespace ReturnPoint
                 $"Contact Info: {contact}\r\n" +
                 $"Face Photo: {Path.GetFileName(claimantPhotoPath)}\r\n" +
                 $"Claimed On: {DateTime.Now:yyyy-MM-dd HH:mm}");
-
                 MessageBox.Show("Item successfully claimed!", "Claimed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
@@ -147,3 +132,4 @@ namespace ReturnPoint
         }
     }
 }
+

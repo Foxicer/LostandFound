@@ -1,7 +1,6 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-
 namespace ReturnPoint
 {
     public class ClaimantInfoForm : Form
@@ -11,32 +10,25 @@ namespace ReturnPoint
         public string Role => cmbRole.SelectedItem?.ToString();
         public string GradeSection => txtWhere.Text;
         public string WhenFound => txtWhen.Text;
-
         private TextBox txtName, txtContact, txtWhere, txtWhen;
         private ComboBox cmbRole;
         private Label lblWhere;
         private Button btnSubmit;
-
         public ClaimantInfoForm()
         {
-            // Initialize controls so they are safe to reference
             txtName = new TextBox();
             txtContact = new TextBox() { Text = "09** *** ****" };
             txtWhere = new TextBox();
             txtWhen = new TextBox();
             cmbRole = new ComboBox();
             btnSubmit = new Button() { Text = "Submit" };
-
-            // Simple layout so the form is usable — adapt to your existing design
             this.Text = "Claimant Info";
             this.StartPosition = FormStartPosition.CenterParent;
             this.Size = new Size(420, 300);
-
             Label lblName = new Label { Text = "Name", Top = 12, Left = 12, AutoSize = true };
             txtName.Top = 32; txtName.Left = 12; txtName.Width = 360;
             Label lblContact = new Label { Text = "Contact", Top = 64, Left = 12, AutoSize = true };
             txtContact.Top = 84; txtContact.Left = 12; txtContact.Width = 360;
-
             btnSubmit.Top = 220; btnSubmit.Left = 12;
             btnSubmit.Click += (s, e) =>
             {
@@ -48,7 +40,6 @@ namespace ReturnPoint
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             };
-
             this.Controls.Add(lblName);
             this.Controls.Add(txtName);
             this.Controls.Add(lblContact);
@@ -57,3 +48,4 @@ namespace ReturnPoint
         }
     }
 }
+

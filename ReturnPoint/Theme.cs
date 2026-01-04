@@ -8,10 +8,8 @@ namespace ReturnPoint
 {
     public static class Theme
     {
-        // Background teal shade selector: 0 = MutedTeal, 1 = MediumTeal, 2 = DarkTeal
-        public static int BackgroundTealShade = 1; // Default to MediumTeal
+        public static int BackgroundTealShade = 1;
         
-        // Palette - ReturnPoint Modern Theme
         public static Color SoftWhite => ColorTranslator.FromHtml("#FFFFFF");
         public static Color LightGray => ColorTranslator.FromHtml("#F8F9FA");
         public static Color MediumGray => ColorTranslator.FromHtml("#E9ECEF");
@@ -37,9 +35,9 @@ namespace ReturnPoint
         {
             return BackgroundTealShade switch
             {
-                0 => ColorTranslator.FromHtml("#005D4F"), // darker than MutedTeal
-                1 => ColorTranslator.FromHtml("#009B7D"), // DarkTeal
-                2 => ColorTranslator.FromHtml("#007C63"), // MutedTeal
+                0 => ColorTranslator.FromHtml("#005D4F"),
+                1 => ColorTranslator.FromHtml("#009B7D"),
+                2 => ColorTranslator.FromHtml("#007C63"),
                 _ => ColorTranslator.FromHtml("#009B7D")
             };
         }
@@ -48,9 +46,9 @@ namespace ReturnPoint
         {
             return BackgroundTealShade switch
             {
-                0 => ColorTranslator.FromHtml("#00C896"), // MediumTeal
-                1 => ColorTranslator.FromHtml("#00E8B3"), // lighter
-                2 => ColorTranslator.FromHtml("#00C896"), // MediumTeal
+                0 => ColorTranslator.FromHtml("#00C896"),
+                1 => ColorTranslator.FromHtml("#00E8B3"),
+                2 => ColorTranslator.FromHtml("#00C896"),
                 _ => ColorTranslator.FromHtml("#00E8B3")
             };
         }
@@ -91,7 +89,6 @@ namespace ReturnPoint
         public static Color PaperWhite => ColorTranslator.FromHtml("#FFFFFF");
         public static Color DarkGrayBook => ColorTranslator.FromHtml("#2C3E50");
         
-        // Modern accent colors
         public static Color AccentBlue => ColorTranslator.FromHtml("#3498DB");
         public static Color LightAccent => ColorTranslator.FromHtml("#ECF0F1");
         public static Color Success => ColorTranslator.FromHtml("#27AE60");
@@ -128,7 +125,7 @@ namespace ReturnPoint
             }
             else if (c is Button btn)
             {
-                // Use teal green for buttons
+                
                 btn.BackColor = TealGreen;
                 btn.ForeColor = SoftWhite;
                 btn.FlatStyle = FlatStyle.Flat;
@@ -158,7 +155,7 @@ namespace ReturnPoint
                 c.ForeColor = NearBlack;
             }
 
-            // recurse children
+            
             foreach (Control child in c.Controls.Cast<Control>().ToArray())
                 ApplyToControl(child);
         }

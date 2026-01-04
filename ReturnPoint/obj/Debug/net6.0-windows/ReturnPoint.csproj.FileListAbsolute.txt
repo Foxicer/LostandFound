@@ -41,7 +41,6 @@ C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\refin
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.pdb
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.genruntimeconfig.cache
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ref\ReturnPoint.dll
-C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.FormClaimantInfo.resources
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.FormGallery.resources
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\obj\Debug\net6.0-windows\ReturnPoint.csproj.GenerateResource.cache
 C:\Users\jayde\Downloads\LostandFound\ReturnPoint\bin\Debug\net6.0-windows\OpenCvSharp.dll
