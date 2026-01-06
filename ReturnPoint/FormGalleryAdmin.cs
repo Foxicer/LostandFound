@@ -26,6 +26,7 @@ namespace ReturnPoint
         public FormGalleryAdmin()
         {
             Text = "Gallery Admin - ReturnPoint";
+            FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
             BackColor = Theme.GetBackgroundTeal();
             this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);

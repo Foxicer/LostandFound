@@ -66,9 +66,10 @@ namespace ReturnPoint
                 Directory.CreateDirectory(saveFolder);
             }
             this.Text = "Gallery - ReturnPoint";
-            this.WindowState = FormWindowState.Maximized;
             this.BackColor = Theme.GetBackgroundTeal();            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
             this.BackgroundImageLayout = ImageLayout.Stretch;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.WindowState = FormWindowState.Maximized;
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
