@@ -18,13 +18,22 @@ namespace ReturnPoint
         private TextBox txtGradeSection;
         private TextBox txtPassword;
         private TextBox txtConfirm;
-        private ComboBox cbRole;
         private Button btnRegister;
         private Button btnCancel;
         private Label lblMsg;
+        private Panel panelMain;
         public string RegisteredEmail { get; private set; } = "";
         public FormRegister()
         {
+            panelMain = new Panel();
+            panelMain.Dock = DockStyle.Fill;
+            panelMain.BackColor = Theme.LightGray;
+            panelMain.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            panelMain.BackgroundImageLayout = ImageLayout.Stretch;
+            panelMain.AutoScroll = true;
+            
+            Controls.Add(panelMain);
+            
             Text = "Create Account - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
@@ -41,9 +50,6 @@ namespace ReturnPoint
             txtGradeSection = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             txtPassword = new TextBox { Width = 370, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             txtConfirm = new TextBox { Width = 370, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            cbRole = new ComboBox { Width = 370, Height = 40, DropDownStyle = ComboBoxStyle.DropDownList, Font = inputFont, BackColor = Color.White };
-            cbRole.Items.AddRange(new[] { "Student", "Admin" });
-            cbRole.SelectedIndex = 0;
             btnRegister = new Button 
             { 
                 Text = "Create Account", 
@@ -74,25 +80,34 @@ namespace ReturnPoint
             var lblGrade = new Label { Text = "Grade and Section", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
             var lblP = new Label { Text = "Password", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
             var lblC = new Label { Text = "Confirm Password", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            var lblR = new Label { Text = "Account Type", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            var main = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 3 };
-            main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
-            main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
-            main.BackColor = Theme.GetBackgroundTeal();
+            
+            // Container panel for centering
+            var containerPanel = new Panel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(20)
+            };
+            
+            // Create a border panel
+            var borderPanel = new Panel
+            {
+                Padding = new Padding(3),
+                BackColor = Color.White,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
+            
             var center = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
                 Width = 400,
                 AutoSize = true,
-                Anchor = AnchorStyles.None,
                 Padding = new Padding(30),
-                BackColor = Color.White
+                BackColor = Theme.GetBackgroundTeal()
             };
+            
             center.Controls.Add(lblTitle);
             center.Controls.Add(lblSubtitle);
             center.Controls.Add(new Label { Height = 28 });
@@ -122,10 +137,6 @@ namespace ReturnPoint
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtConfirm);
             center.Controls.Add(new Label { Height = 14 });
-            center.Controls.Add(lblR);
-            center.Controls.Add(new Label { Height = 6 });
-            center.Controls.Add(cbRole);
-            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblMsg);
             center.Controls.Add(new Label { Height = 20 });
             
@@ -135,6 +146,7 @@ namespace ReturnPoint
                 Text = "Creating account...",
                 AutoSize = false,
                 Height = 20,
+                Width = 370,
                 TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
                 ForeColor = Theme.AccentBlue,
                 Font = new System.Drawing.Font("Segoe UI", 10F),
@@ -148,21 +160,41 @@ namespace ReturnPoint
             btnRow.Controls.Add(new Label { Width = 20 }); 
             btnRow.Controls.Add(btnCancel);
             center.Controls.Add(btnRow);
-            main.Controls.Add(center, 1, 1);
-            Controls.Add(main);
+            
+            // Add panels in hierarchy
+            borderPanel.Controls.Add(center);
+            containerPanel.Controls.Add(borderPanel);
+            panelMain.Controls.Add(containerPanel);
+            
+            // Center the container when resizing
+            this.Resize += (s, e) => CenterContainer(containerPanel);
+            this.Load += (s, e) => CenterContainer(containerPanel);
+            
             btnRegister.Click += (s, e) => DoRegister();
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
             AcceptButton = btnRegister;
             CancelButton = btnCancel;
             Theme.Apply(this);
             BackColor = Theme.GetBackgroundTeal();
-            main.BackColor = Theme.GetBackgroundTeal();
+            panelMain.BackColor = Theme.GetBackgroundTeal();
+            containerPanel.BackColor = Theme.GetBackgroundTeal();
             btnRow.BackColor = Theme.GetBackgroundTeal();
-            center.BackColor = Theme.GetBackgroundTeal();
         }
+        
+        private void CenterContainer(Panel container)
+        {
+            if (panelMain.ClientSize.Width > 0 && panelMain.ClientSize.Height > 0)
+            {
+                int x = Math.Max(0, (panelMain.ClientSize.Width - container.Width) / 2);
+                int y = Math.Max(20, (panelMain.ClientSize.Height - container.Height) / 2);
+                container.Location = new Point(x, y);
+            }
+        }
+        
         private void DoRegister()
         {
             lblMsg.Text = "";
+            lblMsg.Visible = false;
             var first = txtFirst.Text?.Trim() ?? "";
             var middle = txtMiddle.Text?.Trim() ?? "";
             var last = txtLast.Text?.Trim() ?? "";
@@ -170,16 +202,17 @@ namespace ReturnPoint
             var grade = txtGradeSection.Text?.Trim();
             var pass = txtPassword.Text ?? "";
             var confirm = txtConfirm.Text ?? "";
-            var role = cbRole.SelectedItem?.ToString() ?? "user";
             
             if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(last) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
             {
                 lblMsg.Text = "Enter first name, last name, email and password.";
+                lblMsg.Visible = true;
                 return;
             }
             if (!pass.Equals(confirm))
             {
                 lblMsg.Text = "Password and confirm password do not match.";
+                lblMsg.Visible = true;
                 return;
             }
             
@@ -193,23 +226,34 @@ namespace ReturnPoint
             txtGradeSection.Enabled = false;
             txtPassword.Enabled = false;
             txtConfirm.Enabled = false;
-            cbRole.Enabled = false;
             
             // Find and show the loading label
-            foreach (Control c in Controls)
+            foreach (Control c in panelMain.Controls)
             {
-                if (c is FlowLayoutPanel flp)
+                if (c is Panel containerPanel)
                 {
-                    foreach (Control fc in flp.Controls)
+                    foreach (Control bc in containerPanel.Controls)
                     {
-                        if (fc is Label lbl && lbl.Text == "Creating account...")
-                            lbl.Visible = true;
+                        if (bc is Panel borderPanel)
+                        {
+                            foreach (Control cp in borderPanel.Controls)
+                            {
+                                if (cp is FlowLayoutPanel centerPanel)
+                                {
+                                    foreach (Control fc in centerPanel.Controls)
+                                    {
+                                        if (fc is Label lbl && lbl.Text == "Creating account...")
+                                            lbl.Visible = true;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
             
-            // Try to register via Flask API first
-            Task.Run(async () => await RegisterViaAPI(first, middle, last, email, grade, pass, role));
+            // Try to register via Flask API first (all users default to "user" role)
+            Task.Run(async () => await RegisterViaAPI(first, middle, last, email, grade, pass));
         }
 
         private void ResetLoadingState()
@@ -225,24 +269,35 @@ namespace ReturnPoint
                 txtGradeSection.Enabled = true;
                 txtPassword.Enabled = true;
                 txtConfirm.Enabled = true;
-                cbRole.Enabled = true;
                 
                 // Find and hide the loading label
-                foreach (Control c in Controls)
+                foreach (Control c in panelMain.Controls)
                 {
-                    if (c is FlowLayoutPanel flp)
+                    if (c is Panel containerPanel)
                     {
-                        foreach (Control fc in flp.Controls)
+                        foreach (Control bc in containerPanel.Controls)
                         {
-                            if (fc is Label lbl && lbl.Text == "Creating account...")
-                                lbl.Visible = false;
+                            if (bc is Panel borderPanel)
+                            {
+                                foreach (Control cp in borderPanel.Controls)
+                                {
+                                    if (cp is FlowLayoutPanel centerPanel)
+                                    {
+                                        foreach (Control fc in centerPanel.Controls)
+                                        {
+                                            if (fc is Label lbl && lbl.Text == "Creating account...")
+                                                lbl.Visible = false;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             });
         }
 
-        private async Task RegisterViaAPI(string firstName, string middleName, string lastName, string email, string gradeSection, string password, string role)
+        private async Task RegisterViaAPI(string firstName, string middleName, string lastName, string email, string gradeSection, string password)
         {
             try
             {
@@ -285,6 +340,7 @@ namespace ReturnPoint
                             Invoke((MethodInvoker)delegate
                             {
                                 lblMsg.Text = message;
+                                lblMsg.Visible = true;
                                 ResetLoadingState();
                             });
                         }
@@ -293,6 +349,7 @@ namespace ReturnPoint
                             Invoke((MethodInvoker)delegate
                             {
                                 lblMsg.Text = "Registration failed. Please try again.";
+                                lblMsg.Visible = true;
                                 ResetLoadingState();
                             });
                         }
@@ -302,19 +359,20 @@ namespace ReturnPoint
             catch (HttpRequestException)
             {
                 // Flask API not available, fallback to local JSON
-                RegisterViaLocalJSON(firstName, middleName, lastName, email, gradeSection, password, role);
+                RegisterViaLocalJSON(firstName, middleName, lastName, email, gradeSection, password);
             }
             catch (Exception ex)
             {
                 Invoke((MethodInvoker)delegate
                 {
                     lblMsg.Text = "Registration error: " + ex.Message;
+                    lblMsg.Visible = true;
                     ResetLoadingState();
                 });
             }
         }
 
-        private void RegisterViaLocalJSON(string firstName, string middleName, string lastName, string email, string gradeSection, string password, string role)
+        private void RegisterViaLocalJSON(string firstName, string middleName, string lastName, string email, string gradeSection, string password)
         {
             try
             {
@@ -336,6 +394,7 @@ namespace ReturnPoint
                         Invoke((MethodInvoker)delegate
                         {
                             lblMsg.Text = "Email already registered.";
+                            lblMsg.Visible = true;
                             ResetLoadingState();
                         });
                         return;
@@ -348,7 +407,7 @@ namespace ReturnPoint
                     ["grade_section"] = string.IsNullOrWhiteSpace(gradeSection) ? "N/A" : gradeSection,
                     ["password"] = password,
                     ["profile_picture"] = null,
-                    ["role"] = role.ToLower() == "admin" ? "admin" : "user"
+                    ["role"] = "user"
                 };
                 users.Add(newUser);
                 var writeOpts = new JsonSerializerOptions { WriteIndented = true };
@@ -366,6 +425,7 @@ namespace ReturnPoint
                 Invoke((MethodInvoker)delegate
                 {
                     lblMsg.Text = "Registration failed: " + ex.Message;
+                    lblMsg.Visible = true;
                     ResetLoadingState();
                 });
             }

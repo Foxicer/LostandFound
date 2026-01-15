@@ -22,12 +22,12 @@ namespace ReturnPoint
         public FormLogin()
         {
             panelMain = new Panel();
-            {
-                Dock = DockStyle.Fill;
-                BackColor = Theme.LightGray;
-                BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
-                BackgroundImageLayout = ImageLayout.Stretch;
-            }
+            panelMain.Dock = DockStyle.Fill;
+            panelMain.BackColor = Theme.LightGray;
+            panelMain.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            panelMain.BackgroundImageLayout = ImageLayout.Stretch;
+            panelMain.AutoScroll = true;
+            
             Controls.Add(panelMain);
             Text = "Login - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
@@ -131,25 +131,34 @@ namespace ReturnPoint
                 Font = labelFont,
                 ForeColor = Theme.NearBlack
             };
-            var main = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 3 };
-            main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
-            main.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-            main.RowStyles.Add(new RowStyle(SizeType.Percent, 25));
-            main.BackColor = Theme.LightGray; 
-            panelMain.Controls.Add(main);
+            
+            // Container panel for centering
+            var containerPanel = new Panel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(20)
+            };
+            
+            // Create a border panel
+            var borderPanel = new Panel
+            {
+                Padding = new Padding(3),
+                BackColor = Color.White,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink
+            };
+            
             var centerPanel = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
                 Width = 420,
                 AutoSize = true,
-                Anchor = AnchorStyles.None,
                 Padding = new Padding(30),
-                BackColor = Color.White
+                BackColor = Theme.GetBackgroundTeal()
             };
+            
             centerPanel.Controls.Add(lblTitle);
             centerPanel.Controls.Add(lblSubtitle);
             centerPanel.Controls.Add(new Label { Height = 30 });
@@ -170,6 +179,7 @@ namespace ReturnPoint
                 Text = "Signing in...",
                 AutoSize = false,
                 Height = 20,
+                Width = 380,
                 TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
                 ForeColor = Theme.AccentBlue,
                 Font = new System.Drawing.Font("Segoe UI", 10F),
@@ -177,6 +187,7 @@ namespace ReturnPoint
             };
             centerPanel.Controls.Add(lblLoading);
             centerPanel.Controls.Add(new Label { Height = 10 });
+            
             var btnRow = new FlowLayoutPanel 
             { 
                 FlowDirection = FlowDirection.TopDown, 
@@ -185,7 +196,7 @@ namespace ReturnPoint
                 Width = 380
             };
             btnRow.Controls.Add(btnLogin);
-            btnRow.Controls.Add(new Label { Width = 10 });
+            btnRow.Controls.Add(new Label { Height = 10 });
             var secondRowBtns = new FlowLayoutPanel 
             { 
                 FlowDirection = FlowDirection.LeftToRight, 
@@ -197,8 +208,16 @@ namespace ReturnPoint
             secondRowBtns.Controls.Add(btnCancel);
             btnRow.Controls.Add(secondRowBtns);
             centerPanel.Controls.Add(btnRow);
-            main.Controls.Add(centerPanel, 1, 1);
-            Controls.Add(main);
+            
+            // Add panels in hierarchy
+            borderPanel.Controls.Add(centerPanel);
+            containerPanel.Controls.Add(borderPanel);
+            panelMain.Controls.Add(containerPanel);
+            
+            // Center the container when resizing
+            this.Resize += (s, e) => CenterContainer(containerPanel);
+            this.Load += (s, e) => CenterContainer(containerPanel);
+            
             btnLogin.Click += (s, e) => TryLogin();
             btnRegister.Click += (s, e) =>
             {
@@ -207,6 +226,7 @@ namespace ReturnPoint
                 {
                     txtEmail.Text = reg.RegisteredEmail;
                     lblMsg.Text = "Account created. You can now login.";
+                    lblMsg.Visible = true;
                 }
             };
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
@@ -214,10 +234,20 @@ namespace ReturnPoint
             CancelButton = btnCancel;
             Theme.Apply(this);
             panelMain.BackColor = Theme.GetBackgroundTeal();
-            main.BackColor = Theme.GetBackgroundTeal();
-            centerPanel.BackColor = Theme.GetBackgroundTeal();
+            containerPanel.BackColor = Theme.GetBackgroundTeal();
             btnRow.BackColor = Theme.GetBackgroundTeal();
         }
+        
+        private void CenterContainer(Panel container)
+        {
+            if (panelMain.ClientSize.Width > 0 && panelMain.ClientSize.Height > 0)
+            {
+                int x = Math.Max(0, (panelMain.ClientSize.Width - container.Width) / 2);
+                int y = Math.Max(20, (panelMain.ClientSize.Height - container.Height) / 2);
+                container.Location = new Point(x, y);
+            }
+        }
+        
         private void ResetLoadingState()
         {
             Invoke((MethodInvoker)delegate
@@ -227,15 +257,27 @@ namespace ReturnPoint
                 txtEmail.Enabled = true;
                 txtPass.Enabled = true;
                 
-                // Find and hide the loading label
-                foreach (Control c in Controls)
+                // Find and hide the loading label in the center panel
+                foreach (Control c in panelMain.Controls)
                 {
-                    if (c is FlowLayoutPanel flp)
+                    if (c is Panel containerPanel)
                     {
-                        foreach (Control fc in flp.Controls)
+                        foreach (Control bc in containerPanel.Controls)
                         {
-                            if (fc is Label lbl && lbl.Text == "Signing in...")
-                                lbl.Visible = false;
+                            if (bc is Panel borderPanel)
+                            {
+                                foreach (Control cp in borderPanel.Controls)
+                                {
+                                    if (cp is FlowLayoutPanel centerPanel)
+                                    {
+                                        foreach (Control fc in centerPanel.Controls)
+                                        {
+                                            if (fc is Label lbl && lbl.Text == "Signing in...")
+                                                lbl.Visible = false;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -245,16 +287,19 @@ namespace ReturnPoint
         private void TryLogin()
         {
             lblMsg.Text = "";
+            lblMsg.Visible = false;
             var email = txtEmail.Text?.Trim();
             var pass = txtPass.Text ?? "";
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
             {
                 lblMsg.Text = "Enter email and password.";
+                lblMsg.Visible = true;
                 return;
             }
             if (!email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
             {
                 lblMsg.Text = "Please sign in with a Gmail address.";
+                lblMsg.Visible = true;
                 return;
             }
             
@@ -265,14 +310,26 @@ namespace ReturnPoint
             txtPass.Enabled = false;
             
             // Find and show the loading label
-            foreach (Control c in Controls)
+            foreach (Control c in panelMain.Controls)
             {
-                if (c is FlowLayoutPanel flp)
+                if (c is Panel containerPanel)
                 {
-                    foreach (Control fc in flp.Controls)
+                    foreach (Control bc in containerPanel.Controls)
                     {
-                        if (fc is Label lbl && lbl.Text == "Signing in...")
-                            lbl.Visible = true;
+                        if (bc is Panel borderPanel)
+                        {
+                            foreach (Control cp in borderPanel.Controls)
+                            {
+                                if (cp is FlowLayoutPanel centerPanel)
+                                {
+                                    foreach (Control fc in centerPanel.Controls)
+                                    {
+                                        if (fc is Label lbl && lbl.Text == "Signing in...")
+                                            lbl.Visible = true;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -287,6 +344,8 @@ namespace ReturnPoint
             {
                 using (var client = new HttpClient())
                 {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    
                     // Prepare the request
                     var loginData = new { email = email, password = password };
                     var json = JsonSerializer.Serialize(loginData);
@@ -322,17 +381,28 @@ namespace ReturnPoint
                             });
                         }
                     }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        // Wrong credentials
+                        Invoke((MethodInvoker)delegate
+                        {
+                            lblMsg.Text = "Incorrect email or password.";
+                            lblMsg.Visible = true;
+                            ResetLoadingState();
+                        });
+                    }
                     else
                     {
                         try
                         {
                             var errorJson = await response.Content.ReadAsStringAsync();
                             var errorData = JsonSerializer.Deserialize<JsonElement>(errorJson);
-                            var message = errorData.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Login failed";
+                            var message = errorData.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Incorrect email or password.";
 
                             Invoke((MethodInvoker)delegate
                             {
                                 lblMsg.Text = message;
+                                lblMsg.Visible = true;
                                 ResetLoadingState();
                             });
                         }
@@ -340,7 +410,8 @@ namespace ReturnPoint
                         {
                             Invoke((MethodInvoker)delegate
                             {
-                                lblMsg.Text = "Login failed. Please try again.";
+                                lblMsg.Text = "Incorrect email or password.";
+                                lblMsg.Visible = true;
                                 ResetLoadingState();
                             });
                         }
@@ -349,14 +420,38 @@ namespace ReturnPoint
             }
             catch (HttpRequestException)
             {
-                // Flask API not available, try fallback to local JSON
+                // Flask API not available - show specific error message
+                Invoke((MethodInvoker)delegate
+                {
+                    lblMsg.Text = "Flask server is not running. Please start the Flask API.";
+                    lblMsg.ForeColor = Color.Orange;
+                    lblMsg.Visible = true;
+                    ResetLoadingState();
+                });
+                
+                // Also try fallback to local JSON
+                LoginViaLocalJSON(email, password);
+            }
+            catch (TaskCanceledException)
+            {
+                // Timeout - Flask not responding
+                Invoke((MethodInvoker)delegate
+                {
+                    lblMsg.Text = "Flask server is not responding. Please check if it's running.";
+                    lblMsg.ForeColor = Color.Orange;
+                    lblMsg.Visible = true;
+                    ResetLoadingState();
+                });
+                
+                // Try fallback to local JSON
                 LoginViaLocalJSON(email, password);
             }
             catch (Exception ex)
             {
                 Invoke((MethodInvoker)delegate
                 {
-                    lblMsg.Text = "Login error: " + ex.Message;
+                    lblMsg.Text = "Connection error: " + ex.Message;
+                    lblMsg.Visible = true;
                     ResetLoadingState();
                 });
             }
@@ -372,7 +467,8 @@ namespace ReturnPoint
                 {
                     Invoke((MethodInvoker)delegate
                     {
-                        lblMsg.Text = "No users registered.";
+                        lblMsg.Text = "No users registered locally.";
+                        lblMsg.Visible = true;
                         ResetLoadingState();
                     });
                     return;
@@ -389,7 +485,9 @@ namespace ReturnPoint
                 {
                     Invoke((MethodInvoker)delegate
                     {
-                        lblMsg.Text = "Email not registered.";
+                        lblMsg.Text = "Incorrect email or password.";
+                        lblMsg.ForeColor = Theme.DeepRed;
+                        lblMsg.Visible = true;
                         ResetLoadingState();
                     });
                     return;
@@ -400,7 +498,9 @@ namespace ReturnPoint
                 {
                     Invoke((MethodInvoker)delegate
                     {
-                        lblMsg.Text = "Incorrect password.";
+                        lblMsg.Text = "Incorrect email or password.";
+                        lblMsg.ForeColor = Theme.DeepRed;
+                        lblMsg.Visible = true;
                         ResetLoadingState();
                     });
                     return;
@@ -418,7 +518,8 @@ namespace ReturnPoint
             {
                 Invoke((MethodInvoker)delegate
                 {
-                    lblMsg.Text = "Login error: " + ex.Message;
+                    lblMsg.Text = "Local login error: " + ex.Message;
+                    lblMsg.Visible = true;
                     ResetLoadingState();
                 });
             }
