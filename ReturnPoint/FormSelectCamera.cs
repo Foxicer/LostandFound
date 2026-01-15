@@ -40,7 +40,6 @@ namespace ReturnPoint
                 ForeColor = Theme.NearBlack
             };
 
-            // Populate device list
             for (int i = 0; i < devices.Count; i++)
             {
                 deviceListBox.Items.Add($"{i + 1}. {devices[i].Name}");

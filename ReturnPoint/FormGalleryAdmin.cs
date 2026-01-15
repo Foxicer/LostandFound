@@ -2,6 +2,9 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 namespace ReturnPoint
 {
@@ -400,6 +403,7 @@ namespace ReturnPoint
                 File.Move(filePath, dest);
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_tags.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_tags.txt"));
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_info.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_info.txt"));
+                DeleteImageFromGoogleSheets(Path.GetFileName(filePath));
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
             catch (Exception ex)
@@ -420,6 +424,7 @@ namespace ReturnPoint
                 string baseName = Path.GetFileNameWithoutExtension(filePath);
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_tags.txt"), Path.Combine(saveFolder, baseName + "_tags.txt"));
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_info.txt"), Path.Combine(saveFolder, baseName + "_info.txt"));
+                RestoreImageInGoogleSheets(Path.GetFileName(filePath));
                 LoadImages(cbViewMode.SelectedIndex == 1);
             }
             catch (Exception ex)
@@ -854,6 +859,50 @@ namespace ReturnPoint
             catch (Exception ex)
             {
                 MessageBox.Show("Error adding tag: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private async void DeleteImageFromGoogleSheets(string filename)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    var data = new { filename = filename };
+                    string json = JsonSerializer.Serialize(data);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    HttpResponseMessage response = await client.PostAsync("http://localhost:5000/api/delete-captured-image", content);
+                    System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Delete image from Sheets: {response.StatusCode}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Flask unavailable for delete: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Error deleting image from Sheets: {ex.Message}");
+            }
+        }
+        private async void RestoreImageInGoogleSheets(string filename)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    var data = new { filename = filename, status = "active" };
+                    string json = JsonSerializer.Serialize(data);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    HttpResponseMessage response = await client.PostAsync("http://localhost:5000/api/restore-captured-image", content);
+                    System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Restore image in Sheets: {response.StatusCode}");
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Flask unavailable for restore: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Error restoring image in Sheets: {ex.Message}");
             }
         }
     }

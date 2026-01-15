@@ -1,0 +1,4 @@
+Uploader: John Michael Smith
+GradeSection: 12 - PYTHON
+Location: COM LAB
+Date: 2026-01-09 14:15

@@ -55,3 +55,8 @@ uploads/
 
 # Logs
 *.log
+
+#credentials
+credentials.json
+__pycache__/
+*.pyc

@@ -125,7 +125,6 @@ namespace ReturnPoint
             }
             else if (c is Button btn)
             {
-                
                 btn.BackColor = TealGreen;
                 btn.ForeColor = SoftWhite;
                 btn.FlatStyle = FlatStyle.Flat;
@@ -155,7 +154,6 @@ namespace ReturnPoint
                 c.ForeColor = NearBlack;
             }
 
-            
             foreach (Control child in c.Controls.Cast<Control>().ToArray())
                 ApplyToControl(child);
         }

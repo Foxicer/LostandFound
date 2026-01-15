@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ReturnPoint.Models;
 namespace ReturnPoint
@@ -93,7 +95,7 @@ namespace ReturnPoint
             };
             center.Controls.Add(lblTitle);
             center.Controls.Add(lblSubtitle);
-            center.Controls.Add(new Label { Height = 28 }); 
+            center.Controls.Add(new Label { Height = 28 });
             center.Controls.Add(lblFirst);
             center.Controls.Add(new Label { Height = 6 });
             var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 370 };
@@ -103,29 +105,44 @@ namespace ReturnPoint
             nameRow.Controls.Add(new Label { Width = 8 });
             nameRow.Controls.Add(txtLast);
             center.Controls.Add(nameRow);
-            center.Controls.Add(new Label { Height = 14 }); 
+            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblEmail);
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtEmail);
-            center.Controls.Add(new Label { Height = 14 }); 
+            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblGrade);
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtGradeSection);
-            center.Controls.Add(new Label { Height = 14 }); 
+            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblP);
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtPassword);
-            center.Controls.Add(new Label { Height = 14 }); 
+            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblC);
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtConfirm);
-            center.Controls.Add(new Label { Height = 14 }); 
+            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblR);
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(cbRole);
-            center.Controls.Add(new Label { Height = 14 }); 
+            center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblMsg);
-            center.Controls.Add(new Label { Height = 20 }); 
+            center.Controls.Add(new Label { Height = 20 });
+            
+            // Loading indicator
+            var lblLoading = new Label
+            {
+                Text = "Creating account...",
+                AutoSize = false,
+                Height = 20,
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                ForeColor = Theme.AccentBlue,
+                Font = new System.Drawing.Font("Segoe UI", 10F),
+                Visible = false
+            };
+            center.Controls.Add(lblLoading);
+            center.Controls.Add(new Label { Height = 10 });
+            
             var btnRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 370 };
             btnRow.Controls.Add(btnRegister);
             btnRow.Controls.Add(new Label { Width = 20 }); 
@@ -149,24 +166,159 @@ namespace ReturnPoint
             var first = txtFirst.Text?.Trim() ?? "";
             var middle = txtMiddle.Text?.Trim() ?? "";
             var last = txtLast.Text?.Trim() ?? "";
-            var name = string.Join(" ", new[] { first, middle, last }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim();
             var email = txtEmail.Text?.Trim();
             var grade = txtGradeSection.Text?.Trim();
             var pass = txtPassword.Text ?? "";
             var confirm = txtConfirm.Text ?? "";
             var role = cbRole.SelectedItem?.ToString() ?? "user";
-            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
+            
+            if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(last) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
             {
-                lblMsg.Text = "Enter name, email and password.";
+                lblMsg.Text = "Enter first name, last name, email and password.";
                 return;
             }
             if (!pass.Equals(confirm))
             {
-                lblMsg.Text = "Passwords do not match.";
+                lblMsg.Text = "Password and confirm password do not match.";
                 return;
             }
+            
+            // Disable inputs and show loading
+            btnRegister.Enabled = false;
+            btnCancel.Enabled = false;
+            txtFirst.Enabled = false;
+            txtMiddle.Enabled = false;
+            txtLast.Enabled = false;
+            txtEmail.Enabled = false;
+            txtGradeSection.Enabled = false;
+            txtPassword.Enabled = false;
+            txtConfirm.Enabled = false;
+            cbRole.Enabled = false;
+            
+            // Find and show the loading label
+            foreach (Control c in Controls)
+            {
+                if (c is FlowLayoutPanel flp)
+                {
+                    foreach (Control fc in flp.Controls)
+                    {
+                        if (fc is Label lbl && lbl.Text == "Creating account...")
+                            lbl.Visible = true;
+                    }
+                }
+            }
+            
+            // Try to register via Flask API first
+            Task.Run(async () => await RegisterViaAPI(first, middle, last, email, grade, pass, role));
+        }
+
+        private void ResetLoadingState()
+        {
+            Invoke((MethodInvoker)delegate
+            {
+                btnRegister.Enabled = true;
+                btnCancel.Enabled = true;
+                txtFirst.Enabled = true;
+                txtMiddle.Enabled = true;
+                txtLast.Enabled = true;
+                txtEmail.Enabled = true;
+                txtGradeSection.Enabled = true;
+                txtPassword.Enabled = true;
+                txtConfirm.Enabled = true;
+                cbRole.Enabled = true;
+                
+                // Find and hide the loading label
+                foreach (Control c in Controls)
+                {
+                    if (c is FlowLayoutPanel flp)
+                    {
+                        foreach (Control fc in flp.Controls)
+                        {
+                            if (fc is Label lbl && lbl.Text == "Creating account...")
+                                lbl.Visible = false;
+                        }
+                    }
+                }
+            });
+        }
+
+        private async Task RegisterViaAPI(string firstName, string middleName, string lastName, string email, string gradeSection, string password, string role)
+        {
             try
             {
+                using (var client = new HttpClient())
+                {
+                    // Prepare the request
+                    var registerData = new
+                    {
+                        first_name = firstName,
+                        middle_name = middleName,
+                        last_name = lastName,
+                        email = email,
+                        grade_section = gradeSection,
+                        password = password,
+                        confirm_password = password
+                    };
+                    var json = JsonSerializer.Serialize(registerData);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                    // Call Flask API
+                    var response = await client.PostAsync("http://localhost:5000/api/register", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        RegisteredEmail = email;
+                        Invoke((MethodInvoker)delegate
+                        {
+                            DialogResult = DialogResult.OK;
+                            Close();
+                        });
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var errorJson = await response.Content.ReadAsStringAsync();
+                            var errorData = JsonSerializer.Deserialize<JsonElement>(errorJson);
+                            var message = errorData.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Registration failed";
+
+                            Invoke((MethodInvoker)delegate
+                            {
+                                lblMsg.Text = message;
+                                ResetLoadingState();
+                            });
+                        }
+                        catch
+                        {
+                            Invoke((MethodInvoker)delegate
+                            {
+                                lblMsg.Text = "Registration failed. Please try again.";
+                                ResetLoadingState();
+                            });
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // Flask API not available, fallback to local JSON
+                RegisterViaLocalJSON(firstName, middleName, lastName, email, gradeSection, password, role);
+            }
+            catch (Exception ex)
+            {
+                Invoke((MethodInvoker)delegate
+                {
+                    lblMsg.Text = "Registration error: " + ex.Message;
+                    ResetLoadingState();
+                });
+            }
+        }
+
+        private void RegisterViaLocalJSON(string firstName, string middleName, string lastName, string email, string gradeSection, string password, string role)
+        {
+            try
+            {
+                var name = string.Join(" ", new[] { firstName, middleName, lastName }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim();
                 var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
                 path = Path.GetFullPath(path);
                 var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -181,7 +333,11 @@ namespace ReturnPoint
                 {
                     if (u.TryGetValue("email", out var eVal) && eVal?.ToString().Equals(email, StringComparison.OrdinalIgnoreCase) == true)
                     {
-                        lblMsg.Text = "Email already registered.";
+                        Invoke((MethodInvoker)delegate
+                        {
+                            lblMsg.Text = "Email already registered.";
+                            ResetLoadingState();
+                        });
                         return;
                     }
                 }
@@ -189,22 +345,29 @@ namespace ReturnPoint
                 {
                     ["name"] = name,
                     ["email"] = email,
-                    ["grade_section"] = string.IsNullOrWhiteSpace(grade) ? "N/A" : grade,
-                    ["password"] = pass,
+                    ["grade_section"] = string.IsNullOrWhiteSpace(gradeSection) ? "N/A" : gradeSection,
+                    ["password"] = password,
                     ["profile_picture"] = null,
-                    ["role"] = role
+                    ["role"] = role.ToLower() == "admin" ? "admin" : "user"
                 };
                 users.Add(newUser);
                 var writeOpts = new JsonSerializerOptions { WriteIndented = true };
                 var outJson = JsonSerializer.Serialize(users, writeOpts);
                 File.WriteAllText(path, outJson);
                 RegisteredEmail = email ?? "";
-                DialogResult = DialogResult.OK;
-                Close();
+                Invoke((MethodInvoker)delegate
+                {
+                    DialogResult = DialogResult.OK;
+                    Close();
+                });
             }
             catch (Exception ex)
             {
-                lblMsg.Text = "Registration failed: " + ex.Message;
+                Invoke((MethodInvoker)delegate
+                {
+                    lblMsg.Text = "Registration failed: " + ex.Message;
+                    ResetLoadingState();
+                });
             }
         }
     }

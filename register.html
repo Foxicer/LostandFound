@@ -36,6 +36,10 @@
         .footer-note{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;}
         .name-row { display:flex; gap:8px; }
         .name-row input { flex:1; min-width:0; }
+        button:disabled{opacity:0.6;cursor:not-allowed}
+        .loading{display:none;text-align:center;margin:12px 0;color:#2196f3;font-size:13px}
+        .spinner{border:3px solid #f3f3f3;border-top:3px solid #2196f3;border-radius:50%;width:16px;height:16px;animation:spin 1s linear infinite;margin:0 auto 4px}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
         @media (max-width:420px){ .auth-card{padding:18px} .name-row{flex-direction:column} }
     </style>
 </head>
@@ -76,9 +80,10 @@
                 </div>
 
                 <div class="error-message" id="errorMessage" aria-live="polite"></div>
+                <div class="loading" id="loadingIndicator" aria-live="polite"><div class="spinner"></div>Creating account...</div>
 
                 <div class="actions">
-                    <button type="submit" class="primary">Register</button>
+                    <button type="submit" class="primary" id="registerBtn">Register</button>
                     <button type="button" class="secondary" id="clearBtn">Clear</button>
                 </div>
             </form>
@@ -94,8 +99,17 @@
   const form = document.getElementById('registerForm');
   const err = document.getElementById('errorMessage');
   const clearBtn = document.getElementById('clearBtn');
+  const registerBtn = document.getElementById('registerBtn');
+  const loadingEl = document.getElementById('loadingIndicator');
+  const inputs = form.querySelectorAll('input[type="text"], input[type="password"], input[type="email"]');
 
   function showError(msg){ if(err) err.textContent = msg; }
+  function setLoading(isLoading) {
+    if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
+    if (registerBtn) registerBtn.disabled = isLoading;
+    if (clearBtn) clearBtn.disabled = isLoading;
+    inputs.forEach(inp => inp.disabled = isLoading);
+  }
   clearBtn.addEventListener('click', () => {
     document.getElementById('password').value = '';
     document.getElementById('confirmPassword').value = '';
@@ -104,6 +118,7 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     showError('');
+    setLoading(true);
 
     const first = (document.getElementById('firstName').value || '').trim();
     const middle = (document.getElementById('middleName').value || '').trim();
@@ -112,27 +127,26 @@
     const pass = document.getElementById('password').value || '';
     const confirm = document.getElementById('confirmPassword').value || '';
 
-    if (!first || !last) { showError('Please enter first and last name'); return; }
-    if (!email || !email.endsWith('@gmail.com')) { showError('Please register with a valid Gmail address'); return; }
-    if (pass !== confirm) { showError('Passwords do not match'); return; }
+    if (!first || !last) { showError('Please enter first and last name'); setLoading(false); return; }
+    if (!email || !email.endsWith('@gmail.com')) { showError('Please register with a valid Gmail address'); setLoading(false); return; }
+    if (pass !== confirm) { showError('Password and confirm password do not match'); setLoading(false); return; }
+    if (!pass) { showError('Please enter a password'); setLoading(false); return; }
 
     const full = [first, middle, last].filter(Boolean).join(' ');
     document.getElementById('username').value = full;
 
-    // Try server-side registration
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: full, email, password: pass })
+        body: JSON.stringify({ first_name: first, middle_name: middle, last_name: last, email, password: pass })
       });
 
       if (res.ok) {
-        // auto-login to establish session on server
         const loginRes = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: full, password: pass })
+          body: JSON.stringify({ email, password: pass })
         });
 
         if (loginRes.ok) {
@@ -145,32 +159,33 @@
             return;
           }
         }
-        // if any step above fails, set local and redirect as a fallback
         localStorage.setItem('currentUser', JSON.stringify({ name: full, email }));
         localStorage.setItem('currentUserEmail', email);
         window.location.href = 'dashboard.html';
         return;
       } else {
-        const json = await res.json().catch(() => ({}));
-        showError(json.message || 'Server registration failed');
+        try {
+          const json = await res.json().catch(() => ({}));
+          showError(json.message || 'Server registration failed');
+        } catch {
+          showError('Server registration failed');
+        }
+        setLoading(false);
         return;
       }
     } catch (ex) {
-      // server unreachable -> fallback to localStorage
-    }
-
-    // Fallback: persist locally in browser
-    try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      if (users.find(u => (u.email||'').toLowerCase() === email)) { showError('Email already registered (local)'); return; }
-      users.push({ name: full, username: full, email, password: pass });
-      localStorage.setItem('users', JSON.stringify(users));
-      localStorage.setItem('currentUser', JSON.stringify({ name: full, email }));
-      localStorage.setItem('currentUserEmail', email);
-      window.location.href = 'dashboard.html';
-    } catch (e) {
-      showError('Registration failed: ' + (e && e.message ? e.message : e));
-    }
+      try {
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        if (users.find(u => (u.email||'').toLowerCase() === email)) { showError('Email already registered (local)'); setLoading(false); return; }
+        users.push({ name: full, username: full, email, password: pass });
+        localStorage.setItem('users', JSON.stringify(users));
+        localStorage.setItem('currentUser', JSON.stringify({ name: full, email }));
+        localStorage.setItem('currentUserEmail', email);
+        window.location.href = 'dashboard.html';
+      } catch (e) {
+        showError('Registration failed: ' + (e && e.message ? e.message : e));
+        setLoading(false);
+      }
   }, { capture: true });
 })();
     </script>

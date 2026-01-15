@@ -5,6 +5,8 @@ using System.Windows.Forms;
 using System.Reflection;
 using System.Linq;
 using System.Text.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.VisualBasic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -66,8 +68,10 @@ namespace ReturnPoint
                 Directory.CreateDirectory(saveFolder);
             }
             this.Text = "Gallery - ReturnPoint";
+            this.FormBorderStyle = FormBorderStyle.None;
             this.WindowState = FormWindowState.Maximized;
-            this.BackColor = Theme.GetBackgroundTeal();            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            this.BackColor = Theme.GetBackgroundTeal();
+            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
             this.BackgroundImageLayout = ImageLayout.Stretch;
             outerPanel = new Panel
             {
@@ -88,7 +92,7 @@ namespace ReturnPoint
             };
             int cardWidth = 220;
             int cardHorizontalMargin = 15 + 15;
-            int columns = 4;
+            int columns = 1;
             int totalColumnWidth = columns * (cardWidth + cardHorizontalMargin);
             galleryPanel.MaximumSize = new Size(totalColumnWidth + galleryPanel.Padding.Left + galleryPanel.Padding.Right, 0);
             outerPanel.Controls.Add(galleryPanel);
@@ -280,7 +284,6 @@ namespace ReturnPoint
         {
             var uploader = GetLoggedInUser();
             
-            // Show device selection dialog
             string? selectedDevice = null;
             try
             {
@@ -294,7 +297,6 @@ namespace ReturnPoint
                 
                 if (videoDevices.Count > 1)
                 {
-                    // Show device selection dialog if multiple devices
                     using (var selectForm = new FormSelectCamera(videoDevices))
                     {
                         if (selectForm.ShowDialog(this) == DialogResult.OK)
@@ -303,13 +305,12 @@ namespace ReturnPoint
                         }
                         else
                         {
-                            return; // User cancelled
+                            return;
                         }
                     }
                 }
                 else
                 {
-                    // Use the only device available
                     selectedDevice = videoDevices[0].MonikerString;
                 }
             }
@@ -328,6 +329,7 @@ namespace ReturnPoint
                     if (meta == null)
                     {
                         AddImageToGallery(filePath, false);
+                        LogImageToGoogleSheets(filePath, "", uploader);
                         return;
                     }
                     string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
@@ -349,9 +351,18 @@ namespace ReturnPoint
                         $"Date: {meta.Value.Date:yyyy-MM-dd HH:mm}"
                     };
                     File.WriteAllLines(infoPath, lines);
+                    
+                    // Log tags to Google Sheets
+                    string tagsPath = Path.Combine(Path.GetDirectoryName(filePath),
+                        Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
+                    string tagsStr = File.Exists(tagsPath) ? string.Join(", ", File.ReadAllLines(tagsPath)) : "";
+                    if (uploader != null)
+                    {
+                        LogImageToGoogleSheets(filePath, tagsStr, uploader);
+                    }
                 }
                 catch {  }
-                AddImageToGallery(filePath, false);
+                LoadSavedImages();
             };
             camForm.ShowDialog();
         }
@@ -361,8 +372,17 @@ namespace ReturnPoint
             var list = Directory.GetFiles(saveFolder, "*.jpg")
                 .Select(f =>
                 {
-                    DateTime dt;
-                    if (!TryGetDateFromInfo(f, out dt))
+                    string fileName = Path.GetFileNameWithoutExtension(f);
+                    DateTime dt = DateTime.MinValue;
+                    if (fileName.StartsWith("photo_") && fileName.Length >= 20)
+                    {
+                        string dateStr = fileName.Substring(6, 15); // YYYYMMDD_HHMMSS
+                        if (DateTime.TryParseExact(dateStr, "yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out dt))
+                        {
+                            // parsed successfully
+                        }
+                    }
+                    if (dt == DateTime.MinValue)
                     {
                         dt = File.GetCreationTimeUtc(f);
                         if (dt == DateTime.MinValue) dt = File.GetLastWriteTimeUtc(f);
@@ -410,7 +430,7 @@ namespace ReturnPoint
             catch {  }
             return false;
         }
-        private void AddImageToGallery(string filePath, bool alreadyClaimed = false)
+        private void AddImageToGallery(string filePath, bool alreadyClaimed = false, UploaderInfo? uploader = null)
         {
             if (!File.Exists(filePath)) return;
             Image img = Image.FromFile(filePath);
@@ -458,8 +478,8 @@ namespace ReturnPoint
                         map[k] = v;
                     }
                 }
-                string uploader = map.TryGetValue("Uploader", out var u) ? u : "N/A";
-                string gradeSection = map.TryGetValue("GradeSection", out var g) ? g : "N/A";
+                string uploaderName = map.TryGetValue("Uploader", out var u) ? u : "N/A";
+                string gradeSection = (uploader?.GradeSection) ?? (map.TryGetValue("GradeSection", out var g) ? g : "N/A");
                 string location = map.TryGetValue("Location", out var l) ? l : "N/A";
                 string dateFound = map.TryGetValue("Date", out var d) ? d : (map.TryGetValue("DateFound", out var d2) ? d2 : "N/A");
                 Form infoForm = new Form
@@ -470,7 +490,7 @@ namespace ReturnPoint
                 };
                 Label uploaderLabel = new Label
                 {
-                    Text = $"Uploader: {uploader}",
+                    Text = $"Uploader: {uploaderName}",
                     Top = 16,
                     Left = 20,
                     AutoSize = true,
@@ -604,7 +624,6 @@ namespace ReturnPoint
                     MessageBox.Show("No information available for this item.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
-            pic.Click += (s, e) => ShowClaimantInfo();
             Button infoBtn = new Button
             {
                 Text = "Info",
@@ -772,6 +791,84 @@ namespace ReturnPoint
         }
         private UploaderInfo GetLoggedInUser()
         {
+            string currentUserEmail = null;
+            
+            // Try to read the current user email from file
+            try
+            {
+                string emailFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\current_user_email.txt");
+                emailFilePath = Path.GetFullPath(emailFilePath);
+                if (File.Exists(emailFilePath))
+                {
+                    currentUserEmail = File.ReadAllText(emailFilePath).Trim();
+                    System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Read current user email from file: {currentUserEmail}");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Error reading email file: {ex.Message}");
+            }
+            
+            try
+            {
+                // Try to get user info from Flask backend
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    string url = "http://localhost:5000/api/user";
+                    if (!string.IsNullOrWhiteSpace(currentUserEmail))
+                    {
+                        url += $"?email={Uri.EscapeDataString(currentUserEmail)}";
+                    }
+                    System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Calling Flask: {url}");
+                    
+                    HttpResponseMessage response = client.GetAsync(url).Result;
+                    System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Flask response: {response.StatusCode}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string json = response.Content.ReadAsStringAsync().Result;
+                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Response JSON: {json}");
+                        using (var doc = JsonDocument.Parse(json))
+                        {
+                            var root = doc.RootElement;
+                            string name = root.TryGetProperty("name", out var n) ? n.GetString() : null;
+                            string firstName = root.TryGetProperty("first_name", out var fn) ? fn.GetString() : null;
+                            string middleName = root.TryGetProperty("middle_name", out var mn) ? mn.GetString() : null;
+                            string lastName = root.TryGetProperty("last_name", out var ln) ? ln.GetString() : null;
+                            string gradeSection = root.TryGetProperty("grade_section", out var gs) ? gs.GetString() : null;
+                            
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Parsed - Name: {name}, FirstName: {firstName}, LastName: {lastName}, Grade: {gradeSection}");
+                            
+                            var result = new UploaderInfo
+                            {
+                                Name = !string.IsNullOrWhiteSpace(name) ? name : Environment.UserName,
+                                FirstName = firstName ?? "",
+                                MiddleName = middleName ?? "",
+                                LastName = lastName ?? "",
+                                GradeSection = gradeSection ?? "N/A"
+                            };
+                            
+                            if (string.IsNullOrWhiteSpace(result.FirstName) && !string.IsNullOrWhiteSpace(result.Name))
+                            {
+                                ParseFullName(result.Name, result);
+                            }
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] SUCCESS: {result.FirstName} {result.LastName} ({result.GradeSection})");
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Raw gradeSection from JSON: '{gradeSection}'");
+                            return result;
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Failed response: {response.StatusCode} - {response.Content.ReadAsStringAsync().Result}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Error calling Flask: {ex.Message}");
+            }
+            
+            // Fallback: Try reading from Program.CurrentUser
             try
             {
                 var progType = Type.GetType("ReturnPoint.Program");
@@ -811,65 +908,8 @@ namespace ReturnPoint
                 }
             }
             catch {  }
-            try
-            {
-                var cuPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_user.txt");
-                if (File.Exists(cuPath))
-                {
-                    var email = File.ReadAllText(cuPath).Trim();
-                    if (!string.IsNullOrWhiteSpace(email))
-                    {
-                        var usersPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
-                        usersPath = Path.GetFullPath(usersPath);
-                        if (File.Exists(usersPath))
-                        {
-                            var json = File.ReadAllText(usersPath);
-                            using (var doc = JsonDocument.Parse(json))
-                            {
-                                if (doc.RootElement.ValueKind == JsonValueKind.Array)
-                                {
-                                    foreach (var el in doc.RootElement.EnumerateArray())
-                                    {
-                                        if (el.TryGetProperty("email", out var em) && string.Equals(em.GetString(), email, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            string name = null;
-                                            if (el.TryGetProperty("name", out var n)) name = n.GetString();
-                                            else if (el.TryGetProperty("username", out var un)) name = un.GetString();
-                                            string firstName = null;
-                                            if (el.TryGetProperty("firstName", out var fn)) firstName = fn.GetString();
-                                            else if (el.TryGetProperty("first_name", out var fn2)) firstName = fn2.GetString();
-                                            string middleName = null;
-                                            if (el.TryGetProperty("middleName", out var mn)) middleName = mn.GetString();
-                                            else if (el.TryGetProperty("middle_name", out var mn2)) middleName = mn2.GetString();
-                                            string lastName = null;
-                                            if (el.TryGetProperty("lastName", out var ln)) lastName = ln.GetString();
-                                            else if (el.TryGetProperty("last_name", out var ln2)) lastName = ln2.GetString();
-                                            string grade = null;
-                                            if (el.TryGetProperty("grade_section", out var g)) grade = g.GetString();
-                                            else if (el.TryGetProperty("gradeSection", out var g2)) grade = g2.GetString();
-                                            else if (el.TryGetProperty("grade", out var g3)) grade = g3.GetString();
-                                            var result = new UploaderInfo
-                                            {
-                                                Name = !string.IsNullOrWhiteSpace(name) ? name : Environment.UserName,
-                                                FirstName = firstName,
-                                                MiddleName = middleName,
-                                                LastName = lastName,
-                                                GradeSection = !string.IsNullOrWhiteSpace(grade) ? grade : "N/A"
-                                            };
-                                            if (string.IsNullOrWhiteSpace(result.FirstName) && !string.IsNullOrWhiteSpace(result.Name))
-                                            {
-                                                ParseFullName(result.Name, result);
-                                            }
-                                            return result;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch {  }
+            
+            // Last fallback: Return default user
             return new UploaderInfo 
             { 
                 Name = Environment.UserName, 
@@ -878,6 +918,61 @@ namespace ReturnPoint
                 LastName = null,
                 GradeSection = "N/A" 
             };
+        }
+
+        private async void LogImageToGoogleSheets(string filePath, string tags, UploaderInfo uploader)
+        {
+            try
+            {
+                string filename = Path.GetFileName(filePath);
+                string uploaderName = "Unknown";
+                if (uploader != null)
+                {
+                    var parts = new[] { uploader.FirstName, uploader.MiddleName, uploader.LastName }
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .ToList();
+                    uploaderName = parts.Count > 0 ? string.Join(" ", parts) : uploader.Name ?? Environment.UserName;
+                }
+                
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                
+                using (var client = new HttpClient())
+                {
+                    var logData = new
+                    {
+                        filename = filename,
+                        user_name = uploaderName,
+                        tags = tags,
+                        file_path = filePath,
+                        timestamp = timestamp
+                    };
+                    
+                    var json = JsonSerializer.Serialize(logData);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                    
+                    try
+                    {
+                        var response = await client.PostAsync("http://localhost:5000/api/log-captured-image", content);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine($"✓ Image logged to Google Sheets: {filename}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"⚠ Failed to log image: {filename}");
+                        }
+                    }
+                    catch (HttpRequestException)
+                    {
+                        // Flask not available, that's okay - image is still stored locally
+                        Console.WriteLine($"ℹ Flask unavailable, image stored locally: {filename}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error logging image to Google Sheets: {ex.Message}");
+            }
         }
     }
 }

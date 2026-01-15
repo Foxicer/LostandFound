@@ -31,7 +31,6 @@ namespace ReturnPoint
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.BackColor = Theme.GetBackgroundTeal();
 
-            
             saveFolder = string.IsNullOrWhiteSpace(folderPath)
                 ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages")
                 : folderPath;
@@ -71,7 +70,6 @@ namespace ReturnPoint
             {
                 videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
                 
-                // Debug: Log available devices
                 string deviceInfo = $"Found {videoDevices.Count} camera device(s):\n";
                 for (int i = 0; i < videoDevices.Count; i++)
                 {
@@ -95,11 +93,9 @@ namespace ReturnPoint
                     return;
                 }
 
-                // Determine which device to use
                 int deviceIndex = 0;
                 if (!string.IsNullOrEmpty(selectedDeviceMoniker))
                 {
-                    // Find the selected device
                     for (int i = 0; i < videoDevices.Count; i++)
                     {
                         if (videoDevices[i].MonikerString == selectedDeviceMoniker)
@@ -169,7 +165,6 @@ namespace ReturnPoint
                     videoSource.NewFrame -= Video_NewFrame;
                 }
 
-                // Wait a moment for the last frame to be captured
                 System.Threading.Thread.Sleep(100);
                 CapturePhoto();
             }
@@ -200,7 +195,6 @@ namespace ReturnPoint
                     lastFrame = (Bitmap)frame.Clone();
                 }
 
-                // Update UI from the camera thread using Invoke
                 if (livePreview?.InvokeRequired == true)
                 {
                     livePreview.Invoke(new Action(() =>

@@ -13,7 +13,11 @@
     .actions{display:flex;gap:10px;margin-top:12px}
     button.primary{flex:1;height:42px;background:#2196f3;color:#fff;border:none;border-radius:8px;cursor:pointer}
     button.secondary{flex:1;height:42px;background:#fff;border:1px solid #dfe6f2;color:#2196f3;border-radius:8px;cursor:pointer}
+    button:disabled{opacity:0.6;cursor:not-allowed}
     .error{color:#b00020;font-size:13px;min-height:18px;margin-top:8px}
+    .loading{display:none;text-align:center;margin:12px 0}
+    .spinner{border:3px solid #f3f3f3;border-top:3px solid #2196f3;border-radius:50%;width:20px;height:20px;animation:spin 1s linear infinite;margin:0 auto}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
@@ -23,10 +27,10 @@
       <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@gmail.com"></div>
       <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
       <div class="error" id="errorMessage" aria-live="polite"></div>
+      <div class="loading" id="loadingIndicator" aria-live="polite"><div class="spinner"></div><p style="margin:8px 0 0 0;font-size:12px;color:#2196f3">Signing in...</p></div>
 
       <div class="actions">
-        <button type="submit" class="primary">Login</button>
-        <!-- Add inline onclick fallback so navigation works even if JS errors occur -->
+        <button type="submit" class="primary" id="loginBtn">Login</button>
         <button type="button" class="secondary" id="registerBtn" onclick="window.location.href='register.html'">Register</button>
       </div>
     </form>
@@ -38,33 +42,42 @@ document.addEventListener('DOMContentLoaded', function () {
   const emailEl = document.getElementById('email');
   const passEl = document.getElementById('password');
   const errEl = document.getElementById('errorMessage');
+  const loadingEl = document.getElementById('loadingIndicator');
+  const loginBtn = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
 
   function showError(msg){ if (errEl) errEl.textContent = msg; }
+  function setLoading(isLoading) {
+    if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
+    if (loginBtn) loginBtn.disabled = isLoading;
+    if (registerBtn) registerBtn.disabled = isLoading;
+    if (emailEl) emailEl.disabled = isLoading;
+    if (passEl) passEl.disabled = isLoading;
+  }
 
   form.addEventListener('submit', async function (ev) {
     ev.preventDefault();
     showError('');
+    setLoading(true);
 
     const email = (emailEl.value || '').trim().toLowerCase();
     const password = passEl.value || '';
 
-    if (!email || !password) { showError('Enter email and password'); return; }
+    if (!email || !password) { showError('Enter email and password'); setLoading(false); return; }
 
     console.log('Login attempt for:', email);
 
     try {
-      // Use Flask API for login - this will set the session cookie
       const resp = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password: password })
+        body: JSON.stringify({ email: email, password: password })
       });
 
       if (resp.ok) {
         console.log('Login successful via API');
         const result = await resp.json();
         
-        // Get user info and store in localStorage
         const userResp = await fetch('/api/user');
         if (userResp.ok) {
           const userInfo = await userResp.json();
@@ -75,17 +88,23 @@ document.addEventListener('DOMContentLoaded', function () {
           localStorage.setItem('currentUserEmail', userInfo.email || email);
         }
         
-        // Redirect to dashboard
         window.location.href = 'dashboard.html';
+        return;
+      } else if (resp.status === 401) {
+        const error = await resp.json();
+        showError(error.message || 'Invalid email or password');
+        setLoading(false);
         return;
       } else {
         const error = await resp.json();
-        showError(error.message || 'Invalid email or password');
+        showError(error.message || 'Login failed');
+        setLoading(false);
         return;
       }
     } catch (ex) { 
       console.error('Login error:', ex);
       showError('Login failed: ' + (ex.message || ex));
+      setLoading(false);
     }
   });
 });

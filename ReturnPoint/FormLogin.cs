@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ReturnPoint.Models;
 namespace ReturnPoint
@@ -150,17 +152,31 @@ namespace ReturnPoint
             };
             centerPanel.Controls.Add(lblTitle);
             centerPanel.Controls.Add(lblSubtitle);
-            centerPanel.Controls.Add(new Label { Height = 30 }); 
+            centerPanel.Controls.Add(new Label { Height = 30 });
             centerPanel.Controls.Add(lblEmail);
-            centerPanel.Controls.Add(new Label { Height = 6 }); 
+            centerPanel.Controls.Add(new Label { Height = 6 });
             centerPanel.Controls.Add(txtEmail);
-            centerPanel.Controls.Add(new Label { Height = 16 }); 
+            centerPanel.Controls.Add(new Label { Height = 16 });
             centerPanel.Controls.Add(lblP);
-            centerPanel.Controls.Add(new Label { Height = 6 }); 
+            centerPanel.Controls.Add(new Label { Height = 6 });
             centerPanel.Controls.Add(txtPass);
-            centerPanel.Controls.Add(new Label { Height = 16 }); 
+            centerPanel.Controls.Add(new Label { Height = 16 });
             centerPanel.Controls.Add(lblMsg);
-            centerPanel.Controls.Add(new Label { Height = 20 }); 
+            centerPanel.Controls.Add(new Label { Height = 20 });
+            
+            // Loading indicator
+            var lblLoading = new Label
+            {
+                Text = "Signing in...",
+                AutoSize = false,
+                Height = 20,
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                ForeColor = Theme.AccentBlue,
+                Font = new System.Drawing.Font("Segoe UI", 10F),
+                Visible = false
+            };
+            centerPanel.Controls.Add(lblLoading);
+            centerPanel.Controls.Add(new Label { Height = 10 });
             var btnRow = new FlowLayoutPanel 
             { 
                 FlowDirection = FlowDirection.TopDown, 
@@ -169,7 +185,7 @@ namespace ReturnPoint
                 Width = 380
             };
             btnRow.Controls.Add(btnLogin);
-            btnRow.Controls.Add(new Label { Height = 10 }); 
+            btnRow.Controls.Add(new Label { Width = 10 });
             var secondRowBtns = new FlowLayoutPanel 
             { 
                 FlowDirection = FlowDirection.LeftToRight, 
@@ -177,7 +193,7 @@ namespace ReturnPoint
                 WrapContents = false
             };
             secondRowBtns.Controls.Add(btnRegister);
-            secondRowBtns.Controls.Add(new Label { Width = 20 }); 
+            secondRowBtns.Controls.Add(new Label { Width = 20 });
             secondRowBtns.Controls.Add(btnCancel);
             btnRow.Controls.Add(secondRowBtns);
             centerPanel.Controls.Add(btnRow);
@@ -202,6 +218,30 @@ namespace ReturnPoint
             centerPanel.BackColor = Theme.GetBackgroundTeal();
             btnRow.BackColor = Theme.GetBackgroundTeal();
         }
+        private void ResetLoadingState()
+        {
+            Invoke((MethodInvoker)delegate
+            {
+                btnLogin.Enabled = true;
+                btnRegister.Enabled = true;
+                txtEmail.Enabled = true;
+                txtPass.Enabled = true;
+                
+                // Find and hide the loading label
+                foreach (Control c in Controls)
+                {
+                    if (c is FlowLayoutPanel flp)
+                    {
+                        foreach (Control fc in flp.Controls)
+                        {
+                            if (fc is Label lbl && lbl.Text == "Signing in...")
+                                lbl.Visible = false;
+                        }
+                    }
+                }
+            });
+        }
+
         private void TryLogin()
         {
             lblMsg.Text = "";
@@ -217,33 +257,170 @@ namespace ReturnPoint
                 lblMsg.Text = "Please sign in with a Gmail address.";
                 return;
             }
+            
+            // Disable inputs and show loading
+            btnLogin.Enabled = false;
+            btnRegister.Enabled = false;
+            txtEmail.Enabled = false;
+            txtPass.Enabled = false;
+            
+            // Find and show the loading label
+            foreach (Control c in Controls)
+            {
+                if (c is FlowLayoutPanel flp)
+                {
+                    foreach (Control fc in flp.Controls)
+                    {
+                        if (fc is Label lbl && lbl.Text == "Signing in...")
+                            lbl.Visible = true;
+                    }
+                }
+            }
+            
+            // Try to login via Flask API first (Google Sheets)
+            Task.Run(async () => await LoginViaAPI(email, pass));
+        }
+
+        private async Task LoginViaAPI(string email, string password)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // Prepare the request
+                    var loginData = new { email = email, password = password };
+                    var json = JsonSerializer.Serialize(loginData);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                    // Call Flask API
+                    var response = await client.PostAsync("http://localhost:5000/api/login", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Login successful - get user data
+                        var userResponse = await client.GetAsync("http://localhost:5000/api/user");
+                        if (userResponse.IsSuccessStatusCode)
+                        {
+                            var userJson = await userResponse.Content.ReadAsStringAsync();
+                            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                            var userData = JsonSerializer.Deserialize<JsonElement>(userJson, opts);
+
+                            var user = new User
+                            {
+                                Name = userData.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : email,
+                                Email = userData.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : email,
+                                GradeSection = userData.TryGetProperty("grade_section", out var gradeProp) ? gradeProp.GetString() : "",
+                                Password = password,
+                                Role = userData.TryGetProperty("role", out var roleProp) ? roleProp.GetString() : "user"
+                            };
+
+                            AuthenticatedUser = user;
+                            Invoke((MethodInvoker)delegate
+                            {
+                                DialogResult = DialogResult.OK;
+                                Close();
+                            });
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var errorJson = await response.Content.ReadAsStringAsync();
+                            var errorData = JsonSerializer.Deserialize<JsonElement>(errorJson);
+                            var message = errorData.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : "Login failed";
+
+                            Invoke((MethodInvoker)delegate
+                            {
+                                lblMsg.Text = message;
+                                ResetLoadingState();
+                            });
+                        }
+                        catch
+                        {
+                            Invoke((MethodInvoker)delegate
+                            {
+                                lblMsg.Text = "Login failed. Please try again.";
+                                ResetLoadingState();
+                            });
+                        }
+                    }
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // Flask API not available, try fallback to local JSON
+                LoginViaLocalJSON(email, password);
+            }
+            catch (Exception ex)
+            {
+                Invoke((MethodInvoker)delegate
+                {
+                    lblMsg.Text = "Login error: " + ex.Message;
+                    ResetLoadingState();
+                });
+            }
+        }
+
+        private void LoginViaLocalJSON(string email, string password)
+        {
             try
             {
                 var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
                 path = Path.GetFullPath(path);
                 if (!File.Exists(path))
                 {
-                    lblMsg.Text = "No users registered.";
+                    Invoke((MethodInvoker)delegate
+                    {
+                        lblMsg.Text = "No users registered.";
+                        ResetLoadingState();
+                    });
                     return;
                 }
                 var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 var json = File.ReadAllText(path);
                 var users = JsonSerializer.Deserialize<List<User>>(json, opts) ?? new List<User>();
-                var found = users.FirstOrDefault(u =>
-                    string.Equals(u.Email ?? "", email, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(u.Password ?? "", pass, StringComparison.Ordinal));
-                if (found == null)
+                
+                // Check if email exists
+                var userWithEmail = users.FirstOrDefault(u =>
+                    string.Equals(u.Email ?? "", email, StringComparison.OrdinalIgnoreCase));
+                
+                if (userWithEmail == null)
                 {
-                    lblMsg.Text = "Invalid email or password.";
+                    Invoke((MethodInvoker)delegate
+                    {
+                        lblMsg.Text = "Email not registered.";
+                        ResetLoadingState();
+                    });
                     return;
                 }
+                
+                // Email exists, check password
+                if (!string.Equals(userWithEmail.Password ?? "", password, StringComparison.Ordinal))
+                {
+                    Invoke((MethodInvoker)delegate
+                    {
+                        lblMsg.Text = "Incorrect password.";
+                        ResetLoadingState();
+                    });
+                    return;
+                }
+                
+                var found = userWithEmail;
                 AuthenticatedUser = found;
-                DialogResult = DialogResult.OK;
-                Close();
+                Invoke((MethodInvoker)delegate
+                {
+                    DialogResult = DialogResult.OK;
+                    Close();
+                });
             }
             catch (Exception ex)
             {
-                lblMsg.Text = "Login error: " + ex.Message;
+                Invoke((MethodInvoker)delegate
+                {
+                    lblMsg.Text = "Login error: " + ex.Message;
+                    ResetLoadingState();
+                });
             }
         }
     }

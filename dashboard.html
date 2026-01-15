@@ -327,7 +327,6 @@
 <div class="app">
     <div class="gallery-wrap" id="galleryWrap">
         <div id="gallery" class="gallery" aria-live="polite">
-            <!-- Cards injected here -->
         </div>
     </div>
 
@@ -350,7 +349,6 @@
 
 <button id="btnCamera" class="fab" title="Refresh gallery">⟲</button>
 
-<!-- Info Modal -->
 <div id="modal" class="modal" role="dialog" aria-modal="true">
     <div class="card" id="modalCard">
         <h2 id="modalTitle">Item Info</h2>
@@ -375,22 +373,19 @@ const modalClose = document.getElementById('modalClose');
 const btnCamera = document.getElementById('btnCamera');
 const btnLogout = document.getElementById('btnLogout');
 
-let images = []; // loaded from server or fallback
+let images = [];
 let selectedId = null;
 let selectedTag = null;
 
 async function loadImages(){
     try {
-        // Load from API - gets images from FormGallery.cs build directory
         const res = await fetch('/api/images');
         if (res.ok) {
             const data = await res.json();
-            // Handle both old format (array) and new format (object with images and available_tags)
             if (Array.isArray(data)) {
                 images = data;
             } else {
                 images = data.images || [];
-                // Store available tags for display
                 if (data.available_tags) {
                     window.availableTags = data.available_tags;
                 }
@@ -403,17 +398,14 @@ async function loadImages(){
         console.error('Error loading images from API:', e);
     }
     
-    // If API fails, show empty gallery
     renderGallery();
 }
 
 function getAllTags() {
-    // If we have available_tags from the API, use those first
     if (window.availableTags && window.availableTags.length > 0) {
         return window.availableTags;
     }
     
-    // Otherwise extract from images (fallback)
     const tagSet = new Set();
     images.forEach(img => {
         (img.tags || []).forEach(tag => tagSet.add(tag));
@@ -440,7 +432,6 @@ function renderAllTags() {
                 selectedTag = null;
                 el.classList.remove('active');
             } else {
-                // Remove active class from all tags
                 Array.from(tagList.children).forEach(t => t.classList.remove('active'));
                 selectedTag = tag;
                 el.classList.add('active');
@@ -455,7 +446,6 @@ function renderGallery(filter=''){
     galleryEl.innerHTML = '';
     const q = (filter||'').toLowerCase().trim();
     const list = images.filter(img => {
-        // Apply search filter
         if (q) {
             if (!(img.filename||'').toLowerCase().includes(q) && 
                 !(img.tags||[]).some(t=>t.toLowerCase().includes(q))) {
@@ -463,7 +453,6 @@ function renderGallery(filter=''){
             }
         }
         
-        // Apply tag filter
         if (selectedTag) {
             if (!(img.tags||[]).includes(selectedTag)) {
                 return false;
@@ -486,7 +475,6 @@ function renderGallery(filter=''){
         thumb.alt = img.filename;
         thumb.src = img.url;
         thumb.onerror = () => {
-            // If image fails to load, show placeholder
             thumb.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="160"%3E%3Crect width="200" height="160" fill="%23ddd"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3EImage not found%3C/text%3E%3C/svg%3E';
         };
         card.appendChild(thumb);
@@ -530,8 +518,6 @@ searchInput.addEventListener('keyup', (e)=> { if(e.key==='Enter') onSearch(); })
 
 function openInfo(img){
     modalTitle.textContent = img.filename;
-    
-    // Parse info text similar to FormGallery.cs
     const infoMap = {};
     if (img.info) {
         const lines = img.info.split('\n');
@@ -545,7 +531,6 @@ function openInfo(img){
         });
     }
     
-    // Extract fields like FormGallery.cs does
     const uploader = infoMap['Uploader'] || 'N/A';
     const gradeSection = infoMap['GradeSection'] || 'N/A';
     const location = infoMap['Location'] || 'N/A';
@@ -586,7 +571,6 @@ modalClose.addEventListener('click', ()=> modal.style.display='none');
 modal.addEventListener('click', (e)=> { if (e.target===modal) modal.style.display='none'; });
 
 btnCamera.addEventListener('click', ()=>{
-    // Since we're just a viewer, refresh to show new images added by FormGallery
     loadImages();
 });
 
@@ -595,10 +579,8 @@ btnLogout.addEventListener('click', async ()=>{
     window.location.href = '/';
 });
 
-// initial load
 loadImages();
 
-// Auto-refresh every 5 seconds to detect new images added by FormGallery.cs
 setInterval(() => {
     loadImages();
 }, 5000);
