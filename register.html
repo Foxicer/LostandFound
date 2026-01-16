@@ -53,7 +53,7 @@
             <h2 id="register-heading">Create account</h2>
             <div class="desc">Register with your Gmail account to access the dashboard.</div>
 
-            <form id="registerForm" novalidate>
+            <form id="registerForm" method="POST" action="javascript:void(0)" novalidate>
                 <div class="form-group" aria-label="Full name">
                     <label>Full name</label>
                     <div class="name-row" aria-hidden="false">
@@ -67,6 +67,11 @@
                 <div class="form-group">
                     <label for="email">Gmail address</label>
                     <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@gmail.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="gradeSection">Grade and Section</label>
+                    <input type="text" id="gradeSection" name="gradeSection" placeholder="e.g., Grade 10-A">
                 </div>
 
                 <div class="form-group">
@@ -117,6 +122,7 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     showError('');
     setLoading(true);
 
@@ -124,6 +130,7 @@
     const middle = (document.getElementById('middleName').value || '').trim();
     const last = (document.getElementById('lastName').value || '').trim();
     const email = (document.getElementById('email').value || '').trim().toLowerCase();
+    const gradeSection = (document.getElementById('gradeSection').value || '').trim();
     const pass = document.getElementById('password').value || '';
     const confirm = document.getElementById('confirmPassword').value || '';
 
@@ -139,7 +146,7 @@
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first_name: first, middle_name: middle, last_name: last, email, password: pass })
+        body: JSON.stringify({ first_name: first, middle_name: middle, last_name: last, email, grade_section: gradeSection, password: pass, confirm_password: confirm })
       });
 
       if (res.ok) {
@@ -186,7 +193,15 @@
         showError('Registration failed: ' + (e && e.message ? e.message : e));
         setLoading(false);
       }
-  }, { capture: true });
+    }
+  }, false);
+
+  // Also handle button click directly
+  registerBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  }, false);
 })();
     </script>
 </body>

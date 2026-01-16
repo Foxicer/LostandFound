@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory, session, redirec
 import os
 import json
 from werkzeug.utils import secure_filename
-from google_sheets_manager import GoogleSheetsManager
+from supabase_manager import SupabaseManager
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
@@ -13,28 +13,20 @@ if os.environ.get('REPLIT_DEPLOYMENT') == '1':
 else:
     app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-for-local-testing-only')
 
-# Google Sheets configuration
-SPREADSHEET_ID = os.environ.get('GOOGLE_SHEETS_ID')  # You'll set this in Step 6
-CREDENTIALS_FILE = 'credentials.json'  # Your service account JSON key
+# Supabase configuration
+print(f"DEBUG: SUPABASE_URL = {os.environ.get('SUPABASE_URL', 'NOT SET')}")
 
-# Debug: Check what we have
-print(f"DEBUG: CREDENTIALS_FILE exists? {os.path.exists(CREDENTIALS_FILE)}")
-print(f"DEBUG: SPREADSHEET_ID = {SPREADSHEET_ID}")
-
-# Initialize Google Sheets manager (we'll handle errors gracefully)
-gs_manager = None
+# Initialize Supabase manager
+db_manager = None
 try:
-    if os.path.exists(CREDENTIALS_FILE) and SPREADSHEET_ID:
-        print("DEBUG: Attempting to connect to Google Sheets...")
-        gs_manager = GoogleSheetsManager(CREDENTIALS_FILE, SPREADSHEET_ID)
-        print("DEBUG: Successfully initialized Google Sheets!")
-    else:
-        print("DEBUG: Skipping Google Sheets (missing credentials or ID)")
+    print("DEBUG: Attempting to connect to Supabase...")
+    db_manager = SupabaseManager()
+    print("DEBUG: Successfully initialized Supabase!")
 except Exception as e:
-    print(f"⚠ Warning: Could not initialize Google Sheets: {e}")
+    print(f"❌ Error: Could not initialize Supabase: {e}")
     import traceback
     traceback.print_exc()
-    print("  Falling back to local JSON storage")
+    print("  Please set SUPABASE_URL and SUPABASE_KEY environment variables")
 
 USERS_FILE = 'users.json'
 UPLOAD_FOLDER = 'uploads/profile_pictures'
@@ -51,35 +43,27 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def load_users():
-    """Load users from Google Sheets if available, otherwise from JSON"""
-    # Try Google Sheets first
-    if gs_manager:
-        try:
-            print("DEBUG: Attempting to load users from Google Sheets...")
-            data = gs_manager.read_data('users')
-            if data:
-                print(f"DEBUG: Loaded {len(data)} users from Google Sheets")
-                for u in data:
-                    print(f"   - {u.get('email', 'NO EMAIL')}")
-                return data
-            else:
-                print("DEBUG: Google Sheets returned empty data, falling back to JSON")
-        except Exception as e:
-            print(f"ERROR: Error reading from Google Sheets: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    # Fallback to JSON
-    print("DEBUG: Loading users from local JSON file...")
-    if not os.path.exists(USERS_FILE):
-        print(f"DEBUG: {USERS_FILE} does not exist")
+    """Load users from SQLite"""
+    if not db_manager:
+        print("ERROR: Database manager not initialized")
         return []
-    with open(USERS_FILE, 'r') as f:
-        data = json.load(f)
-        print(f"DEBUG: Loaded {len(data)} users from JSON")
-        for u in data:
-            print(f"   - {u.get('email', 'NO EMAIL')}")
-        return data
+    
+    try:
+        print("DEBUG: Attempting to load users from SQLite...")
+        data = db_manager.read_data('users')
+        if data:
+            print(f"DEBUG: Loaded {len(data)} users from SQLite")
+            for u in data:
+                print(f"   - {u.get('email', 'NO EMAIL')}")
+            return data
+        else:
+            print("DEBUG: SQLite returned empty data")
+            return []
+    except Exception as e:
+        print(f"ERROR: Error reading from SQLite: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 def get_full_name(user):
     """Get full name from user object"""
@@ -97,20 +81,18 @@ def combine_name(first_name, middle_name, last_name):
     return ' '.join(parts) if parts else None
 
 def save_users(users):
-    """Save users to Google Sheets if available, otherwise to JSON"""
-    # Try Google Sheets first
-    if gs_manager:
-        try:
-            gs_manager.write_data(users, 'users')
-            print("✓ Saved to Google Sheets")
-            return
-        except Exception as e:
-            print(f"Error writing to Google Sheets: {e}")
+    """Save users to SQLite"""
+    if not db_manager:
+        print("ERROR: Database manager not initialized")
+        return
     
-    # Fallback to JSON
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f, indent=2)
-    print("✓ Saved to local JSON")
+    try:
+        db_manager.write_data(users, 'users')
+        print("✓ Saved to SQLite")
+    except Exception as e:
+        print(f"Error writing to SQLite: {e}")
+        import traceback
+        traceback.print_exc()
 
 @app.route('/')
 def index():
@@ -312,19 +294,19 @@ def upload_profile_picture():
         users = load_users()
         for user in users:
             if user.get('email', '').lower() == session['email'].lower():
-                # Try to save with base64 encoding if Google Sheets is available
-                if gs_manager:
+                # Try to save with base64 encoding if SQLite is available
+                if db_manager:
                     try:
                         import base64
                         with open(filepath, 'rb') as img_file:
                             image_data = base64.b64encode(img_file.read()).decode('utf-8')
                         user['profile_picture'] = image_data
-                        print(f"✓ Stored profile picture as base64 in Google Sheets ({len(image_data)} chars)")
+                        print(f"✓ Stored profile picture as base64 in SQLite ({len(image_data)} chars)")
                     except Exception as e:
                         print(f"Warning: Could not encode to base64: {e}")
                         user['profile_picture'] = f"/uploads/profile_pictures/{filename}"
                 else:
-                    # Fallback to file path if no Google Sheets
+                    # Fallback to file path if no database
                     user['profile_picture'] = f"/uploads/profile_pictures/{filename}"
                 
                 save_users(users)
@@ -489,8 +471,8 @@ def log_captured_image():
                 user_name = u.get('name', 'Unknown')
                 break
         
-        # Try to log to Google Sheets
-        if gs_manager:
+        # Try to log to SQLite
+        if db_manager:
             try:
                 # Read and encode image as base64 if file exists
                 image_data = None
@@ -503,7 +485,7 @@ def log_captured_image():
                     except Exception as e:
                         print(f"Warning: Could not encode image: {e}")
                 
-                result = gs_manager.log_captured_image(
+                result = db_manager.log_captured_image(
                     filename=filename,
                     user_name=user_name,
                     tags=tags,
@@ -512,12 +494,12 @@ def log_captured_image():
                     image_data=image_data
                 )
                 if result:
-                    print(f"✓ Image logged to Google Sheets: {filename}")
+                    print(f"✓ Image logged to SQLite: {filename}")
                     return jsonify({'message': 'Image logged successfully'})
                 else:
-                    print(f"⚠ Failed to log image to Google Sheets: {filename}")
+                    print(f"⚠ Failed to log image to SQLite: {filename}")
             except Exception as e:
-                print(f"Error logging to Google Sheets: {e}")
+                print(f"Error logging to SQLite: {e}")
         
         # Fallback successful regardless (local storage already saved)
         return jsonify({'message': 'Image recorded'})
@@ -538,21 +520,21 @@ def delete_captured_image():
         return jsonify({'message': 'Filename required'}), 400
     
     try:
-        # Try to update status to deleted in Google Sheets
-        if gs_manager:
+        # Try to update status to deleted in SQLite
+        if db_manager:
             try:
-                images = gs_manager.read_data('images')
+                images = db_manager.read_data('images')
                 for img in images:
                     if img.get('filename', '') == filename:
                         img['status'] = 'deleted'
                 
                 # Write back updated images
-                result = gs_manager.write_data(images, 'images')
+                result = db_manager.write_data(images, 'images')
                 if result:
-                    print(f"✓ Image marked as deleted in Google Sheets: {filename}")
+                    print(f"✓ Image marked as deleted in SQLite: {filename}")
                     return jsonify({'message': 'Image deleted successfully'})
             except Exception as e:
-                print(f"Error updating Google Sheets: {e}")
+                print(f"Error updating SQLite: {e}")
         
         return jsonify({'message': 'Deleted'})
     
@@ -572,21 +554,21 @@ def restore_captured_image():
         return jsonify({'message': 'Filename required'}), 400
     
     try:
-        # Try to update status to active in Google Sheets
-        if gs_manager:
+        # Try to update status to active in SQLite
+        if db_manager:
             try:
-                images = gs_manager.read_data('images')
+                images = db_manager.read_data('images')
                 for img in images:
                     if img.get('filename', '') == filename:
                         img['status'] = 'active'
                 
                 # Write back updated images
-                result = gs_manager.write_data(images, 'images')
+                result = db_manager.write_data(images, 'images')
                 if result:
-                    print(f"✓ Image restored to active in Google Sheets: {filename}")
+                    print(f"✓ Image restored to active in SQLite: {filename}")
                     return jsonify({'message': 'Image restored successfully'})
             except Exception as e:
-                print(f"Error updating Google Sheets: {e}")
+                print(f"Error updating SQLite: {e}")
         
         return jsonify({'message': 'Restored'})
     
