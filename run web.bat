@@ -1,0 +1,1 @@
+$env:GOOGLE_SHEETS_ID = "1DVU0dggyukStQyidy7SYaSyoVmE5Z5gkALYS5pLGjQ4"; python app.py
