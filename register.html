@@ -181,18 +181,9 @@
         return;
       }
     } catch (ex) {
-      try {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        if (users.find(u => (u.email||'').toLowerCase() === email)) { showError('Email already registered (local)'); setLoading(false); return; }
-        users.push({ name: full, username: full, email, password: pass });
-        localStorage.setItem('users', JSON.stringify(users));
-        localStorage.setItem('currentUser', JSON.stringify({ name: full, email }));
-        localStorage.setItem('currentUserEmail', email);
-        window.location.href = 'dashboard.html';
-      } catch (e) {
-        showError('Registration failed: ' + (e && e.message ? e.message : e));
-        setLoading(false);
-      }
+      console.error('Registration error:', ex);
+      showError('Registration failed: ' + (ex && ex.message ? ex.message : ex));
+      setLoading(false);
     }
   }, false);
 

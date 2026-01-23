@@ -43,24 +43,20 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def load_users():
-    """Load users from SQLite"""
-    if not db_manager:
-        print("ERROR: Database manager not initialized")
-        return []
-    
+    """Load users from users.json"""
     try:
-        print("DEBUG: Attempting to load users from SQLite...")
-        data = db_manager.read_data('users')
-        if data:
-            print(f"DEBUG: Loaded {len(data)} users from SQLite")
+        if os.path.exists(USERS_FILE):
+            with open(USERS_FILE, 'r') as f:
+                data = json.load(f)
+            print(f"DEBUG: Loaded {len(data)} users from {USERS_FILE}")
             for u in data:
                 print(f"   - {u.get('email', 'NO EMAIL')}")
             return data
         else:
-            print("DEBUG: SQLite returned empty data")
+            print(f"DEBUG: {USERS_FILE} not found, returning empty list")
             return []
     except Exception as e:
-        print(f"ERROR: Error reading from SQLite: {e}")
+        print(f"ERROR: Error reading from {USERS_FILE}: {e}")
         import traceback
         traceback.print_exc()
         return []
@@ -81,16 +77,13 @@ def combine_name(first_name, middle_name, last_name):
     return ' '.join(parts) if parts else None
 
 def save_users(users):
-    """Save users to SQLite"""
-    if not db_manager:
-        print("ERROR: Database manager not initialized")
-        return
-    
+    """Save users to users.json"""
     try:
-        db_manager.write_data(users, 'users')
-        print("✓ Saved to SQLite")
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users, f, indent=2)
+        print(f"✓ Saved to {USERS_FILE}")
     except Exception as e:
-        print(f"Error writing to SQLite: {e}")
+        print(f"Error writing to {USERS_FILE}: {e}")
         import traceback
         traceback.print_exc()
 
