@@ -18,6 +18,8 @@ namespace ReturnPoint
         private System.Windows.Forms.Timer? countdownTimer;
         private int countdownValue;
         private string? selectedDeviceMoniker;
+        private PictureBox? logoPictureBox;
+        private Bitmap? backgroundBitmap;
 
         public delegate void PhotoSavedHandler(string filePath);
         public event PhotoSavedHandler? PhotoSaved;
@@ -30,6 +32,7 @@ namespace ReturnPoint
             this.Size = new Size(900, 700);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.BackColor = Theme.GetBackgroundTeal();
+            SetLogoTransparentBackground();
 
             saveFolder = string.IsNullOrWhiteSpace(folderPath)
                 ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages")
@@ -62,6 +65,7 @@ namespace ReturnPoint
 
             this.Load += FormCamera_Load;
             this.FormClosing += FormCamera_FormClosing;
+            AddLogoCopyright();
         }
 
         private void FormCamera_Load(object? sender, EventArgs e)
@@ -348,6 +352,76 @@ namespace ReturnPoint
             }
 
             original.Dispose();
+        }
+
+        private void AddLogoCopyright()
+        {
+            try
+            {
+                string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (File.Exists(logoPath))
+                {
+                    logoPictureBox = new PictureBox
+                    {
+                        Image = Image.FromFile(logoPath),
+                        SizeMode = PictureBoxSizeMode.Zoom,
+                        Width = 40,
+                        Height = 40,
+                        BackColor = Color.Transparent,
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                    };
+                    logoPictureBox.Location = new System.Drawing.Point(ClientSize.Width - 60, ClientSize.Height - 60);
+
+                    var copyrightLabel = new Label
+                    {
+                        Text = "© ReturnPoint 2026",
+                        AutoSize = true,
+                        BackColor = Color.Transparent,
+                        ForeColor = Theme.DarkGray,
+                        Font = new System.Drawing.Font("Segoe UI", 8F),
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                    };
+                    copyrightLabel.Location = new System.Drawing.Point(ClientSize.Width - 140, ClientSize.Height - 30);
+
+                    this.Controls.Add(logoPictureBox);
+                    this.Controls.Add(copyrightLabel);
+                }
+            }
+            catch { /* Logo not found, continue without it */ }
+        }
+
+        private void SetLogoTransparentBackground()
+        {
+            try
+            {
+                string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (File.Exists(logoPath))
+                {
+                    Bitmap originalImage = new Bitmap(logoPath);
+                    Bitmap transparentBitmap = new Bitmap(originalImage.Width, originalImage.Height);
+                    transparentBitmap.MakeTransparent();
+                    
+                    for (int y = 0; y < originalImage.Height; y++)
+                    {
+                        for (int x = 0; x < originalImage.Width; x++)
+                        {
+                            Color originalColor = originalImage.GetPixel(x, y);
+                            int newAlpha = (int)(originalColor.A * 0.35);
+                            Color transparentColor = Color.FromArgb(newAlpha, originalColor.R, originalColor.G, originalColor.B);
+                            transparentBitmap.SetPixel(x, y, transparentColor);
+                        }
+                    }
+                    
+                    backgroundBitmap = transparentBitmap;
+                    this.BackgroundImage = backgroundBitmap;
+                    this.BackgroundImageLayout = ImageLayout.Stretch;
+                    originalImage.Dispose();
+                }
+            }
+            catch (Exception ex) 
+            { 
+                System.Diagnostics.Debug.WriteLine($"Error loading logo background: {ex.Message}");
+            }
         }
 
         private void FormCamera_FormClosing(object? sender, FormClosingEventArgs e)

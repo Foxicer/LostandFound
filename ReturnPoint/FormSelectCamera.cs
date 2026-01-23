@@ -1,6 +1,8 @@
 using System;
 using System.Windows.Forms;
 using AForge.Video.DirectShow;
+using System.IO;
+using System.Drawing;
 
 namespace ReturnPoint
 {
@@ -10,6 +12,8 @@ namespace ReturnPoint
         private Button btnSelect;
         private Button btnCancel;
         private Label lblTitle;
+        private PictureBox? logoPictureBox;
+        private Bitmap? backgroundBitmap;
         public string? SelectedDeviceMoniker { get; private set; }
 
         public FormSelectCamera(FilterInfoCollection devices)
@@ -21,6 +25,10 @@ namespace ReturnPoint
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.BackColor = Theme.GetBackgroundTeal();
+            SetLogoTransparentBackground();
+            
+            // Add logo copyright
+            AddLogoCopyright();
 
             lblTitle = new Label
             {
@@ -94,7 +102,80 @@ namespace ReturnPoint
             this.Controls.Add(deviceListBox);
             this.Controls.Add(btnSelect);
             this.Controls.Add(btnCancel);
+        }
+        
+        private void AddLogoCopyright()
+        {
+            try
+            {
+                string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (File.Exists(logoPath))
+                {
+                    logoPictureBox = new PictureBox
+                    {
+                        Image = Image.FromFile(logoPath),
+                        SizeMode = PictureBoxSizeMode.Zoom,
+                        Width = 30,
+                        Height = 30,
+                        BackColor = Color.Transparent,
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                    };
+                    logoPictureBox.Location = new System.Drawing.Point(this.ClientSize.Width - 45, this.ClientSize.Height - 45);
+                    
+                    var copyrightLabel = new Label
+                    {
+                        Text = "© 2026",
+                        AutoSize = true,
+                        BackColor = Color.Transparent,
+                        ForeColor = Theme.DarkGray,
+                        Font = new System.Drawing.Font("Segoe UI", 7F),
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                    };
+                    copyrightLabel.Location = new System.Drawing.Point(this.ClientSize.Width - 55, this.ClientSize.Height - 25);
+                    
+                    this.Controls.Add(logoPictureBox);
+                    this.Controls.Add(copyrightLabel);
+                }
+            }
+            catch { /* Logo not found, continue without it */ }
+        }
 
+        private void SetLogoTransparentBackground()
+        {
+            try
+            {
+                string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (File.Exists(logoPath))
+                {
+                    Bitmap originalImage = new Bitmap(logoPath);
+                    Bitmap transparentBitmap = new Bitmap(originalImage.Width, originalImage.Height);
+                    transparentBitmap.MakeTransparent();
+                    
+                    for (int y = 0; y < originalImage.Height; y++)
+                    {
+                        for (int x = 0; x < originalImage.Width; x++)
+                        {
+                            Color originalColor = originalImage.GetPixel(x, y);
+                            int newAlpha = (int)(originalColor.A * 0.35);
+                            Color transparentColor = Color.FromArgb(newAlpha, originalColor.R, originalColor.G, originalColor.B);
+                            transparentBitmap.SetPixel(x, y, transparentColor);
+                        }
+                    }
+                    
+                    backgroundBitmap = transparentBitmap;
+                    this.BackgroundImage = backgroundBitmap;
+                    this.BackgroundImageLayout = ImageLayout.Stretch;
+                    originalImage.Dispose();
+                }
+            }
+            catch (Exception ex) 
+            { 
+                System.Diagnostics.Debug.WriteLine($"Error loading logo background: {ex.Message}");
+            }
+        }
+
+        private void InitializeComponent()
+        {
             this.AcceptButton = btnSelect;
             this.CancelButton = btnCancel;
         }

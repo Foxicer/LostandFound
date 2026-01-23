@@ -25,6 +25,16 @@ namespace ReturnPoint
 
             using (var login = new FormLogin())
             {
+                try
+                {
+                    string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                    if (System.IO.File.Exists(logoPath))
+                    {
+                        login.Icon = new System.Drawing.Icon(logoPath);
+                    }
+                }
+                catch { /* Logo not found, continue without icon */ }
+
                 var dr = login.ShowDialog();
                 if (dr != DialogResult.OK || login.AuthenticatedUser == null)
                 {
@@ -48,11 +58,31 @@ namespace ReturnPoint
                 
                 if (string.Equals(auth.Role ?? "user", "admin", StringComparison.OrdinalIgnoreCase))
                 {
-                    Application.Run(new FormGalleryAdmin());
+                    var adminForm = new FormGalleryAdmin();
+                    try
+                    {
+                        string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                        if (System.IO.File.Exists(logoPath))
+                        {
+                            adminForm.Icon = new System.Drawing.Icon(logoPath);
+                        }
+                    }
+                    catch { /* Logo not found, continue without icon */ }
+                    Application.Run(adminForm);
                 }
                 else
                 {
-                    Application.Run(new FormGallery());
+                    var galleryForm = new FormGallery();
+                    try
+                    {
+                        string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                        if (System.IO.File.Exists(logoPath))
+                        {
+                            galleryForm.Icon = new System.Drawing.Icon(logoPath);
+                        }
+                    }
+                    catch { /* Logo not found, continue without icon */ }
+                    Application.Run(galleryForm);
                 }
             }
         }

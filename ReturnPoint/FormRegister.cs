@@ -22,6 +22,8 @@ namespace ReturnPoint
         private Button btnCancel;
         private Label lblMsg;
         private Panel panelMain;
+        private PictureBox? logoPictureBox;
+        private Bitmap? backgroundBitmap;
         public string RegisteredEmail { get; private set; } = "";
         public FormRegister()
         {
@@ -33,6 +35,10 @@ namespace ReturnPoint
             panelMain.AutoScroll = true;
             
             Controls.Add(panelMain);
+            
+            // Add logo copyright
+            AddLogoCopyright();
+            SetLogoTransparentBackground();
             
             Text = "Create Account - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
@@ -199,7 +205,7 @@ namespace ReturnPoint
             var middle = txtMiddle.Text?.Trim() ?? "";
             var last = txtLast.Text?.Trim() ?? "";
             var email = txtEmail.Text?.Trim();
-            var grade = txtGradeSection.Text?.Trim();
+            var grade = txtGradeSection.Text?.Trim() ?? "";
             var pass = txtPassword.Text ?? "";
             var confirm = txtConfirm.Text ?? "";
             
@@ -389,7 +395,7 @@ namespace ReturnPoint
                 }
                 foreach (var u in users)
                 {
-                    if (u.TryGetValue("email", out var eVal) && eVal?.ToString().Equals(email, StringComparison.OrdinalIgnoreCase) == true)
+                    if (u.TryGetValue("email", out var eVal) && eVal?.ToString()?.Equals(email, StringComparison.OrdinalIgnoreCase) == true)
                     {
                         Invoke((MethodInvoker)delegate
                         {
@@ -406,7 +412,7 @@ namespace ReturnPoint
                     ["email"] = email,
                     ["grade_section"] = string.IsNullOrWhiteSpace(gradeSection) ? "N/A" : gradeSection,
                     ["password"] = password,
-                    ["profile_picture"] = null,
+                    ["profile_picture"] = (object?)null ?? "",
                     ["role"] = "user"
                 };
                 users.Add(newUser);
@@ -428,6 +434,76 @@ namespace ReturnPoint
                     lblMsg.Visible = true;
                     ResetLoadingState();
                 });
+            }
+        }
+        
+        private void AddLogoCopyright()
+        {
+            try
+            {
+                string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (File.Exists(logoPath))
+                {
+                    logoPictureBox = new PictureBox
+                    {
+                        Image = Image.FromFile(logoPath),
+                        SizeMode = PictureBoxSizeMode.Zoom,
+                        Width = 40,
+                        Height = 40,
+                        BackColor = Color.Transparent,
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                    };
+                    logoPictureBox.Location = new System.Drawing.Point(this.ClientSize.Width - 60, this.ClientSize.Height - 60);
+                    
+                    var copyrightLabel = new Label
+                    {
+                        Text = "© ReturnPoint 2026",
+                        AutoSize = true,
+                        BackColor = Color.Transparent,
+                        ForeColor = Theme.DarkGray,
+                        Font = new System.Drawing.Font("Segoe UI", 8F),
+                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                    };
+                    copyrightLabel.Location = new System.Drawing.Point(this.ClientSize.Width - 140, this.ClientSize.Height - 30);
+                    
+                    this.Controls.Add(logoPictureBox);
+                    this.Controls.Add(copyrightLabel);
+                }
+            }
+            catch { /* Logo not found, continue without it */ }
+        }
+
+        private void SetLogoTransparentBackground()
+        {
+            try
+            {
+                string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (File.Exists(logoPath))
+                {
+                    Bitmap originalImage = new Bitmap(logoPath);
+                    Bitmap transparentBitmap = new Bitmap(originalImage.Width, originalImage.Height);
+                    transparentBitmap.MakeTransparent();
+                    
+                    for (int y = 0; y < originalImage.Height; y++)
+                    {
+                        for (int x = 0; x < originalImage.Width; x++)
+                        {
+                            Color originalColor = originalImage.GetPixel(x, y);
+                            int newAlpha = (int)(originalColor.A * 0.35);
+                            Color transparentColor = Color.FromArgb(newAlpha, originalColor.R, originalColor.G, originalColor.B);
+                            transparentBitmap.SetPixel(x, y, transparentColor);
+                        }
+                    }
+                    
+                    backgroundBitmap = transparentBitmap;
+                    this.BackgroundImage = backgroundBitmap;
+                    this.BackgroundImageLayout = ImageLayout.Stretch;
+                    originalImage.Dispose();
+                }
+            }
+            catch (Exception ex) 
+            { 
+                System.Diagnostics.Debug.WriteLine($"Error loading logo background: {ex.Message}");
             }
         }
     }
