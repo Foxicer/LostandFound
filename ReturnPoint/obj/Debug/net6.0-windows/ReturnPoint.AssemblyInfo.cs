@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReturnPoint")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d9b388e2708ae1285d426fc975789ab49ae0b88f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ba94e9124065175cc587bd0f9b16c59eae50221d")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReturnPoint")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReturnPoint")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

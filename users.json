@@ -108,5 +108,13 @@
     "password": "Password",
     "profile_picture": null,
     "role": "Student"
+  },
+  {
+    "name": "jayden Daza Tordesillas",
+    "email": "jaydenmeganzsx@gmail.com",
+    "grade_section": "12 - PYTHON",
+    "password": "Password",
+    "profile_picture": null,
+    "role": "user"
   }
 ]
