@@ -5,7 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Register</title>
     <style>
-        :root{
+        .header{
+  display: flex;
+  align-items: center;   
+  gap: 12px;             
+  margin-bottom: 16px;
+}
+
+.header img{
+  width: 100px;           
+  height: auto;
+}
+
+.header h2{
+  margin: 0;
+}
+      :root{
             --bg:#00ffdd;
             --card:#ffffff;
             --accent:#2196f3;
@@ -47,8 +62,12 @@
     <div class="center-wrap">
         <div class="auth-card" role="main" aria-labelledby="register-heading">
             <div class="brand" aria-hidden="true">
+              <div class="header">
+                <img src="logo.png" alt="System logo">
                 <div class="brand-title">Lost & Found</div>
             </div>
+              </div>
+
 
             <h2 id="register-heading">Create account</h2>
             <div class="desc">Register with your Gmail account to access the dashboard.</div>
