@@ -123,6 +123,41 @@ namespace ReturnPoint
                 TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
                 ForeColor = Theme.DarkGray
             };
+            PictureBox logoLeft = new PictureBox
+            {
+            Image = Image.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png")),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            Width = 60,
+            Height = 80,
+            Margin = new Padding(0, 0, 12, 0),
+            BackColor = Color.Transparent
+           };
+           logoLeft.Size = new Size(150,100 );
+           logoLeft.MinimumSize = logoLeft.Size;
+var titlePanel = new FlowLayoutPanel
+{
+    FlowDirection = FlowDirection.LeftToRight,
+    AutoSize = true,
+    Width = 400,
+    Height = 100,   
+    WrapContents = false,
+    BackColor = Color.Transparent,
+    Margin = new Padding(0, 0, 0, 10)
+};
+var textPanel = new FlowLayoutPanel
+{
+     FlowDirection = FlowDirection.TopDown,
+    AutoSize = true,
+    WrapContents = false,
+    BackColor = Color.Transparent,
+    Margin = new Padding(0, 10, 0, 0)
+};
+
+textPanel.Controls.Add(lblTitle);
+textPanel.Controls.Add(lblSubtitle);
+
+titlePanel.Controls.Add(logoLeft);
+titlePanel.Controls.Add(textPanel);
             var lblEmail = new Label 
             { 
                 Text = "Email Address", 
@@ -165,8 +200,7 @@ namespace ReturnPoint
                 BackColor = Theme.GetBackgroundTeal()
             };
             
-            centerPanel.Controls.Add(lblTitle);
-            centerPanel.Controls.Add(lblSubtitle);
+            centerPanel.Controls.Add(titlePanel);
             centerPanel.Controls.Add(new Label { Height = 30 });
             centerPanel.Controls.Add(lblEmail);
             centerPanel.Controls.Add(new Label { Height = 6 });
