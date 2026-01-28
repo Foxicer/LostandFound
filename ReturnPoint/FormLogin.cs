@@ -125,13 +125,23 @@ namespace ReturnPoint
             };
             PictureBox logoLeft = new PictureBox
             {
-            Image = Image.FromFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png")),
             SizeMode = PictureBoxSizeMode.Zoom,
             Width = 60,
             Height = 80,
             Margin = new Padding(0, 0, 12, 0),
             BackColor = Color.Transparent
            };
+           
+           // Load logo image if it exists
+           try
+           {
+               string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+               if (File.Exists(logoPath))
+               {
+                   logoLeft.Image = Image.FromFile(logoPath);
+               }
+           }
+           catch { /* Logo not found, continue without it */ }
            logoLeft.Size = new Size(150,100 );
            logoLeft.MinimumSize = logoLeft.Size;
 var titlePanel = new FlowLayoutPanel
