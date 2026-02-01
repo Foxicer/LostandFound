@@ -395,80 +395,11 @@ namespace ReturnPoint
                 })
                 .OrderByDescending(x => x.Date)
                 .ToList();
-            
-            // Group by month and week
-            var groupedByMonth = list.GroupBy(x => new { x.Date.Year, x.Date.Month })
-                .OrderByDescending(g => new DateTime(g.Key.Year, g.Key.Month, 1));
-            
-            foreach (var monthGroup in groupedByMonth)
+            foreach (var item in list)
             {
-                // Add month header
-                var monthDate = new DateTime(monthGroup.Key.Year, monthGroup.Key.Month, 1);
-                var monthHeaderPanel = new Panel
-                {
-                    Height = 40,
-                    Width = galleryPanel.Width - 60,
-                    BackColor = Theme.TealGreen,
-                    Margin = new Padding(0, 20, 0, 10),
-                    Padding = new Padding(10)
-                };
-                var monthLabel = new Label
-                {
-                    Text = monthDate.ToString("MMMM yyyy"),
-                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                    ForeColor = Color.White,
-                    Dock = DockStyle.Fill,
-                    TextAlign = ContentAlignment.MiddleLeft
-                };
-                monthHeaderPanel.Controls.Add(monthLabel);
-                monthHeaderPanel.MaximumSize = new Size(galleryPanel.Width - 60, 40);
-                galleryPanel.Controls.Add(monthHeaderPanel);
-                
-                // Group by week within the month
-                var groupedByWeek = monthGroup.GroupBy(x =>
-                {
-                    var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
-                    return cal.GetWeekOfYear(x.Date, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
-                }).OrderByDescending(g => g.Key);
-                
-                foreach (var weekGroup in groupedByWeek)
-                {
-                    var firstDayOfWeek = monthGroup.First(x =>
-                    {
-                        var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
-                        return cal.GetWeekOfYear(x.Date, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Sunday) == weekGroup.Key;
-                    }).Date;
-                    
-                    // Add week header
-                    var weekHeaderPanel = new Panel
-                    {
-                        Height = 35,
-                        Width = galleryPanel.Width - 90,
-                        BackColor = Theme.MediumTeal,
-                        Margin = new Padding(20, 15, 0, 8),
-                        Padding = new Padding(10)
-                    };
-                    var weekEndDate = firstDayOfWeek.AddDays(6);
-                    var weekLabel = new Label
-                    {
-                        Text = $"Week {weekGroup.Key}: {firstDayOfWeek:MMM d} - {weekEndDate:MMM d}",
-                        Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                        ForeColor = Color.White,
-                        Dock = DockStyle.Fill,
-                        TextAlign = ContentAlignment.MiddleLeft
-                    };
-                    weekHeaderPanel.Controls.Add(weekLabel);
-                    weekHeaderPanel.MaximumSize = new Size(galleryPanel.Width - 90, 35);
-                    galleryPanel.Controls.Add(weekHeaderPanel);
-                    
-                    // Add images for this week
-                    foreach (var item in weekGroup.OrderByDescending(x => x.Date))
-                    {
-                        bool claimed = File.Exists(Path.Combine(Path.GetDirectoryName(item.File),
-                            Path.GetFileNameWithoutExtension(item.File) + "_claim.txt"));
-                        AddImageToGallery(item.File, claimed);
-                    }
-                }
+                bool claimed = File.Exists(Path.Combine(Path.GetDirectoryName(item.File),
+                    Path.GetFileNameWithoutExtension(item.File) + "_claim.txt"));
+                AddImageToGallery(item.File, claimed);
             }
         }
         private bool TryGetDateFromInfo(string imageFile, out DateTime when)
@@ -506,9 +437,7 @@ namespace ReturnPoint
         private void AddImageToGallery(string filePath, bool alreadyClaimed = false, UploaderInfo? uploader = null)
         {
             if (!File.Exists(filePath)) return;
-            try
-            {
-                Image img = Image.FromFile(filePath);
+            Image img = Image.FromFile(filePath);
             int displayWidth = 200; 
             int displayHeight = (int)((double)img.Height / img.Width * displayWidth);
             var card = new RoundedPanel
@@ -714,11 +643,6 @@ namespace ReturnPoint
             card.Controls.Add(pic);
             card.Controls.Add(infoBtn);
              galleryPanel.Controls.Add(card);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Could not load image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
         private void SelectCard(Panel card)
         {

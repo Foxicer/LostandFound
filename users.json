@@ -116,13 +116,5 @@
     "password": "Password",
     "profile_picture": null,
     "role": "user"
-  },
-  {
-    "name": "sa sa sa",
-    "email": "sasasa@gmail.com",
-    "grade_section": "12-Python",
-    "password": "sasasa",
-    "profile_picture": "",
-    "role": "user"
   }
 ]
