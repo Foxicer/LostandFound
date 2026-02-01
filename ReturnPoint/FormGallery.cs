@@ -437,7 +437,9 @@ namespace ReturnPoint
         private void AddImageToGallery(string filePath, bool alreadyClaimed = false, UploaderInfo? uploader = null)
         {
             if (!File.Exists(filePath)) return;
-            Image img = Image.FromFile(filePath);
+            try
+            {
+                Image img = Image.FromFile(filePath);
             int displayWidth = 200; 
             int displayHeight = (int)((double)img.Height / img.Width * displayWidth);
             var card = new RoundedPanel
@@ -643,6 +645,11 @@ namespace ReturnPoint
             card.Controls.Add(pic);
             card.Controls.Add(infoBtn);
              galleryPanel.Controls.Add(card);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not load image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
         private void SelectCard(Panel card)
         {
