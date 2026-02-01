@@ -11,7 +11,7 @@ namespace ReturnPoint
     public class FormGalleryAdmin : Form
     {
         private Panel outerPanel;
-        private FlowLayoutPanel galleryPanel;
+        private TableLayoutPanel galleryTable;
         private Panel rightPanel;
         private ComboBox cbViewMode;
         private Label lblSelectedFile;
@@ -28,6 +28,8 @@ namespace ReturnPoint
         private Panel selectedCard;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
+        private const int COLUMNS = 5;
+        private const int IMAGE_SIZE = 220;
         public FormGalleryAdmin()
         {
             Text = "Gallery Admin - ReturnPoint";
@@ -47,22 +49,24 @@ namespace ReturnPoint
                 BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
                 BackgroundImageLayout = ImageLayout.Stretch
             };
-            galleryPanel = new FlowLayoutPanel
+            
+            galleryTable = new TableLayoutPanel
             {
+                ColumnCount = COLUMNS,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = true,
-                BackColor = Theme.GetBackgroundTeal(),
                 Padding = new Padding(30, 20, 30, 20),
-                Location = new Point(0, 0)
+                BackColor = Theme.GetBackgroundTeal(),
+                Dock = DockStyle.Top
             };
-            int cardWidth = 220;
-            int cardHorizontalMargin = 30;
-            int columns = 4;
-            int totalColumnWidth = columns * (cardWidth + cardHorizontalMargin);
-            galleryPanel.MaximumSize = new Size(totalColumnWidth + galleryPanel.Padding.Left + galleryPanel.Padding.Right, 0);
-            outerPanel.Controls.Add(galleryPanel);
+            
+            // Set column styles
+            for (int i = 0; i < COLUMNS; i++)
+            {
+                galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            }
+            
+            outerPanel.Controls.Add(galleryTable);
             rightPanel = new Panel
             {
                 Dock = DockStyle.Right,
@@ -273,17 +277,115 @@ namespace ReturnPoint
         }
         private void LoadImages(bool showDeleted)
         {
-            galleryPanel.Controls.Clear();
+            galleryTable.Controls.Clear();
+            galleryTable.RowCount = 0;
             selectedCard = null;
             lblSelectedFile.Text = "Selected: (none)";
             lblDateAdded.Text = "Date Added: N/A";
             btnRestore.Enabled = false;
             btnDelete.Enabled = true;
             btnPermanentlyDelete.Enabled = false;
+            
             string folder = showDeleted ? deletedFolder : saveFolder;
             if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-            string[] files = Directory.GetFiles(folder, "*.jpg").OrderByDescending(f => File.GetCreationTime(f)).ToArray();
-            foreach (var f in files) AddImageToGalleryAdmin(f, showDeleted);
+            
+            string[] files = Directory.GetFiles(folder, "*.jpg").ToArray();
+            if (files.Length == 0) return;
+            
+            var list = files.Select(f => new { File = f, Date = File.GetCreationTime(f) })
+                .OrderByDescending(x => x.Date)
+                .ToList();
+            
+            int columnIndex = 0;
+            int rowIndex = 0;
+            
+            foreach (var item in list)
+            {
+                if (columnIndex == 0)
+                {
+                    galleryTable.RowCount++;
+                }
+                
+                try
+                {
+                    string filePath = item.File;
+                    Image img;
+                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        fs.CopyTo(ms);
+                        img = Image.FromStream(ms);
+                    }
+                    
+                    var card = new Panel
+                    {
+                        Width = IMAGE_SIZE,
+                        Height = IMAGE_SIZE + 80,
+                        BackColor = Theme.MediumTeal,
+                        Margin = new Padding(10),
+                        Padding = new Padding(5),
+                        BorderStyle = BorderStyle.FixedSingle,
+                        Tag = filePath,
+                        Cursor = Cursors.Hand
+                    };
+                    
+                    PictureBox pic = new PictureBox
+                    {
+                        Image = img,
+                        SizeMode = PictureBoxSizeMode.Zoom,
+                        Width = IMAGE_SIZE - 10,
+                        Height = IMAGE_SIZE - 50,
+                        Cursor = Cursors.Hand,
+                        Dock = DockStyle.Top
+                    };
+                    
+                    Label lblDate = new Label
+                    {
+                        Text = item.Date.ToString("MM/dd/yyyy"),
+                        Dock = DockStyle.Top,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Font = new Font("Segoe UI", 8),
+                        ForeColor = Color.White,
+                        BackColor = Theme.DarkTeal,
+                        Height = 22
+                    };
+                    
+                    Button btnInfo = new Button
+                    {
+                        Text = "Info",
+                        Dock = DockStyle.Bottom,
+                        BackColor = Theme.AccentBlue,
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                        FlatStyle = FlatStyle.Flat,
+                        Height = 28,
+                        Cursor = Cursors.Hand
+                    };
+                    btnInfo.FlatAppearance.BorderSize = 0;
+                    
+                    card.Controls.Add(pic);
+                    card.Controls.Add(lblDate);
+                    card.Controls.Add(btnInfo);
+                    
+                    string filePath_copy = filePath;
+                    btnInfo.Click += (s, e) => ShowFileInfo(filePath_copy);
+                    pic.Click += (s, e) => SelectAdminCard(card);
+                    card.Click += (s, e) => SelectAdminCard(card);
+                    
+                    galleryTable.Controls.Add(card, columnIndex, rowIndex);
+                    
+                    columnIndex++;
+                    if (columnIndex >= COLUMNS)
+                    {
+                        columnIndex = 0;
+                        rowIndex++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading image: {ex.Message}");
+                }
+            }
         }
         private void AddImageToGalleryAdmin(string filePath, bool isDeletedView)
         {
@@ -337,7 +439,6 @@ namespace ReturnPoint
             btnInfo.Click += (s, e) => ShowFileInfo(filePath);
             card.Controls.Add(pic);
             card.Controls.Add(btnInfo);
-            galleryPanel.Controls.Add(card);
         }
         private void SelectAdminCard(Panel card)
         {

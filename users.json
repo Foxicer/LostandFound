@@ -1,13 +1,19 @@
 [
   {
-    "username": "Jayden D. Tordesillas",
+    "name": "Jayden D. Tordesillas",
+    "first_name": "Jayden",
+    "middle_name": "D.",
+    "last_name": "Tordesillas",
     "email": "jaydentordesillas222@gmail.com",
     "password": "Bday033008",
     "profile_picture": null,
     "role": "admin"
   },
   {
-    "username": "UserJayden",
+    "name": "UserJayden",
+    "first_name": "",
+    "middle_name": "",
+    "last_name": "",
     "email": "discordjayden2323@gmail.com",
     "password": "Bday033008",
     "profile_picture": null,
@@ -15,6 +21,9 @@
   },
   {
     "name": "Jayden D. Tordesillas",
+    "first_name": "Jayden",
+    "middle_name": "D.",
+    "last_name": "Tordesillas",
     "email": "palestin@gmail.com",
     "grade_section": "12 - ICT",
     "password": "Password",
@@ -23,6 +32,9 @@
   },
   {
     "name": "Jayden D. Tordesillas",
+    "first_name": "Jayden",
+    "middle_name": "D.",
+    "last_name": "Tordesillas",
     "email": "ukraine@gmail.com",
     "grade_section": "12 - ICT PYTHON",
     "password": "Password",
@@ -31,6 +43,9 @@
   },
   {
     "name": "Shindaime C. Tobias",
+    "first_name": "Shindaime",
+    "middle_name": "C.",
+    "last_name": "Tobias",
     "email": "shinshin@gmail.com",
     "grade_section": "12-Python",
     "password": "D1kosasabihin",
@@ -39,6 +54,9 @@
   },
   {
     "name": "Nick Alison G. Villarias",
+    "first_name": "Nick",
+    "middle_name": "Alison",
+    "last_name": "Villarias",
     "email": "nickalisonvillarias@gmail.com",
     "grade_section": "12 ICT - Python",
     "password": "nickiscoolaf",
@@ -47,6 +65,9 @@
   },
   {
     "name": "Jayden Daza Tordesillas",
+    "first_name": "Jayden",
+    "middle_name": "Daza",
+    "last_name": "Tordesillas",
     "email": "test acc part 1",
     "grade_section": "12 - ICT PYTHON",
     "password": "Password",
@@ -55,6 +76,9 @@
   },
   {
     "name": "Jayden Daza Tordesillas",
+    "first_name": "Jayden",
+    "middle_name": "Daza",
+    "last_name": "Tordesillas",
     "email": "testaccountpart1@gmail.com",
     "grade_section": "12-ICT PYTHON",
     "password": "Password",
@@ -63,6 +87,9 @@
   },
   {
     "name": "Nick Alison Glorioso Villarias",
+    "first_name": "Nick",
+    "middle_name": "Alison Glorioso",
+    "last_name": "Villarias",
     "email": "nickalisonvillarias2@gmail.com",
     "grade_section": "12 ICT - Python",
     "password": "titetite",
@@ -71,6 +98,9 @@
   },
   {
     "name": "xean guzman rafael",
+    "first_name": "xean",
+    "middle_name": "guzman",
+    "last_name": "rafael",
     "email": "qwerty1234@gmail.com",
     "grade_section": "12-python",
     "password": "ngipen123",
@@ -79,6 +109,9 @@
   },
   {
     "name": "Yolanda Sierra Madre",
+    "first_name": "Yolanda",
+    "middle_name": "Sierra",
+    "last_name": "Madre",
     "email": "yolandamapanghe@gmail.com",
     "grade_section": "12-Python",
     "password": "bagyonguwan",
@@ -87,6 +120,9 @@
   },
   {
     "name": "xean guzman rafael",
+    "first_name": "xean",
+    "middle_name": "guzman",
+    "last_name": "rafael",
     "email": "qwerty@gmail.com",
     "grade_section": "12-python",
     "password": "ngipen123",
@@ -95,6 +131,9 @@
   },
   {
     "name": "Yohann Daza Tordesillas",
+    "first_name": "Yohann",
+    "middle_name": "Daza",
+    "last_name": "Tordesillas",
     "email": "yoann@gmail.com",
     "grade_section": "7 - Genesis",
     "password": "Password",
@@ -103,6 +142,9 @@
   },
   {
     "name": "Jayden Daza Tordesillas",
+    "first_name": "Jayden",
+    "middle_name": "Daza",
+    "last_name": "Tordesillas",
     "email": "useronly@gmail.com",
     "grade_section": "12 - PYTHON",
     "password": "Password",
@@ -111,6 +153,9 @@
   },
   {
     "name": "jayden Daza Tordesillas",
+    "first_name": "jayden",
+    "middle_name": "Daza",
+    "last_name": "Tordesillas",
     "email": "jaydenmeganzsx@gmail.com",
     "grade_section": "12 - PYTHON",
     "password": "Password",
@@ -119,6 +164,9 @@
   },
   {
     "name": "sa sa sa",
+    "first_name": "sa",
+    "middle_name": "sa",
+    "last_name": "sa",
     "email": "sasasa@gmail.com",
     "grade_section": "12-Python",
     "password": "sasasa",

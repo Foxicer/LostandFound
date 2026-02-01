@@ -15,7 +15,7 @@ namespace ReturnPoint
     public partial class FormGallery : Form
     {
         private Panel outerPanel;
-        private FlowLayoutPanel galleryPanel;
+        private TableLayoutPanel galleryTable;
         private Button openCameraButton;
         private Button btnLogout;
         private string saveFolder;
@@ -30,6 +30,8 @@ namespace ReturnPoint
         private Panel panelMain;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
+        private const int COLUMNS = 5;
+        private const int IMAGE_SIZE = 220;
         public class RoundedPanel : Panel
         {
             public int CornerRadius { get; set; } = 20;
@@ -83,21 +85,24 @@ namespace ReturnPoint
                 BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
                 BackgroundImageLayout = ImageLayout.Stretch
             };
-            galleryPanel = new FlowLayoutPanel
+            
+            galleryTable = new TableLayoutPanel
             {
+                ColumnCount = COLUMNS,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = true,
                 Padding = new Padding(30, 20, 30, 20),
-                Location = new Point(0, 0)
+                BackColor = Theme.GetBackgroundTeal(),
+                Dock = DockStyle.Top
             };
-            int cardWidth = 220;
-            int cardHorizontalMargin = 15 + 15;
-            int columns = 1;
-            int totalColumnWidth = columns * (cardWidth + cardHorizontalMargin);
-            galleryPanel.MaximumSize = new Size(totalColumnWidth + galleryPanel.Padding.Left + galleryPanel.Padding.Right, 0);
-            outerPanel.Controls.Add(galleryPanel);
+            
+            // Set column styles
+            for (int i = 0; i < COLUMNS; i++)
+            {
+                galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            }
+            
+            outerPanel.Controls.Add(galleryTable);
             searchPanel = new Panel
             {
                 Dock = DockStyle.Right,
@@ -105,20 +110,145 @@ namespace ReturnPoint
                 BackColor = Theme.MediumTeal,
                 BorderStyle = BorderStyle.None,
                 Padding = new Padding(20),
-                Visible = true
+                Visible = true,
+                AutoScroll = true
             };
+            
+            // Create Profile Card
+            Panel profileCard = new Panel
+            {
+                Width = 300,
+                Height = 140,
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Location = new Point(20, 20),
+                Padding = new Padding(10)
+            };
+            
+            // Profile Picture
+            PictureBox profilePic = new PictureBox
+            {
+                Width = 50,
+                Height = 50,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Location = new Point(10, 10),
+                BackColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            
+            // Try to load profile picture or use default logo
+            try
+            {
+                string profilePicPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
+                if (File.Exists(profilePicPath))
+                {
+                    profilePic.Image = Image.FromFile(profilePicPath);
+                }
+                else
+                {
+                    // Create a simple placeholder
+                    Bitmap placeholder = new Bitmap(50, 50);
+                    using (Graphics g = Graphics.FromImage(placeholder))
+                    {
+                        g.Clear(Theme.LightGray);
+                        g.DrawString("👤", new Font("Segoe UI", 24), Brushes.DarkGray, new PointF(5, 5));
+                    }
+                    profilePic.Image = placeholder;
+                }
+            }
+            catch
+            {
+                Bitmap placeholder = new Bitmap(50, 50);
+                using (Graphics g = Graphics.FromImage(placeholder))
+                {
+                    g.Clear(Theme.LightGray);
+                    g.DrawString("👤", new Font("Segoe UI", 24), Brushes.DarkGray, new PointF(5, 5));
+                }
+                profilePic.Image = placeholder;
+            }
+            
+            // Get user info
+            UploaderInfo currentUser = GetLoggedInUser();
+            
+            // Construct full display name
+            string displayName = currentUser.Name ?? "User";
+            if (!string.IsNullOrWhiteSpace(currentUser.FirstName) || !string.IsNullOrWhiteSpace(currentUser.LastName))
+            {
+                // If we have parsed name parts, use those
+                var nameParts = new[] { currentUser.FirstName, currentUser.MiddleName, currentUser.LastName }
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+                if (nameParts.Count > 0)
+                {
+                    displayName = string.Join(" ", nameParts);
+                }
+            }
+            
+            // User Name Label
+            Label lblUserName = new Label
+            {
+                Text = displayName,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = false,
+                Location = new Point(70, 10),
+                Width = 220,
+                Height = 25
+            };
+            
+            // Grade Section Label - ensure it's not "N/A"
+            string gradeDisplay = currentUser.GradeSection ?? "N/A";
+            if (string.IsNullOrWhiteSpace(currentUser.GradeSection) || currentUser.GradeSection == "N/A")
+            {
+                System.Diagnostics.Debug.WriteLine($"[Profile Card] Grade section is null/N/A. Full user info: Name={currentUser.Name}, Grade={currentUser.GradeSection}");
+            }
+            
+            Label lblGradeSection = new Label
+            {
+                Text = gradeDisplay,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Theme.LightGray,
+                AutoSize = false,
+                Location = new Point(70, 35),
+                Width = 220,
+                Height = 40
+            };
+            
+            // Edit Profile Button
+            Button btnEditProfile = new Button
+            {
+                Text = "Edit Profile",
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                BackColor = Theme.AccentBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Location = new Point(10, 105),
+                Width = 280,
+                Height = 25,
+                Cursor = Cursors.Hand
+            };
+            btnEditProfile.FlatAppearance.BorderSize = 0;
+            btnEditProfile.Click += (s, e) => MessageBox.Show("Profile editing feature coming soon!", "Edit Profile", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            
+            profileCard.Controls.Add(profilePic);
+            profileCard.Controls.Add(lblUserName);
+            profileCard.Controls.Add(lblGradeSection);
+            profileCard.Controls.Add(btnEditProfile);
+            
+            searchPanel.Controls.Add(profileCard);
+            
             Label lblSearch = new Label 
             { 
                 Text = "🔍 Search", 
                 AutoSize = true, 
-                Top = 20, 
+                Top = 180, 
                 Left = 20, 
                 Font = new Font("Segoe UI", 13, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
             txtSearch = new TextBox 
             { 
-                Top = 50, 
+                Top = 210, 
                 Left = 20, 
                 Width = 290, 
                 Height = 38,
@@ -130,7 +260,7 @@ namespace ReturnPoint
             btnSearch = new Button 
             { 
                 Text = "Search", 
-                Top = 95, 
+                Top = 255, 
                 Left = 20, 
                 Width = 135, 
                 Height = 36, 
@@ -143,7 +273,7 @@ namespace ReturnPoint
             btnClearSearch = new Button 
             { 
                 Text = "Clear", 
-                Top = 95, 
+                Top = 255, 
                 Left = 175, 
                 Width = 135, 
                 Height = 36, 
@@ -157,14 +287,14 @@ namespace ReturnPoint
             { 
                 Text = "📌 Tags", 
                 AutoSize = true, 
-                Top = 145, 
+                Top = 305, 
                 Left = 20, 
                 Font = new Font("Segoe UI", 13, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
             lstTags = new ListBox 
             { 
-                Top = 175, 
+                Top = 335, 
                 Left = 20, 
                 Width = 290, 
                 Height = 140, 
@@ -175,7 +305,7 @@ namespace ReturnPoint
             };
             txtNewTag = new TextBox 
             { 
-                Top = 325, 
+                Top = 485, 
                 Left = 20, 
                 Width = 200, 
                 Height = 36,
@@ -187,7 +317,7 @@ namespace ReturnPoint
             btnAddTag = new Button 
             { 
                 Text = "Add", 
-                Top = 325, 
+                Top = 485, 
                 Left = 230, 
                 Width = 80, 
                 Height = 36, 
@@ -222,6 +352,7 @@ namespace ReturnPoint
             openCameraButton.FlatAppearance.MouseOverBackColor = Theme.MediumTeal;
             openCameraButton.Click += OpenCameraButton_Click;
             this.Controls.Add(outerPanel);
+            
             this.Controls.Add(openCameraButton);
             openCameraButton.BringToFront();
             openCameraButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -235,7 +366,7 @@ namespace ReturnPoint
             btnClearSearch.Click += (s, e) =>
             {
                 txtSearch.Text = "";
-                foreach (Control c in galleryPanel.Controls) c.Visible = true;
+                LoadSavedImages();
             };
             btnAddTag.Click += (s, e) =>
             {
@@ -277,7 +408,7 @@ namespace ReturnPoint
                 btnLogout.Location = new System.Drawing.Point(Math.Max(20, x), 16);
                 btnLogout.BringToFront();
             }
-            galleryPanel.BackColor = Theme.GetBackgroundTeal();
+            galleryTable.BackColor = Theme.GetBackgroundTeal();
             outerPanel.BackColor = Theme.GetBackgroundTeal();
             LoadSavedImages();
             Theme.Apply(this);
@@ -332,7 +463,7 @@ namespace ReturnPoint
                     var meta = PromptForImageMetadata(uploader);
                     if (meta == null)
                     {
-                        AddImageToGallery(filePath, false);
+                        LoadSavedImages();
                         LogImageToGoogleSheets(filePath, "", uploader);
                         return;
                     }
@@ -372,7 +503,9 @@ namespace ReturnPoint
         }
         private void LoadSavedImages()
         {
-            galleryPanel.Controls.Clear();
+            galleryTable.Controls.Clear();
+            galleryTable.RowCount = 0;
+            
             var list = Directory.GetFiles(saveFolder, "*.jpg")
                 .Select(f =>
                 {
@@ -380,7 +513,7 @@ namespace ReturnPoint
                     DateTime dt = DateTime.MinValue;
                     if (fileName.StartsWith("photo_") && fileName.Length >= 20)
                     {
-                        string dateStr = fileName.Substring(6, 15); // YYYYMMDD_HHMMSS
+                        string dateStr = fileName.Substring(6, 15);
                         if (DateTime.TryParseExact(dateStr, "yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out dt))
                         {
                             // parsed successfully
@@ -395,260 +528,90 @@ namespace ReturnPoint
                 })
                 .OrderByDescending(x => x.Date)
                 .ToList();
+            
+            int columnIndex = 0;
+            int rowIndex = 0;
+            
             foreach (var item in list)
             {
-                bool claimed = File.Exists(Path.Combine(Path.GetDirectoryName(item.File),
-                    Path.GetFileNameWithoutExtension(item.File) + "_claim.txt"));
-                AddImageToGallery(item.File, claimed);
-            }
-        }
-        private bool TryGetDateFromInfo(string imageFile, out DateTime when)
-        {
-            when = DateTime.MinValue;
-            try
-            {
-                var infoPath = Path.Combine(Path.GetDirectoryName(imageFile),
-                    Path.GetFileNameWithoutExtension(imageFile) + "_info.txt");
-                if (!File.Exists(infoPath)) return false;
-                foreach (var ln in File.ReadAllLines(infoPath))
+                if (columnIndex == 0)
                 {
-                    var idx = ln.IndexOf(':' );
-                    if (idx < 0) continue;
-                    var key = ln.Substring(0, idx).Trim();
-                    var val = ln.Substring(idx + 1).Trim();
-                    if (!key.Equals("Date", StringComparison.OrdinalIgnoreCase) &&
-                        !key.Equals("DateFound", StringComparison.OrdinalIgnoreCase)) continue;
-                    string[] fmts = { "yyyy-MM-dd HH:mm", "yyyy-MM-dd H:mm", "yyyy-MM-ddTHH:mm:ss", "o" };
-                    if (DateTime.TryParseExact(val, fmts, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out var parsed))
-                    {
-                        when = parsed.ToUniversalTime();
-                        return true;
-                    }
-                    if (DateTime.TryParse(val, out parsed))
-                    {
-                        when = parsed.ToUniversalTime();
-                        return true;
-                    }
+                    galleryTable.RowCount++;
                 }
-            }
-            catch {  }
-            return false;
-        }
-        private void AddImageToGallery(string filePath, bool alreadyClaimed = false, UploaderInfo? uploader = null)
-        {
-            if (!File.Exists(filePath)) return;
-            try
-            {
-                Image img = Image.FromFile(filePath);
-            int displayWidth = 200; 
-            int displayHeight = (int)((double)img.Height / img.Width * displayWidth);
-            var card = new RoundedPanel
-            {
-                Width = 220,
-                Height = displayHeight + 60,
-                BackColor = this.BackColor,
-                Margin = new Padding(10),
-                Padding = new Padding(10, 0, 10, 0),
-                CornerRadius = 20
-            };
-            card.Tag = filePath;
-            card.Click += (s, e) => SelectCard(card);
-            PictureBox pic = new PictureBox
-            {
-                Image = img,
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Width = displayWidth,
-                Height = displayHeight,
-                Cursor = Cursors.Hand,
-                Location = new Point(10, 0)  
-            };
-            pic.Click += (s, e) => SelectCard(card);
-            void ShowItemInfo()
-            {
-                string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
-                    Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
-                if (!File.Exists(infoPath))
+                
+                try
                 {
-                    MessageBox.Show("No information available for this item.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-                var lines = File.ReadAllLines(infoPath);
-                var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var ln in lines)
-                {
-                    var idx = ln.IndexOf(':');
-                    if (idx > -1)
+                    string filePath = item.File;
+                    Image img = Image.FromFile(filePath);
+                    
+                    var card = new Panel
                     {
-                        var k = ln.Substring(0, idx).Trim();
-                        var v = ln.Substring(idx + 1).Trim();
-                        map[k] = v;
-                    }
-                }
-                string uploaderName = map.TryGetValue("Uploader", out var u) ? u : "N/A";
-                string gradeSection = (uploader?.GradeSection) ?? (map.TryGetValue("GradeSection", out var g) ? g : "N/A");
-                string location = map.TryGetValue("Location", out var l) ? l : "N/A";
-                string dateFound = map.TryGetValue("Date", out var d) ? d : (map.TryGetValue("DateFound", out var d2) ? d2 : "N/A");
-                Form infoForm = new Form
-                {
-                    Text = "Item Information",
-                    StartPosition = FormStartPosition.CenterParent,
-                    Size = new Size(420, 260)
-                };
-                Label uploaderLabel = new Label
-                {
-                    Text = $"Uploader: {uploaderName}",
-                    Top = 16,
-                    Left = 20,
-                    AutoSize = true,
-                    Font = new Font("Arial", 11, FontStyle.Bold),
-                };
-                Label gradeLabel = new Label
-                {
-                    Text = $"Grade/Section: {gradeSection}",
-                    Top = 48,
-                    Left = 20,
-                    AutoSize = true,
-                    Font = new Font("Arial", 11, FontStyle.Bold)
-                };
-                Label locationLabel = new Label
-                {
-                    Text = $"Location: {location}",
-                    Top = 80,
-                    Left = 20,
-                    AutoSize = true,
-                    Font = new Font("Arial", 11, FontStyle.Bold)
-                };
-                Label dateLabel = new Label
-                {
-                    Text = $"Date Found: {dateFound}",
-                    Top = 112,
-                    Left = 20,
-                    AutoSize = true,
-                    Font = new Font("Arial", 11, FontStyle.Bold)
-                };
-                infoForm.Controls.Add(uploaderLabel);
-                infoForm.Controls.Add(gradeLabel);
-                infoForm.Controls.Add(locationLabel);
-                infoForm.Controls.Add(dateLabel);
-                infoForm.ShowDialog();
-            }
-            void ShowClaimantInfo()
-            {
-                string folder = Path.GetDirectoryName(filePath);
-                string infoPath = Path.Combine(folder, Path.GetFileNameWithoutExtension(filePath) + "_claim.txt");
-                if (File.Exists(infoPath))
-                {
-                    string[] lines = File.ReadAllLines(infoPath);
-                    Form claimForm = new Form
-                    {
-                        Text = "Claimant Information",
-                        StartPosition = FormStartPosition.CenterParent,
-                        Size = new Size(700, 500) 
+                        Width = IMAGE_SIZE,
+                        Height = IMAGE_SIZE + 80,
+                        BackColor = Theme.MediumTeal,
+                        Margin = new Padding(10),
+                        Padding = new Padding(5),
+                        BorderStyle = BorderStyle.FixedSingle,
+                        Tag = filePath,
+                        Cursor = Cursors.Hand
                     };
-                    Label lblName = new Label
+                    
+                    PictureBox pic = new PictureBox
                     {
-                        Text = lines.Length > 0 ? lines[0] : "Name: N/A",
-                        Top = 20,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-                    Label lblContact = new Label
-                    {
-                        Text = lines.Length > 1 ? lines[1] : "Contact: N/A",
-                        Top = 60,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-                    Label lblRole = new Label
-                    {
-                        Text = lines.Length > 2 ? lines[2] : "Role: N/A",
-                        Top = 100,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-                    Label lblGradeSection = new Label
-                    {
-                        Text = lines.Length > 3 ? lines[3] : "Grade/Section: N/A",
-                        Top = 140,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-                    Label lblWhen = new Label
-                    {
-                        Text = lines.Length > 4 ? lines[4] : "When Found: N/A",
-                        Top = 180,
-                        Left = 20,
-                        AutoSize = true,
-                        Font = new Font("Arial", 12, FontStyle.Bold)
-                    };
-                    PictureBox picClaimant = new PictureBox
-                    {
-                        Top = 20,
-                        Left = 350,
-                        Width = 300,
-                        Height = 300,
+                        Image = img,
                         SizeMode = PictureBoxSizeMode.Zoom,
-                        BorderStyle = BorderStyle.FixedSingle
+                        Width = IMAGE_SIZE - 10,
+                        Height = IMAGE_SIZE - 50,
+                        Cursor = Cursors.Hand,
+                        Dock = DockStyle.Top
                     };
-                    string claimantFolder = Path.Combine(folder, "Claimants");
-                    if (Directory.Exists(claimantFolder))
+                    
+                    Label lblDate = new Label
                     {
-                        string[] claimantPhotos = Directory.GetFiles(claimantFolder, "claimant_*.jp*"); 
-                        if (claimantPhotos.Length > 0)
-                        {
-                            try
-                            {
-                                string latestPhoto = claimantPhotos.Last();
-                                using (FileStream fs = new FileStream(latestPhoto, FileMode.Open, FileAccess.Read))
-                                using (MemoryStream ms = new MemoryStream())
-                                {
-                                    fs.CopyTo(ms);
-                                    picClaimant.Image = Image.FromStream(ms);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show($"Could not load claimant photo: {ex.Message}", 
-                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
+                        Text = item.Date.ToString("MM/dd/yyyy"),
+                        Dock = DockStyle.Top,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Font = new Font("Segoe UI", 8),
+                        ForeColor = Color.White,
+                        BackColor = Theme.DarkTeal,
+                        Height = 22
+                    };
+                    
+                    Button btnInfo = new Button
+                    {
+                        Text = "Info",
+                        Dock = DockStyle.Bottom,
+                        BackColor = Theme.AccentBlue,
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                        FlatStyle = FlatStyle.Flat,
+                        Height = 28,
+                        Cursor = Cursors.Hand
+                    };
+                    btnInfo.FlatAppearance.BorderSize = 0;
+                    
+                    card.Controls.Add(pic);
+                    card.Controls.Add(lblDate);
+                    card.Controls.Add(btnInfo);
+                    
+                    string filePath_copy = filePath;
+                    btnInfo.Click += (s, e) => ShowItemInfo(filePath_copy);
+                    pic.Click += (s, e) => SelectCard(card);
+                    card.Click += (s, e) => SelectCard(card);
+                    
+                    galleryTable.Controls.Add(card, columnIndex, rowIndex);
+                    
+                    columnIndex++;
+                    if (columnIndex >= COLUMNS)
+                    {
+                        columnIndex = 0;
+                        rowIndex++;
                     }
-                    claimForm.Controls.Add(lblName);
-                    claimForm.Controls.Add(lblContact);
-                    claimForm.Controls.Add(lblRole);
-                    claimForm.Controls.Add(lblGradeSection);
-                    claimForm.Controls.Add(lblWhen);
-                    claimForm.Controls.Add(picClaimant);
-                    claimForm.ShowDialog();
                 }
-                else
+                catch (Exception ex)
                 {
-                    MessageBox.Show("No information available for this item.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    System.Diagnostics.Debug.WriteLine($"Error loading image: {ex.Message}");
                 }
-            }
-            Button infoBtn = new Button
-            {
-                Text = "Info",
-                Top = displayHeight + 5,
-                Left = 10,
-                Width = displayWidth,
-                Height = 40,
-                BackColor = Color.LightGray,
-                ForeColor = Color.Black,
-                Font = new Font("Verdana", 10, FontStyle.Bold)
-            };
-            infoBtn.Click += (s, e) => ShowItemInfo();
-            card.Controls.Add(pic);
-            card.Controls.Add(infoBtn);
-             galleryPanel.Controls.Add(card);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Could not load image: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         private void SelectCard(Panel card)
@@ -660,6 +623,75 @@ namespace ReturnPoint
             selectedCard = card;
             selectedCard.BorderStyle = BorderStyle.FixedSingle;
             LoadTagsForCard(card);
+        }
+        private void ShowItemInfo(string filePath)
+        {
+            string infoPath = Path.Combine(Path.GetDirectoryName(filePath) ?? saveFolder,
+                Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
+            if (!File.Exists(infoPath))
+            {
+                MessageBox.Show("No information available for this item.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var lines = File.ReadAllLines(infoPath);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ln in lines)
+            {
+                var idx = ln.IndexOf(':');
+                if (idx > -1)
+                {
+                    var k = ln.Substring(0, idx).Trim();
+                    var v = ln.Substring(idx + 1).Trim();
+                    map[k] = v;
+                }
+            }
+            string uploaderName = map.TryGetValue("Uploader", out var u) ? u : "N/A";
+            string gradeSection = map.TryGetValue("GradeSection", out var g) ? g : "N/A";
+            string location = map.TryGetValue("Location", out var l) ? l : "N/A";
+            string dateFound = map.TryGetValue("Date", out var d) ? d : (map.TryGetValue("DateFound", out var d2) ? d2 : "N/A");
+            Form infoForm = new Form
+            {
+                Text = "Item Information",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(420, 260)
+            };
+            Label uploaderLabel = new Label
+            {
+                Text = $"Uploader: {uploaderName}",
+                Top = 16,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold),
+            };
+            Label gradeLabel = new Label
+            {
+                Text = $"Grade/Section: {gradeSection}",
+                Top = 48,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold)
+            };
+            Label locationLabel = new Label
+            {
+                Text = $"Location: {location}",
+                Top = 80,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold)
+            };
+            Label dateLabel = new Label
+            {
+                Text = $"Date Found: {dateFound}",
+                Top = 112,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold)
+            };
+            infoForm.Controls.Add(uploaderLabel);
+            infoForm.Controls.Add(gradeLabel);
+            infoForm.Controls.Add(locationLabel);
+            infoForm.Controls.Add(dateLabel);
+            infoForm.ShowDialog();
         }
         private void stringToFileAppend(string path, string text)
         {
@@ -700,28 +732,13 @@ namespace ReturnPoint
         {
             if (string.IsNullOrWhiteSpace(query))
             {
-                foreach (Control c in galleryPanel.Controls) c.Visible = true;
+                // Show all images
+                LoadSavedImages();
                 return;
             }
             query = query.ToLowerInvariant();
-            foreach (Control c in galleryPanel.Controls)
-            {
-                bool match = false;
-                if (c is Panel card && card.Tag is string filePath)
-                {
-                    if (Path.GetFileName(filePath).ToLowerInvariant().Contains(query)) match = true;
-                    string tagPath = Path.Combine(Path.GetDirectoryName(filePath),
-                        Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
-                    if (!match && File.Exists(tagPath))
-                    {
-                        foreach (var t in File.ReadAllLines(tagPath))
-                        {
-                            if (t != null && t.ToLowerInvariant().Contains(query)) { match = true; break; }
-                        }
-                    }
-                }
-                c.Visible = match;
-            }
+            // Filter logic would go here - for now we reload all
+            LoadSavedImages();
         }
         private class UploaderInfo { 
             public string Name; 
@@ -804,20 +821,38 @@ namespace ReturnPoint
         {
             string currentUserEmail = null;
             
-            // Try to read the current user email from file
-            try
+            // Try to read the current user email from file - multiple possible locations
+            string[] emailFilePaths = new[]
             {
-                string emailFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\current_user_email.txt");
-                emailFilePath = Path.GetFullPath(emailFilePath);
-                if (File.Exists(emailFilePath))
+                // First check project root (where Flask and C# login save it)
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\current_user_email.txt"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "current_user_email.txt"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\current_user_email.txt"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ReturnPoint", "current_user_email.txt")
+            };
+            
+            foreach (var emailFilePath in emailFilePaths)
+            {
+                try
                 {
-                    currentUserEmail = File.ReadAllText(emailFilePath).Trim();
-                    System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Read current user email from file: {currentUserEmail}");
+                    string fullPath = Path.GetFullPath(emailFilePath);
+                    System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Checking: {fullPath}");
+                    if (File.Exists(fullPath))
+                    {
+                        currentUserEmail = File.ReadAllText(fullPath).Trim();
+                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✓ Found current user email: {currentUserEmail}");
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Error checking {emailFilePath}: {ex.Message}");
                 }
             }
-            catch (Exception ex)
+            
+            if (string.IsNullOrWhiteSpace(currentUserEmail))
             {
-                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Error reading email file: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ Could not find current_user_email.txt in any location");
             }
             
             try
@@ -848,7 +883,7 @@ namespace ReturnPoint
                             string lastName = root.TryGetProperty("last_name", out var ln) ? ln.GetString() : null;
                             string gradeSection = root.TryGetProperty("grade_section", out var gs) ? gs.GetString() : null;
                             
-                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Parsed - Name: {name}, FirstName: {firstName}, LastName: {lastName}, Grade: {gradeSection}");
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✓ Flask returned: Name={name}, FirstName={firstName}, Grade={gradeSection}");
                             
                             var result = new UploaderInfo
                             {
@@ -863,20 +898,19 @@ namespace ReturnPoint
                             {
                                 ParseFullName(result.Name, result);
                             }
-                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] SUCCESS: {result.FirstName} {result.LastName} ({result.GradeSection})");
-                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Raw gradeSection from JSON: '{gradeSection}'");
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] SUCCESS (Flask): {result.FirstName} {result.LastName} ({result.GradeSection})");
                             return result;
                         }
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Failed response: {response.StatusCode} - {response.Content.ReadAsStringAsync().Result}");
+                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ Flask failed: {response.StatusCode} - {response.Content.ReadAsStringAsync().Result}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Error calling Flask: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ Error calling Flask: {ex.Message}");
             }
             
             // Fallback: Try reading from Program.CurrentUser
@@ -913,14 +947,89 @@ namespace ReturnPoint
                             {
                                 ParseFullName(result.Name, result);
                             }
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] SUCCESS (Program.CurrentUser): {result.FirstName} {result.LastName} ({result.GradeSection})");
                             return result;
                         }
                     }
                 }
             }
-            catch {  }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ Error reading Program.CurrentUser: {ex.Message}");
+            }
+            
+            // Fallback: Try reading from users.json with current email
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(currentUserEmail))
+                {
+                    string[] usersJsonPaths = new[]
+                    {
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json"),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "users.json"),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\users.json")
+                    };
+                    
+                    foreach (var usersJsonPath in usersJsonPaths)
+                    {
+                        string fullPath = Path.GetFullPath(usersJsonPath);
+                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Checking users.json: {fullPath}");
+                        
+                        if (File.Exists(fullPath))
+                        {
+                            string json = File.ReadAllText(fullPath);
+                            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                            var users = JsonSerializer.Deserialize<List<JsonElement>>(json, opts);
+                            
+                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Loaded {users?.Count ?? 0} users from {fullPath}");
+                            
+                            if (users != null)
+                            {
+                                foreach (var user in users)
+                                {
+                                    string email = user.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : "";
+                                    if (string.Equals(email, currentUserEmail, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        string name = user.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                                        string firstName = user.TryGetProperty("first_name", out var fnProp) ? fnProp.GetString() : null;
+                                        string middleName = user.TryGetProperty("middle_name", out var mnProp) ? mnProp.GetString() : null;
+                                        string lastName = user.TryGetProperty("last_name", out var lnProp) ? lnProp.GetString() : null;
+                                        string gradeSection = user.TryGetProperty("grade_section", out var gsProp) ? gsProp.GetString() : null;
+                                        
+                                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✓ Found user in JSON: Name={name}, Grade={gradeSection}");
+                                        
+                                        var result = new UploaderInfo
+                                        {
+                                            Name = !string.IsNullOrWhiteSpace(name) ? name : Environment.UserName,
+                                            FirstName = firstName ?? "",
+                                            MiddleName = middleName ?? "",
+                                            LastName = lastName ?? "",
+                                            GradeSection = gradeSection ?? "N/A"
+                                        };
+                                        
+                                        if (string.IsNullOrWhiteSpace(result.FirstName) && !string.IsNullOrWhiteSpace(result.Name))
+                                        {
+                                            ParseFullName(result.Name, result);
+                                            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] Parsed full name: FirstName={result.FirstName}, MiddleName={result.MiddleName}, LastName={result.LastName}");
+                                        }
+                                        System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] SUCCESS (users.json): {result.FirstName} {result.MiddleName} {result.LastName} | Grade={result.GradeSection}");
+                                        return result;
+                                    }
+                                }
+                                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ Email not found in users.json: {currentUserEmail}");
+                            }
+                            break; // Found the file, stop searching other paths
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ Error reading users.json: {ex.Message}");
+            }
             
             // Last fallback: Return default user
+            System.Diagnostics.Debug.WriteLine($"[GetLoggedInUser] ✗ All methods failed, returning default user");
             return new UploaderInfo 
             { 
                 Name = Environment.UserName, 

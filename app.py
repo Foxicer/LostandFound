@@ -128,6 +128,9 @@ def register():
     
     users.append({
         'name': full_name,
+        'first_name': first_name,
+        'middle_name': middle_name,
+        'last_name': last_name,
         'email': email,
         'grade_section': data.get('grade_section', '').strip(),
         'password': data.get('password', ''),
@@ -254,12 +257,18 @@ def update_username():
     for user in users:
         if user.get('email', '').lower() == user_email.lower():
             user['name'] = full_name
+            user['first_name'] = first_name
+            user['middle_name'] = middle_name
+            user['last_name'] = last_name
             user['grade_section'] = grade_section
             session['full_name'] = full_name
             save_users(users)
             return jsonify({
                 'message': 'Profile updated successfully',
                 'name': user['name'],
+                'first_name': user.get('first_name', ''),
+                'middle_name': user.get('middle_name', ''),
+                'last_name': user.get('last_name', ''),
                 'grade_section': user['grade_section']
             })
     

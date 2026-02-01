@@ -424,6 +424,22 @@ titlePanel.Controls.Add(textPanel);
                             };
 
                             AuthenticatedUser = user;
+                            
+                            // Save email to project root so Gallery can read it (do this before closing dialog)
+                            try
+                            {
+                                string projectRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\");
+                                projectRoot = Path.GetFullPath(projectRoot);
+                                string emailFilePath = Path.Combine(projectRoot, "current_user_email.txt");
+                                System.Diagnostics.Debug.WriteLine($"[FormLogin] Writing email to: {emailFilePath}");
+                                File.WriteAllText(emailFilePath, email);
+                                System.Diagnostics.Debug.WriteLine($"[FormLogin] ✓ Saved email successfully");
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[FormLogin] ✗ Error saving email: {ex.Message}");
+                            }
+                            
                             Invoke((MethodInvoker)delegate
                             {
                                 DialogResult = DialogResult.OK;
@@ -558,6 +574,22 @@ titlePanel.Controls.Add(textPanel);
                 
                 var found = userWithEmail;
                 AuthenticatedUser = found;
+                
+                // Save email to project root so Gallery can read it (do this before closing dialog)
+                try
+                {
+                    string projectRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\");
+                    projectRoot = Path.GetFullPath(projectRoot);
+                    string emailFilePath = Path.Combine(projectRoot, "current_user_email.txt");
+                    System.Diagnostics.Debug.WriteLine($"[FormLogin] Writing email to: {emailFilePath}");
+                    File.WriteAllText(emailFilePath, email);
+                    System.Diagnostics.Debug.WriteLine($"[FormLogin] ✓ Saved email successfully");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FormLogin] ✗ Error saving email: {ex.Message}");
+                }
+                
                 Invoke((MethodInvoker)delegate
                 {
                     DialogResult = DialogResult.OK;
