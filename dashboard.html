@@ -30,7 +30,7 @@
         font-family: "Segoe UI", Arial, sans-serif;
         background: linear-gradient(180deg, var(--medium-teal) 0%, var(--dark-teal) 100%);
         color: var(--near-black);
-        overflow: hidden;
+        overflow: auto;
     }
     
     .app {
@@ -62,6 +62,46 @@
         font-size: 13px;
         transition: all 0.2s ease;
     }
+    
+    /* Hamburger Menu */
+    .hamburger {
+        display: none;
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1300;
+        background: var(--teal-green);
+        border: 0;
+        width: 44px;
+        height: 44px;
+        padding: 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        flex-direction: column;
+        justify-content: space-around;
+        gap: 4px;
+    }
+    
+    .hamburger span {
+        display: block;
+        width: 100%;
+        height: 3px;
+        background: var(--soft-white);
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .hamburger.active span:nth-child(1) {
+        transform: rotate(45deg) translate(8px, 8px);
+    }
+    
+    .hamburger.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .hamburger.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(7px, -7px);
+    }
 
     /* Gallery area */
     .gallery-wrap {
@@ -73,7 +113,7 @@
     
     .gallery {
         display: grid;
-        grid-template-columns: repeat(4, var(--card-w));
+        grid-template-columns: repeat(5, var(--card-w));
         gap: 30px;
         justify-content: flex-start;
         align-content: flex-start;
@@ -82,10 +122,10 @@
     
     .card {
         width: var(--card-w);
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.98);
         border-radius: 20px;
         padding: 10px;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
         color: var(--near-black);
         display: flex;
         flex-direction: column;
@@ -95,17 +135,27 @@
     }
     
     .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
     }
     
     .card img {
-        width: 200px;
+        width: 100%;
         height: 200px;
-        object-fit: contain;
+        object-fit: cover;
         border-radius: 6px;
         background: #eee;
         display: block;
+    }
+    
+    .card-date {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.6);
+        text-align: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.02);
     }
     
     .card .btn-row {
@@ -146,6 +196,87 @@
         border-left: 1px solid rgba(0, 0, 0, 0.1);
     }
     
+    /* Profile Card */
+    .profile-card {
+        width: 100%;
+        height: 140px;
+        background: var(--dark-teal);
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .profile-header {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .profile-pic {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background: var(--soft-white);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .profile-pic img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .profile-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .profile-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--soft-white);
+        line-height: 1.2;
+        margin: 0;
+    }
+    
+    .profile-grade {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.2;
+        margin: 0;
+    }
+    
+    .btn-edit-profile {
+        width: 100%;
+        padding: 8px;
+        background: var(--accent-blue);
+        color: var(--soft-white);
+        border: 0;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 8px;
+    }
+    
+    .btn-edit-profile:hover {
+        background: #2980ca;
+        transform: translateY(-1px);
+    }
+    
     .panel h3 {
         margin: 0 0 12px 0;
         color: var(--near-black);
@@ -163,28 +294,41 @@
     
     .search-row input[type="text"] {
         flex: 1;
-        padding: 10px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
+        padding: 10px 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
         background: var(--soft-white);
         color: var(--near-black);
         font-family: "Segoe UI", Arial, sans-serif;
         font-size: 12px;
+        transition: all 0.2s ease;
+    }
+    
+    .search-row input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
     }
     
     .search-row button {
         padding: 10px 14px;
-        border-radius: 4px;
+        border-radius: 6px;
         border: 0;
         background: var(--teal-green);
         color: var(--soft-white);
         cursor: pointer;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 12px;
         transition: all 0.2s ease;
     }
     
     .search-row button:hover {
-        background: var(--dark-teal);
+        background: var(--medium-teal);
+        transform: translateY(-1px);
+    }
+    
+    .search-row button:active {
+        transform: translateY(0);
     }
     
     .clear-btn {
@@ -198,36 +342,39 @@
     .tag-list {
         height: 140px;
         overflow: auto;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        padding: 8px;
-        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 6px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.6);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .tag-item {
         display: inline-block;
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.85);
         color: var(--near-black);
-        padding: 4px 8px;
-        margin: 6px 6px 0 0;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 500;
+        padding: 6px 10px;
+        margin: 4px 6px 0 0;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
-        border: 1px solid transparent;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
     
     .tag-item:hover {
         background: var(--teal-green);
         color: var(--soft-white);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
     .tag-item.active {
         background: var(--teal-green);
         color: var(--soft-white);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 211, 163, 0.4);
     }
 
 
@@ -245,7 +392,7 @@
         align-items: center;
         justify-content: center;
         font-size: 28px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         cursor: pointer;
         z-index: 1100;
         border: 0;
@@ -254,8 +401,13 @@
     }
     
     .fab:hover {
-        background: var(--dark-teal);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+        background: var(--medium-teal);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+        transform: scale(1.05);
+    }
+    
+    .fab:active {
+        transform: scale(0.98);
     }
 
     /* Info / claim modal */
@@ -291,8 +443,20 @@
         line-height: 1.5;
     }
 
-    /* responsive: 2 cols on small screens, 1 on very small */
+    /* responsive: 3 cols on smaller screens, 2 on tablets, 1 on very small */
+    @media (max-width: 1400px) {
+        .gallery {
+            grid-template-columns: repeat(4, var(--card-w));
+        }
+    }
+    
     @media (max-width: 1100px) {
+        .gallery {
+            grid-template-columns: repeat(3, var(--card-w));
+        }
+    }
+    
+    @media (max-width: 800px) {
         .gallery {
             grid-template-columns: repeat(2, var(--card-w));
         }
@@ -301,27 +465,72 @@
     @media (max-width: 720px) {
         .app {
             grid-template-columns: 1fr;
+            height: auto;
         }
+        
+        .hamburger {
+            display: flex;
+        }
+        
         .panel {
             position: fixed;
-            right: 0;
-            top: 72px;
-            width: 88%;
-            height: auto;
-            max-height: 60vh;
+            right: -100%;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            max-height: none;
+            transition: right 0.3s ease;
+            z-index: 1250;
+            overflow-y: auto;
         }
+        
+        .panel.open {
+            right: 0;
+        }
+        
+        .panel::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .panel.open::before {
+            opacity: 1;
+        }
+        
         .fab {
             right: 18px;
         }
+        
         .gallery {
-            grid-template-columns: repeat(1, var(--card-w));
+            grid-template-columns: repeat(1, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 16px;
+        }
+        
+        .card {
+            width: 100%;
+        }
+        
+        .gallery-wrap {
+            padding: 16px;
+            padding-top: 60px;
         }
     }
 </style>
 </head>
 <body>
+<button class="hamburger" id="hamburger" title="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
 <div class="top-actions">
-    <button id="btnLogout" class="btn" style="background: var(--deep-red); color: var(--soft-white);">Logout</button>
 </div>
 
 <div class="app">
@@ -331,6 +540,18 @@
     </div>
 
     <aside class="panel" id="rightPanel">
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-pic" id="profilePic">👤</div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">User</div>
+                    <div class="profile-grade" id="profileGrade">N/A</div>
+                </div>
+            </div>
+            <button class="btn-edit-profile" id="btnEditProfile">Edit Profile</button>
+        </div>
+        
         <h3>🔍 Search</h3>
         <div class="search-row">
             <input id="searchInput" type="text" placeholder="Filename or tag..." />
@@ -340,10 +561,18 @@
             <button id="btnClear" class="clear-btn">Clear</button>
         </div>
 
-        <h3 style="margin-top: 20px;">📌 Available Tags</h3>
+        <h3 style="margin-top: 20px;">� Sort</h3>
+        <div class="search-row">
+            <button id="btnLatest" style="flex: 1;">Latest</button>
+            <button id="btnOldest" style="flex: 1;">Oldest</button>
+        </div>
+
+        <h3 style="margin-top: 20px;">�📌 Available Tags</h3>
         <div id="tagList" class="tag-list" aria-live="polite"></div>
 
         <div style="margin-top: 20px; font-size: 12px; color: rgba(0, 0, 0, 0.7);">Click tags to filter gallery. Select an image to view details.</div>
+        
+        <button id="btnLogout" class="btn" style="background: var(--deep-red); color: var(--soft-white); width: 100%; margin-top: 20px;">Logout</button>
     </aside>
 </div>
 
@@ -365,6 +594,8 @@ const galleryEl = document.getElementById('gallery');
 const searchInput = document.getElementById('searchInput');
 const btnSearch = document.getElementById('btnSearch');
 const btnClear = document.getElementById('btnClear');
+const btnLatest = document.getElementById('btnLatest');
+const btnOldest = document.getElementById('btnOldest');
 const tagList = document.getElementById('tagList');
 const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
@@ -372,10 +603,240 @@ const modalBody = document.getElementById('modalBody');
 const modalClose = document.getElementById('modalClose');
 const btnCamera = document.getElementById('btnCamera');
 const btnLogout = document.getElementById('btnLogout');
+const btnEditProfile = document.getElementById('btnEditProfile');
+const hamburger = document.getElementById('hamburger');
+const rightPanel = document.getElementById('rightPanel');
 
 let images = [];
 let selectedId = null;
 let selectedTag = null;
+let sortOrder = 'latest'; // 'latest' or 'oldest'
+
+// Hamburger menu toggle
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    rightPanel.classList.toggle('open');
+});
+
+// Close panel when clicking outside on mobile
+document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 720) {
+        if (!rightPanel.contains(e.target) && !hamburger.contains(e.target)) {
+            if (rightPanel.classList.contains('open')) {
+                hamburger.classList.remove('active');
+                rightPanel.classList.remove('open');
+            }
+        }
+    }
+});
+
+// Close panel when clicking on buttons inside it
+rightPanel.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SPAN') {
+        if (window.innerWidth <= 720) {
+            hamburger.classList.remove('active');
+            rightPanel.classList.remove('open');
+        }
+    }
+});
+
+// GetLoggedInUser - Similar to FormGallery.cs
+async function GetLoggedInUser() {
+    console.log('[GetLoggedInUser] ============ Starting user retrieval ============');
+    
+    // Debug: Check what's in localStorage
+    const storedEmail = localStorage.getItem('userEmail');
+    const storedUser = localStorage.getItem('currentUser');
+    console.log('[GetLoggedInUser] localStorage.userEmail:', storedEmail);
+    console.log('[GetLoggedInUser] localStorage.currentUser:', storedUser);
+    
+    try {
+        // First try to get user from API endpoint with session
+        console.log('[GetLoggedInUser] Step 1: Attempting /api/user (session-based)...');
+        const res = await fetch('/api/user');
+        console.log('[GetLoggedInUser] /api/user response status:', res.status);
+        
+        if (res.ok) {
+            const userData = await res.json();
+            console.log('[GetLoggedInUser] ✓ Got user from API (session):', {
+                name: userData.name,
+                email: userData.email,
+                first_name: userData.first_name,
+                last_name: userData.last_name
+            });
+            
+            const user = {
+                name: userData.name || 'User',
+                first_name: userData.first_name || '',
+                middle_name: userData.middle_name || '',
+                last_name: userData.last_name || '',
+                email: userData.email || '',
+                grade_section: userData.grade_section || 'N/A',
+                profile_picture: userData.profile_picture || null,
+                role: userData.role || 'user'
+            };
+            
+            // Store for future use
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            return user;
+        } else {
+            console.log('[GetLoggedInUser] ✗ Session-based call failed (status ' + res.status + ')');
+        }
+    } catch (e) {
+        console.error('[GetLoggedInUser] ✗ Session-based API error:', e);
+    }
+    
+    // Step 2: Try with email parameter from localStorage
+    const userEmail = localStorage.getItem('userEmail');
+    if (userEmail) {
+        try {
+            console.log('[GetLoggedInUser] Step 2: Attempting /api/user with email param:', userEmail);
+            const res = await fetch(`/api/user?email=${encodeURIComponent(userEmail)}`);
+            console.log('[GetLoggedInUser] /api/user?email response status:', res.status);
+            
+            if (res.ok) {
+                const userData = await res.json();
+                console.log('[GetLoggedInUser] ✓ Got user from API (email param):', {
+                    name: userData.name,
+                    email: userData.email,
+                    first_name: userData.first_name,
+                    last_name: userData.last_name
+                });
+                
+                const user = {
+                    name: userData.name || 'User',
+                    first_name: userData.first_name || '',
+                    middle_name: userData.middle_name || '',
+                    last_name: userData.last_name || '',
+                    email: userData.email || '',
+                    grade_section: userData.grade_section || 'N/A',
+                    profile_picture: userData.profile_picture || null,
+                    role: userData.role || 'user'
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                return user;
+            } else {
+                console.log('[GetLoggedInUser] ✗ Email param call failed (status ' + res.status + ')');
+            }
+        } catch (e) {
+            console.error('[GetLoggedInUser] ✗ Email param API error:', e);
+        }
+    } else {
+        console.log('[GetLoggedInUser] ✗ No email in localStorage, skipping email param call');
+    }
+    
+    // Step 3: Try localStorage fallback
+    console.log('[GetLoggedInUser] Step 3: Trying localStorage fallback...');
+    const storedUserJson = localStorage.getItem('currentUser');
+    if (storedUserJson) {
+        try {
+            const userData = JSON.parse(storedUserJson);
+            console.log('[GetLoggedInUser] ✓ Got user from localStorage:', {
+                name: userData.name,
+                email: userData.email
+            });
+            return userData;
+        } catch (e) {
+            console.error('[GetLoggedInUser] ✗ localStorage parse failed:', e);
+        }
+    } else {
+        console.log('[GetLoggedInUser] ✗ No stored user in localStorage');
+    }
+    
+    // Step 4: Final fallback
+    console.log('[GetLoggedInUser] ✗ ALL METHODS FAILED - returning default user');
+    const defaultUser = {
+        name: 'User',
+        first_name: 'User',
+        middle_name: '',
+        last_name: '',
+        email: '',
+        grade_section: 'N/A',
+        profile_picture: null,
+        role: 'user'
+    };
+    console.log('[GetLoggedInUser] ============ End user retrieval ============');
+    return defaultUser;
+}
+
+// Load current user profile using GetLoggedInUser
+async function loadUserProfile() {
+    console.log('[loadUserProfile] Starting profile load...');
+    const currentUser = await GetLoggedInUser();
+    
+    console.log('[loadUserProfile] Got user object:', {
+        name: currentUser.name,
+        first_name: currentUser.first_name,
+        last_name: currentUser.last_name,
+        email: currentUser.email,
+        grade_section: currentUser.grade_section
+    });
+    
+    const profilePic = document.getElementById('profilePic');
+    const profileName = document.getElementById('profileName');
+    const profileGrade = document.getElementById('profileGrade');
+    
+    // Store email in localStorage for future requests
+    if (currentUser.email) {
+        localStorage.setItem('userEmail', currentUser.email);
+        console.log('[loadUserProfile] Saved email to localStorage:', currentUser.email);
+    }
+    
+    // Construct full display name from parts or use combined name
+    let displayName = currentUser.name || 'User';
+    if (currentUser.first_name || currentUser.last_name) {
+        const nameParts = [];
+        if (currentUser.first_name) nameParts.push(currentUser.first_name);
+        if (currentUser.middle_name) nameParts.push(currentUser.middle_name);
+        if (currentUser.last_name) nameParts.push(currentUser.last_name);
+        if (nameParts.length > 0) {
+            displayName = nameParts.join(' ');
+        }
+    }
+    
+    console.log('[loadUserProfile] Display name:', displayName);
+    
+    profileName.textContent = displayName;
+    profileGrade.textContent = currentUser.grade_section;
+    
+    // Load profile picture if exists
+    if (currentUser.profile_picture) {
+        const img = document.createElement('img');
+        img.src = currentUser.profile_picture;
+        img.onerror = () => {
+            console.log('[loadUserProfile] Profile picture failed to load, using emoji');
+            profilePic.innerHTML = '👤';
+        };
+        profilePic.innerHTML = '';
+        profilePic.appendChild(img);
+    } else {
+        profilePic.innerHTML = '👤';
+    }
+    
+    // Store in localStorage for fallback
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    console.log('[loadUserProfile] Profile card updated for:', displayName);
+}
+
+// Extract date from image info
+function extractDateFromImage(img) {
+    if (!img.info) return null;
+    const lines = img.info.split('\n');
+    for (let line of lines) {
+        if (line.toLowerCase().startsWith('date:')) {
+            const dateStr = line.substring('date:'.length).trim();
+            const date = new Date(dateStr);
+            return isNaN(date.getTime()) ? null : date;
+        }
+    }
+    return null;
+}
+
+btnEditProfile.addEventListener('click', () => {
+    alert('Profile editing feature coming soon!');
+});
 
 async function loadImages(){
     try {
@@ -445,7 +906,7 @@ function renderAllTags() {
 function renderGallery(filter=''){
     galleryEl.innerHTML = '';
     const q = (filter||'').toLowerCase().trim();
-    const list = images.filter(img => {
+    let list = images.filter(img => {
         if (q) {
             if (!(img.filename||'').toLowerCase().includes(q) && 
                 !(img.tags||[]).some(t=>t.toLowerCase().includes(q))) {
@@ -460,6 +921,17 @@ function renderGallery(filter=''){
         }
         
         return true;
+    });
+    
+    // Sort by date
+    list.sort((a, b) => {
+        const dateA = extractDateFromImage(a) || new Date(0);
+        const dateB = extractDateFromImage(b) || new Date(0);
+        if (sortOrder === 'latest') {
+            return dateB - dateA;
+        } else {
+            return dateA - dateB;
+        }
     });
     
     if (list.length===0){
@@ -478,6 +950,17 @@ function renderGallery(filter=''){
             thumb.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="160"%3E%3Crect width="200" height="160" fill="%23ddd"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14"%3EImage not found%3C/text%3E%3C/svg%3E';
         };
         card.appendChild(thumb);
+
+        // Add date label
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'card-date';
+        const imgDate = extractDateFromImage(img);
+        if (imgDate) {
+            dateDiv.textContent = imgDate.toLocaleString();
+        } else {
+            dateDiv.textContent = 'No date';
+        }
+        card.appendChild(dateDiv);
 
         const btnRow = document.createElement('div');
         btnRow.className = 'btn-row';
@@ -515,6 +998,20 @@ function onClear(){
 btnSearch.addEventListener('click', onSearch);
 btnClear.addEventListener('click', onClear);
 searchInput.addEventListener('keyup', (e)=> { if(e.key==='Enter') onSearch(); });
+
+btnLatest.addEventListener('click', () => {
+    sortOrder = 'latest';
+    btnLatest.style.background = 'var(--teal-green)';
+    btnOldest.style.background = 'var(--dark-gray)';
+    renderGallery(searchInput.value);
+});
+
+btnOldest.addEventListener('click', () => {
+    sortOrder = 'oldest';
+    btnOldest.style.background = 'var(--teal-green)';
+    btnLatest.style.background = 'var(--dark-gray)';
+    renderGallery(searchInput.value);
+});
 
 function openInfo(img){
     modalTitle.textContent = img.filename;
@@ -579,7 +1076,22 @@ btnLogout.addEventListener('click', async ()=>{
     window.location.href = '/';
 });
 
+// Initialize
+console.log('[Init] Clearing potentially stale localStorage data on page load...');
+// Don't clear - just let GetLoggedInUser handle the API call which will refresh if needed
+
+loadUserProfile();
 loadImages();
+
+// Set initial sort button styling
+btnLatest.style.background = 'var(--teal-green)';
+btnOldest.style.background = 'var(--dark-gray)';
+
+// Refresh profile every 30 seconds to ensure it's up to date
+setInterval(() => {
+    console.log('[Auto-refresh] Refreshing user profile...');
+    loadUserProfile();
+}, 30000);
 
 setInterval(() => {
     loadImages();

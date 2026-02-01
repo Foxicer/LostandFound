@@ -406,8 +406,8 @@ titlePanel.Controls.Add(textPanel);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        // Login successful - get user data
-                        var userResponse = await client.GetAsync("http://localhost:5000/api/user");
+                        // Login successful - get user data with email parameter (since C# HttpClient doesn't share session cookies)
+                        var userResponse = await client.GetAsync($"http://localhost:5000/api/user?email={Uri.EscapeDataString(email)}");
                         if (userResponse.IsSuccessStatusCode)
                         {
                             var userJson = await userResponse.Content.ReadAsStringAsync();
@@ -417,6 +417,9 @@ titlePanel.Controls.Add(textPanel);
                             var user = new User
                             {
                                 Name = userData.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? email : email,
+                                FirstName = userData.TryGetProperty("first_name", out var fnProp) ? fnProp.GetString() ?? "" : "",
+                                MiddleName = userData.TryGetProperty("middle_name", out var mnProp) ? mnProp.GetString() ?? "" : "",
+                                LastName = userData.TryGetProperty("last_name", out var lnProp) ? lnProp.GetString() ?? "" : "",
                                 Email = userData.TryGetProperty("email", out var emailProp) ? emailProp.GetString() ?? email : email,
                                 GradeSection = userData.TryGetProperty("grade_section", out var gradeProp) ? gradeProp.GetString() ?? "" : "",
                                 Password = password,
@@ -573,6 +576,19 @@ titlePanel.Controls.Add(textPanel);
                 }
                 
                 var found = userWithEmail;
+                
+                // Parse full name into parts if needed
+                if (string.IsNullOrWhiteSpace(found.FirstName) && !string.IsNullOrWhiteSpace(found.Name))
+                {
+                    var parts = found.Name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 1)
+                        found.FirstName = parts[0];
+                    if (parts.Length >= 2)
+                        found.MiddleName = parts[1];
+                    if (parts.Length >= 3)
+                        found.LastName = string.Join(" ", parts.Skip(2));
+                }
+                
                 AuthenticatedUser = found;
                 
                 // Save email to project root so Gallery can read it (do this before closing dialog)

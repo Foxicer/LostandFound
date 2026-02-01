@@ -104,9 +104,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (userResp.ok) {
           const userInfo = await userResp.json();
           localStorage.setItem('currentUser', JSON.stringify({ 
-            name: userInfo.username || email, 
-            email: userInfo.email || email 
+            name: userInfo.name || email,
+            first_name: userInfo.first_name || '',
+            middle_name: userInfo.middle_name || '',
+            last_name: userInfo.last_name || '',
+            email: userInfo.email || email,
+            grade_section: userInfo.grade_section || '',
+            profile_picture: userInfo.profile_picture || '',
+            role: userInfo.role || 'user'
           }));
+          localStorage.setItem('userEmail', userInfo.email || email);
           localStorage.setItem('currentUserEmail', userInfo.email || email);
         }
         
