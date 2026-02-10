@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace ReturnPoint
         private TableLayoutPanel galleryTable;
         private Panel rightPanel;
         private ComboBox cbViewMode;
+        private TextBox txtSearch;
         private Label lblSelectedFile;
         private Label lblDateAdded;
         private Button btnDelete;
@@ -23,6 +25,8 @@ namespace ReturnPoint
         private Button btnImageDetails;
         private Button btnTagManager;
         private Button btnLogout;
+        private FlowLayoutPanel pnlTags;
+        private TextBox txtNewTag;
         private string saveFolder;
         private string deletedFolder;
         private Panel selectedCard;
@@ -85,7 +89,7 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
-            TextBox txtSearch = new TextBox
+            txtSearch = new TextBox
             {
                 Top = 45,
                 Left = 15,
@@ -264,18 +268,19 @@ namespace ReturnPoint
             rightPanel.Controls.Add(btnLogout);
             Controls.Add(rightPanel);
             Controls.Add(outerPanel);
-            cbViewMode.SelectedIndexChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1);
-            btnRefresh.Click += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1);
+            cbViewMode.SelectedIndexChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
+            btnRefresh.Click += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             btnDelete.Click += (s, e) => DeleteSelected();
             btnRestore.Click += (s, e) => RestoreSelected();
             btnPermanentlyDelete.Click += (s, e) => PermanentlyDeleteSelected();
             btnImageDetails.Click += (s, e) => OpenImageDetailsForm();
             btnTagManager.Click += (s, e) => OpenTagManager();
+            txtSearch.TextChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             LoadImages(false);
             AddLogoCopyright();
             SetLogoTransparentBackground();
         }
-        private void LoadImages(bool showDeleted)
+        private void LoadImages(bool showDeleted, string searchQuery = "")
         {
             galleryTable.Controls.Clear();
             galleryTable.RowCount = 0;
@@ -295,6 +300,27 @@ namespace ReturnPoint
             var list = files.Select(f => new { File = f, Date = File.GetCreationTime(f) })
                 .OrderByDescending(x => x.Date)
                 .ToList();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                searchQuery = searchQuery.ToLower();
+                list = list.Where(item =>
+                {
+                    // Search by filename
+                    if (Path.GetFileName(item.File).ToLower().Contains(searchQuery))
+                        return true;
+
+                    // Search by tags
+                    var tags = TagManager.GetImageTags(item.File);
+                    foreach (var tagList in tags.Values)
+                    {
+                        if (tagList.Any(tag => tag.ToLower().Contains(searchQuery)))
+                            return true;
+                    }
+                    return false;
+                }).ToList();
+            }
             
             int columnIndex = 0;
             int rowIndex = 0;
@@ -320,7 +346,7 @@ namespace ReturnPoint
                     var card = new Panel
                     {
                         Width = IMAGE_SIZE,
-                        Height = IMAGE_SIZE + 80,
+                        Height = IMAGE_SIZE + 20,
                         BackColor = Theme.MediumTeal,
                         Margin = new Padding(10),
                         Padding = new Padding(5),
@@ -329,12 +355,16 @@ namespace ReturnPoint
                         Cursor = Cursors.Hand
                     };
                     
+                    // 4:3 aspect ratio: width = 210 (220 - 10 padding), height = 157.5
+                    int picWidth = IMAGE_SIZE - 10;
+                    int picHeight = (int)(picWidth * 3 / 4.0); // 157px for 4:3 ratio
+                    
                     PictureBox pic = new PictureBox
                     {
                         Image = img,
                         SizeMode = PictureBoxSizeMode.Zoom,
-                        Width = IMAGE_SIZE - 10,
-                        Height = IMAGE_SIZE - 50,
+                        Width = picWidth,
+                        Height = picHeight,
                         Cursor = Cursors.Hand,
                         Dock = DockStyle.Top
                     };
@@ -366,6 +396,9 @@ namespace ReturnPoint
                     card.Controls.Add(pic);
                     card.Controls.Add(lblDate);
                     card.Controls.Add(btnInfo);
+                    
+                    // Add tag badges
+                    BuildTagBadges(card, filePath);
                     
                     string filePath_copy = filePath;
                     btnInfo.Click += (s, e) => ShowFileInfo(filePath_copy);
@@ -508,8 +541,9 @@ namespace ReturnPoint
                 File.Move(filePath, dest);
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_tags.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_tags.txt"));
                 MoveIfExists(Path.ChangeExtension(filePath, null) + "_info.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_info.txt"));
+                TagManager.DeleteImageTags(filePath);
                 DeleteImageFromGoogleSheets(Path.GetFileName(filePath));
-                LoadImages(cbViewMode.SelectedIndex == 1);
+                LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             }
             catch (Exception ex)
             {
@@ -530,7 +564,7 @@ namespace ReturnPoint
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_tags.txt"), Path.Combine(saveFolder, baseName + "_tags.txt"));
                 MoveIfExists(Path.Combine(deletedFolder, baseName + "_info.txt"), Path.Combine(saveFolder, baseName + "_info.txt"));
                 RestoreImageInGoogleSheets(Path.GetFileName(filePath));
-                LoadImages(cbViewMode.SelectedIndex == 1);
+                LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             }
             catch (Exception ex)
             {
@@ -553,7 +587,8 @@ namespace ReturnPoint
                     Path.Combine(Path.GetDirectoryName(filePath), baseName + "_info.txt")
                 };
                 foreach (var r in related) if (File.Exists(r)) File.Delete(r);
-                LoadImages(cbViewMode.SelectedIndex == 1);
+                TagManager.DeleteImageTags(filePath);
+                LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             }
             catch (Exception ex)
             {
@@ -747,224 +782,317 @@ namespace ReturnPoint
         }
         private void OpenTagManager()
         {
+            if (selectedCard == null)
+            {
+                MessageBox.Show("Please select an image first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string filePath = (string)selectedCard.Tag;
             Form tagForm = new Form
             {
-                Text = "Tag Manager - Create and Manage Tags",
-                Width = 600,
-                Height = 500,
+                Text = $"Edit Tags - {Path.GetFileName(filePath)}",
+                Width = 500,
+                Height = 450,
                 StartPosition = FormStartPosition.CenterParent,
-                BackColor = Theme.LightGray,
-                Font = new Font("Segoe UI", 11),
+                BackColor = Theme.SoftWhite,
+                Font = new Font("Segoe UI", 10),
                 Owner = this
             };
+
+            Label lblCurrentTags = new Label
+            {
+                Text = "Current Tags:",
+                AutoSize = true,
+                Top = 15,
+                Left = 15,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+
+            FlowLayoutPanel pnlCurrentTags = new FlowLayoutPanel
+            {
+                Top = 40,
+                Left = 15,
+                Width = 460,
+                Height = 80,
+                BackColor = Theme.LightGray,
+                BorderStyle = BorderStyle.FixedSingle,
+                AutoScroll = true,
+                Padding = new Padding(5)
+            };
+
             Label lblAvailableTags = new Label
             {
                 Text = "Available Tags:",
-                Top = 10,
-                Left = 10,
                 AutoSize = true,
-                Font = new Font("Segoe UI", 11, FontStyle.Bold)
-            };
-            ListBox lbTags = new ListBox
-            {
-                Top = 35,
-                Left = 10,
-                Width = 570,
-                Height = 200,
-                BackColor = Theme.SoftWhite,
+                Top = 135,
+                Left = 15,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
+
+            ListBox lbAvailableTags = new ListBox
+            {
+                Top = 160,
+                Left = 15,
+                Width = 460,
+                Height = 120,
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                SelectionMode = SelectionMode.One
+            };
+
             Label lblNewTag = new Label
             {
-                Text = "Create New Tag:",
-                Top = 245,
-                Left = 10,
+                Text = "Add New Tag:",
                 AutoSize = true,
-                Font = new Font("Segoe UI", 11, FontStyle.Bold)
-            };
-            TextBox txtNewTag = new TextBox
-            {
-                Top = 270,
-                Left = 10,
-                Width = 400,
-                Height = 30,
-                Font = new Font("Segoe UI", 11),
-                BackColor = Theme.SoftWhite,
+                Top = 290,
+                Left = 15,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
-            Button btnCreateTag = new Button
+
+            TextBox txtAddTag = new TextBox
             {
-                Text = "➕ Create Tag",
-                Top = 270,
-                Left = 420,
-                Width = 160,
-                Height = 30,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.MediumTeal,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
+                Top = 315,
+                Left = 15,
+                Width = 330,
+                Height = 32,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                PlaceholderText = "Type tag name..."
             };
-            btnCreateTag.FlatAppearance.BorderSize = 0;
-            Button btnDeleteTag = new Button
+
+            Button btnAddTag = new Button
             {
-                Text = "🗑️ Delete Selected",
-                Top = 310,
-                Left = 10,
-                Width = 160,
-                Height = 30,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.DeepRed,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnDeleteTag.FlatAppearance.BorderSize = 0;
-            Button btnAssignTag = new Button
-            {
-                Text = "🏷️ Assign to Selected Image",
-                Top = 310,
-                Left = 180,
-                Width = 220,
-                Height = 30,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.AccentBlue,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnAssignTag.FlatAppearance.BorderSize = 0;
-            Label lblInfo = new Label
-            {
-                Text = "The first two tags on an image will display as the Item name",
-                Top = 350,
-                Left = 10,
-                Width = 560,
-                Height = 40,
-                AutoSize = false,
-                Font = new Font("Segoe UI", 9, FontStyle.Italic),
-                ForeColor = Theme.MediumTeal,
-                BackColor = Color.Transparent
-            };
-            Button btnClose = new Button
-            {
-                Text = "Close",
-                Top = 400,
-                Left = 450,
+                Text = "➕ Add",
+                Top = 315,
+                Left = 355,
                 Width = 120,
-                Height = 40,
+                Height = 32,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = Theme.Success,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnAddTag.FlatAppearance.BorderSize = 0;
+
+            Button btnApply = new Button
+            {
+                Text = "✓ Apply",
+                Top = 360,
+                Left = 15,
+                Width = 220,
+                Height = 35,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 BackColor = Theme.MediumTeal,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand
             };
-            btnClose.FlatAppearance.BorderSize = 0;
-            btnClose.Click += (s, e) => tagForm.Close();
-            LoadAllTagsIntoListBox(lbTags);
-            btnCreateTag.Click += (s, e) =>
+            btnApply.FlatAppearance.BorderSize = 0;
+
+            Button btnCancel = new Button
             {
-                string tagName = txtNewTag.Text.Trim();
+                Text = "Cancel",
+                Top = 360,
+                Left = 255,
+                Width = 220,
+                Height = 35,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = Theme.LightGray,
+                ForeColor = Theme.NearBlack,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+
+            // Populate available tags
+            var allTags = TagManager.GetAllTags();
+            foreach (var tag in allTags)
+            {
+                lbAvailableTags.Items.Add(tag);
+            }
+
+            // Populate current tags
+            RefreshCurrentTagsDisplay(pnlCurrentTags, filePath);
+
+            tagForm.Controls.Add(lblCurrentTags);
+            tagForm.Controls.Add(pnlCurrentTags);
+            tagForm.Controls.Add(lblAvailableTags);
+            tagForm.Controls.Add(lbAvailableTags);
+            tagForm.Controls.Add(lblNewTag);
+            tagForm.Controls.Add(txtAddTag);
+            tagForm.Controls.Add(btnAddTag);
+            tagForm.Controls.Add(btnApply);
+            tagForm.Controls.Add(btnCancel);
+
+            // Button handlers
+            btnAddTag.Click += (s, e) =>
+            {
+                string tagName = txtAddTag.Text.Trim();
                 if (!string.IsNullOrWhiteSpace(tagName))
                 {
-                    string tagsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tags.txt");
-                    var tags = File.Exists(tagsFile) ? File.ReadAllLines(tagsFile).ToList() : new List<string>();
-                    if (!tags.Contains(tagName))
+                    // Add to Uncategorized
+                    TagManager.AddTagToCategory("Uncategorized", tagName);
+                    
+                    // Add to available list if not already there
+                    if (!lbAvailableTags.Items.Contains(tagName))
                     {
-                        tags.Add(tagName);
-                        File.WriteAllLines(tagsFile, tags.OrderBy(t => t));
-                        LoadAllTagsIntoListBox(lbTags);
-                        txtNewTag.Clear();
-                        MessageBox.Show($"Tag '{tagName}' created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        lbAvailableTags.Items.Add(tagName);
                     }
-                    else
-                    {
-                        MessageBox.Show($"Tag '{tagName}' already exists!", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Please enter a tag name.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    
+                    txtAddTag.Clear();
                 }
             };
-            btnDeleteTag.Click += (s, e) =>
+
+            lbAvailableTags.DoubleClick += (s, e) =>
             {
-                if (lbTags.SelectedItem != null)
+                if (lbAvailableTags.SelectedItem is string selectedTag)
                 {
-                    string selectedTag = lbTags.SelectedItem.ToString();
-                    if (MessageBox.Show($"Delete tag '{selectedTag}'?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                    {
-                        string tagsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tags.txt");
-                        var tags = File.Exists(tagsFile) ? File.ReadAllLines(tagsFile).ToList() : new List<string>();
-                        tags.Remove(selectedTag);
-                        File.WriteAllLines(tagsFile, tags);
-                        LoadAllTagsIntoListBox(lbTags);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Please select a tag to delete.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    TagManager.AddTagToImage(filePath, "Uncategorized", selectedTag);
+                    RefreshCurrentTagsDisplay(pnlCurrentTags, filePath);
                 }
             };
-            btnAssignTag.Click += (s, e) =>
+
+            btnApply.Click += (s, e) =>
             {
-                if (selectedCard == null)
-                {
-                    MessageBox.Show("Please select an image first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                if (lbTags.SelectedItem == null)
-                {
-                    MessageBox.Show("Please select a tag to assign.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                string filePath = (string)selectedCard.Tag;
-                string selectedTag = lbTags.SelectedItem.ToString();
-                AddTagToImage(filePath, selectedTag);
-                MessageBox.Show($"Tag '{selectedTag}' added to image!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
+                tagForm.Close();
             };
-            tagForm.Controls.Add(lblAvailableTags);
-            tagForm.Controls.Add(lbTags);
-            tagForm.Controls.Add(lblNewTag);
-            tagForm.Controls.Add(txtNewTag);
-            tagForm.Controls.Add(btnCreateTag);
-            tagForm.Controls.Add(btnDeleteTag);
-            tagForm.Controls.Add(btnAssignTag);
-            tagForm.Controls.Add(lblInfo);
-            tagForm.Controls.Add(btnClose);
+
+            btnCancel.Click += (s, e) => tagForm.Close();
+
             tagForm.ShowDialog(this);
         }
-        private void LoadAllTagsIntoListBox(ListBox listBox)
+
+        private void RefreshCurrentTagsDisplay(FlowLayoutPanel panel, string filePath)
         {
-            listBox.Items.Clear();
-            string tagsFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tags.txt");
-            if (File.Exists(tagsFile))
+            panel.Controls.Clear();
+            var imageTags = TagManager.GetImageTags(filePath);
+            
+            if (imageTags.Count == 0)
             {
-                string[] tags = File.ReadAllLines(tagsFile);
-                foreach (var tag in tags.OrderBy(t => t))
+                Label lblEmpty = new Label
                 {
-                    listBox.Items.Add(tag);
+                    Text = "(no tags yet)",
+                    AutoSize = true,
+                    ForeColor = Theme.DarkGray,
+                    Font = new Font("Segoe UI", 9, FontStyle.Italic)
+                };
+                panel.Controls.Add(lblEmpty);
+                return;
+            }
+
+            foreach (var categoryTags in imageTags)
+            {
+                foreach (var tag in categoryTags.Value)
+                {
+                    Panel tagChip = new Panel
+                    {
+                        BackColor = ColorTranslator.FromHtml(TagManager.GetCategoryColor(categoryTags.Key)),
+                        Height = 28,
+                        Width = 120,
+                        Margin = new Padding(3),
+                        AutoSize = false
+                    };
+
+                    Label lblTag = new Label
+                    {
+                        Text = tag,
+                        AutoSize = false,
+                        Dock = DockStyle.Fill,
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                        TextAlign = ContentAlignment.MiddleLeft,
+                        Padding = new Padding(5, 0, 25, 0)
+                    };
+
+                    Button btnRemove = new Button
+                    {
+                        Text = "✕",
+                        AutoSize = false,
+                        Width = 20,
+                        Height = 28,
+                        Dock = DockStyle.Right,
+                        BackColor = Color.Transparent,
+                        ForeColor = Color.White,
+                        FlatStyle = FlatStyle.Flat,
+                        Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                        Cursor = Cursors.Hand
+                    };
+                    btnRemove.FlatAppearance.BorderSize = 0;
+
+                    string tagName = tag;
+                    string categoryName = categoryTags.Key;
+                    btnRemove.Click += (s, e) =>
+                    {
+                        TagManager.RemoveTagFromImage(filePath, categoryName, tagName);
+                        RefreshCurrentTagsDisplay(panel, filePath);
+                    };
+
+                    tagChip.Controls.Add(lblTag);
+                    tagChip.Controls.Add(btnRemove);
+                    panel.Controls.Add(tagChip);
                 }
             }
         }
-        private void AddTagToImage(string filePath, string tagName)
+
+        private void BuildTagBadges(Panel card, string filePath)
         {
-            try
+            // Remove existing tag panel if present
+            var existingTagPanel = card.Controls.OfType<Panel>().FirstOrDefault(p => (string)p.Tag == "tag-panel");
+            if (existingTagPanel != null)
+                card.Controls.Remove(existingTagPanel);
+
+            var imageTags = TagManager.GetImageTags(filePath);
+            if (imageTags.Count == 0)
+                return;
+
+            Panel tagPanel = new Panel
             {
-                string baseName = Path.GetFileNameWithoutExtension(filePath);
-                string folderPath = Path.GetDirectoryName(filePath);
-                string tagsPath = Path.Combine(folderPath, baseName + "_tags.txt");
-                var tags = File.Exists(tagsPath) ? File.ReadAllLines(tagsPath).ToList() : new List<string>();
-                if (!tags.Contains(tagName))
+                Tag = "tag-panel",
+                Height = 25,
+                Dock = DockStyle.Bottom,
+                BackColor = Theme.DarkTeal,
+                AutoScroll = true
+            };
+
+            int xOffset = 5;
+            foreach (var categoryTags in imageTags)
+            {
+                string categoryName = categoryTags.Key;
+                var tags = categoryTags.Value;
+                string categoryColor = TagManager.GetCategoryColor(categoryName);
+
+                foreach (var tag in tags.Take(4)) // Show up to 4 tags per image
                 {
-                    tags.Add(tagName);
-                    File.WriteAllLines(tagsPath, tags);
+                    Label tagBadge = new Label
+                    {
+                        Text = $"  {tag}  ",
+                        AutoSize = true,
+                        BackColor = ColorTranslator.FromHtml(categoryColor),
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 7, FontStyle.Bold),
+                        Location = new Point(xOffset, 3),
+                        Padding = new Padding(2)
+                    };
+
+                    tagPanel.Controls.Add(tagBadge);
+                    xOffset += tagBadge.Width + 2;
+
+                    if (xOffset > 200)
+                    {
+                        xOffset = 5;
+                        tagPanel.Height += 22;
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error adding tag: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+
+            card.Controls.Add(tagPanel);
         }
         private async void DeleteImageFromGoogleSheets(string filename)
         {

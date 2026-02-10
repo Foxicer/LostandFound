@@ -547,7 +547,7 @@ namespace ReturnPoint
                     var card = new Panel
                     {
                         Width = IMAGE_SIZE,
-                        Height = IMAGE_SIZE + 80,
+                        Height = IMAGE_SIZE + 20,
                         BackColor = Theme.MediumTeal,
                         Margin = new Padding(10),
                         Padding = new Padding(5),
@@ -556,12 +556,16 @@ namespace ReturnPoint
                         Cursor = Cursors.Hand
                     };
                     
+                    // 4:3 aspect ratio: width = 210 (220 - 10 padding), height = 157.5
+                    int picWidth = IMAGE_SIZE - 10;
+                    int picHeight = (int)(picWidth * 3 / 4.0); // 157px for 4:3 ratio
+                    
                     PictureBox pic = new PictureBox
                     {
                         Image = img,
                         SizeMode = PictureBoxSizeMode.Zoom,
-                        Width = IMAGE_SIZE - 10,
-                        Height = IMAGE_SIZE - 50,
+                        Width = picWidth,
+                        Height = picHeight,
                         Cursor = Cursors.Hand,
                         Dock = DockStyle.Top
                     };

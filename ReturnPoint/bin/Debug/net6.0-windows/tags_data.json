@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Size",
+    "color": "#4ECDC4",
+    "tags": []
+  },
+  {
+    "name": "Type",
+    "color": "#45B7D1",
+    "tags": []
+  },
+  {
+    "name": "Condition",
+    "color": "#FFA07A",
+    "tags": []
+  },
+  {
+    "name": "Location",
+    "color": "#98D8C8",
+    "tags": []
+  },
+  {
+    "name": "Color",
+    "color": "#808080",
+    "tags": []
+  }
+]

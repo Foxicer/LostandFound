@@ -6,7 +6,7 @@
     "last_name": "Villarias",
     "email": "nickalisonvillarias@gmail.com",
     "grade_section": "12 ICT - Python",
-    "password": "pb&jthelongway",
+    "password": "pb\u0026jthelongway",
     "profile_picture": "",
     "role": "user"
   },
@@ -18,6 +18,81 @@
     "email": "jaydentordesillas222@gmail.com",
     "grade_section": "12 - PYTHON",
     "password": "Password",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Princess Ryan Francisco",
+    "first_name": "Princess",
+    "middle_name": "Ryan",
+    "last_name": "Francisco",
+    "email": "princessryanfrancisco@gmail.com",
+    "grade_section": "12-PYTHON",
+    "password": "1234567",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Paula Louise Ili",
+    "email": "paula.louise0808@gmail.com",
+    "grade_section": "12- ICT PYTHON",
+    "password": "ilipaula",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Mar Guiller Sican Guevarra",
+    "email": "marguller@gmail.com",
+    "grade_section": "12 ICT Python",
+    "password": "mar0708",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "marrk pagelos",
+    "email": "marrkpagelos@gmail.com",
+    "grade_section": "12 ict python",
+    "password": "pagelomark",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "sean nathan cabasa delacruz cabasa",
+    "email": "seannathancabasa@gmail.com",
+    "grade_section": "12 ict python",
+    "password": "cabasasean",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Alfred De Leon Mendoza",
+    "email": "alfredmendoza572@gmail.com",
+    "grade_section": "12- Python",
+    "password": "Mendoza25",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Paul Del Rosario Antonio",
+    "email": "paulantonio726@gmail.com",
+    "grade_section": "12 - python",
+    "password": "tonton123",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Paul Del Rosario Antonio",
+    "email": "cedrick567@gmail.com",
+    "grade_section": "12-python",
+    "password": "tonton098",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Lhoyfd Reign Umayam",
+    "email": "lhoydreignu@gmail.com",
+    "grade_section": "12 ICT Python",
+    "password": "Dr0g!.349",
     "profile_picture": "",
     "role": "user"
   }

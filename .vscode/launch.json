@@ -2,23 +2,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "cppdbg",
+      "name": ".NET Launch (console)",
+      "type": "coreclr",
       "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/ReturnPoint/bin/Debug/net6.0-windows/ReturnPoint.dll",
       "args": [],
+      "cwd": "${workspaceFolder}/ReturnPoint",
       "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "c:/Users/jayde/Downloads/ReturnPoint/CameraUploader",
-      "program": "c:/Users/jayde/Downloads/ReturnPoint/CameraUploader/build/Debug/outDebug",
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
+      "console": "integratedTerminal",
+      "requireExactSource": false
+    },
+    {
+      "name": ".NET Attach",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
     }
   ]
 }
