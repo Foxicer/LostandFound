@@ -54,8 +54,8 @@ namespace ReturnPoint
             txtLast = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "Last name", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             txtEmail = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             txtGradeSection = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtPassword = new TextBox { Width = 370, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtConfirm = new TextBox { Width = 370, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtPassword = new TextBox { Width = 330, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
+            txtConfirm = new TextBox { Width = 330, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
             btnRegister = new Button 
             { 
                 Text = "Create Account", 
@@ -137,11 +137,77 @@ namespace ReturnPoint
             center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblP);
             center.Controls.Add(new Label { Height = 6 });
-            center.Controls.Add(txtPassword);
+            
+            // Create password field container with show/hide toggle
+            var passwordContainer = new Panel
+            {
+                Width = 370,
+                Height = 40,
+                BackColor = Color.Transparent,
+                AutoSize = false
+            };
+            var btnTogglePassword = new Button
+            {
+                Text = "👁️",
+                Width = 40,
+                Height = 40,
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                FlatStyle = FlatStyle.Flat,
+                Font = new System.Drawing.Font("Segoe UI", 11F),
+                Dock = DockStyle.Right
+            };
+            btnTogglePassword.FlatAppearance.BorderSize = 0;
+            btnTogglePassword.Tag = false;
+            btnTogglePassword.Click += (s, e) =>
+            {
+                bool isVisible = (bool)btnTogglePassword.Tag;
+                txtPassword.UseSystemPasswordChar = isVisible;
+                btnTogglePassword.Tag = !isVisible;
+                btnTogglePassword.Text = isVisible ? "👁️" : "👁️‍🗨️";
+            };
+            txtPassword.Dock = DockStyle.Fill;
+            passwordContainer.Controls.Add(txtPassword);
+            passwordContainer.Controls.Add(btnTogglePassword);
+            
+            center.Controls.Add(passwordContainer);
             center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblC);
             center.Controls.Add(new Label { Height = 6 });
-            center.Controls.Add(txtConfirm);
+            
+            // Create confirm password field container with show/hide toggle
+            var confirmContainer = new Panel
+            {
+                Width = 370,
+                Height = 40,
+                BackColor = Color.Transparent,
+                AutoSize = false
+            };
+            var btnToggleConfirm = new Button
+            {
+                Text = "👁️",
+                Width = 40,
+                Height = 40,
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                FlatStyle = FlatStyle.Flat,
+                Font = new System.Drawing.Font("Segoe UI", 11F),
+                Dock = DockStyle.Right
+            };
+            btnToggleConfirm.FlatAppearance.BorderSize = 0;
+            btnToggleConfirm.Tag = false;
+            btnToggleConfirm.Click += (s, e) =>
+            {
+                bool isVisible = (bool)btnToggleConfirm.Tag;
+                txtConfirm.UseSystemPasswordChar = isVisible;
+                btnToggleConfirm.Tag = !isVisible;
+                btnToggleConfirm.Text = isVisible ? "👁️" : "👁️‍🗨️";
+            };
+            txtConfirm.Dock = DockStyle.Fill;
+            confirmContainer.Controls.Add(txtConfirm);
+            confirmContainer.Controls.Add(btnToggleConfirm);
+            
+            center.Controls.Add(confirmContainer);
             center.Controls.Add(new Label { Height = 14 });
             center.Controls.Add(lblMsg);
             center.Controls.Add(new Label { Height = 20 });
@@ -233,30 +299,7 @@ namespace ReturnPoint
             txtPassword.Enabled = false;
             txtConfirm.Enabled = false;
             
-            // Find and show the loading label
-            foreach (Control c in panelMain.Controls)
-            {
-                if (c is Panel containerPanel)
-                {
-                    foreach (Control bc in containerPanel.Controls)
-                    {
-                        if (bc is Panel borderPanel)
-                        {
-                            foreach (Control cp in borderPanel.Controls)
-                            {
-                                if (cp is FlowLayoutPanel centerPanel)
-                                {
-                                    foreach (Control fc in centerPanel.Controls)
-                                    {
-                                        if (fc is Label lbl && lbl.Text == "Creating account...")
-                                            lbl.Visible = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            ShowLoadingScreen("Creating account....");
             
             // Try to register via Flask API first (all users default to "user" role)
             Task.Run(async () => await RegisterViaAPI(first, middle, last, email, grade, pass));
@@ -264,6 +307,7 @@ namespace ReturnPoint
 
         private void ResetLoadingState()
         {
+            HideLoadingScreen();
             Invoke((MethodInvoker)delegate
             {
                 btnRegister.Enabled = true;
@@ -275,31 +319,6 @@ namespace ReturnPoint
                 txtGradeSection.Enabled = true;
                 txtPassword.Enabled = true;
                 txtConfirm.Enabled = true;
-                
-                // Find and hide the loading label
-                foreach (Control c in panelMain.Controls)
-                {
-                    if (c is Panel containerPanel)
-                    {
-                        foreach (Control bc in containerPanel.Controls)
-                        {
-                            if (bc is Panel borderPanel)
-                            {
-                                foreach (Control cp in borderPanel.Controls)
-                                {
-                                    if (cp is FlowLayoutPanel centerPanel)
-                                    {
-                                        foreach (Control fc in centerPanel.Controls)
-                                        {
-                                            if (fc is Label lbl && lbl.Text == "Creating account...")
-                                                lbl.Visible = false;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             });
         }
 
@@ -504,6 +523,111 @@ namespace ReturnPoint
             catch (Exception ex) 
             { 
                 System.Diagnostics.Debug.WriteLine($"Error loading logo background: {ex.Message}");
+            }
+        }
+        
+        private Form? loadingForm;
+        private bool isLoading = false;
+        
+        private void ShowLoadingScreen(string message = "Loading...")
+        {
+            if (isLoading) return;
+            isLoading = true;
+            
+            loadingForm = new Form
+            {
+                Text = "Loading",
+                FormBorderStyle = FormBorderStyle.None,
+                Size = new Size(300, 150),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Theme.GetBackgroundTeal(),
+                TopMost = true,
+                ControlBox = false
+            };
+            
+            Panel contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.DarkTeal,
+                Padding = new Padding(20)
+            };
+            
+            Label messageLabel = new Label
+            {
+                Text = message,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(20, 20)
+            };
+            
+            Label spinnerLabel = new Label
+            {
+                Text = "⏳",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 40),
+                ForeColor = Theme.AccentBlue,
+                Location = new Point(110, 30),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Width = 80,
+                Height = 80
+            };
+            
+            contentPanel.Controls.Add(messageLabel);
+            contentPanel.Controls.Add(spinnerLabel);
+            loadingForm.Controls.Add(contentPanel);
+            
+            System.Windows.Forms.Timer animationTimer = new System.Windows.Forms.Timer();
+            int spinnerIndex = 0;
+            string[] spinners = new string[] { "⏳", "⌛" };
+            
+            animationTimer.Interval = 500;
+            animationTimer.Tick += (s, e) =>
+            {
+                try
+                {
+                    if (spinnerLabel.InvokeRequired)
+                    {
+                        spinnerLabel.Invoke((MethodInvoker)delegate
+                        {
+                            spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                            spinnerLabel.Text = spinners[spinnerIndex];
+                        });
+                    }
+                    else
+                    {
+                        spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                        spinnerLabel.Text = spinners[spinnerIndex];
+                    }
+                }
+                catch { }
+            };
+            animationTimer.Start();
+            
+            loadingForm.FormClosed += (s, e) =>
+            {
+                animationTimer.Stop();
+                animationTimer.Dispose();
+            };
+            
+            loadingForm.Show(this);
+        }
+        
+        private void HideLoadingScreen()
+        {
+            if (loadingForm != null && !loadingForm.IsDisposed)
+            {
+                try
+                {
+                    Invoke((MethodInvoker)delegate
+                    {
+                        loadingForm?.Close();
+                        loadingForm?.Dispose();
+                        loadingForm = null;
+                        isLoading = false;
+                    });
+                }
+                catch { }
             }
         }
     }

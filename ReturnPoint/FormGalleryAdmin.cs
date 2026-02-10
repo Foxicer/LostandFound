@@ -34,6 +34,8 @@ namespace ReturnPoint
         private Bitmap? backgroundBitmap;
         private const int COLUMNS = 5;
         private const int IMAGE_SIZE = 220;
+        private Form? loadingForm;
+        private bool isLoading = false;
         public FormGalleryAdmin()
         {
             Text = "Gallery Admin - ReturnPoint";
@@ -280,16 +282,149 @@ namespace ReturnPoint
             AddLogoCopyright();
             SetLogoTransparentBackground();
         }
+        
+        private void ShowLoadingScreen(string message = "Loading...")
+        {
+            if (isLoading) return;
+            isLoading = true;
+            
+            loadingForm = new Form
+            {
+                Text = "Loading",
+                FormBorderStyle = FormBorderStyle.None,
+                Size = new Size(300, 150),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Theme.GetBackgroundTeal(),
+                TopMost = true,
+                ControlBox = false
+            };
+            
+            Panel contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.DarkTeal,
+                Padding = new Padding(20)
+            };
+            
+            Label messageLabel = new Label
+            {
+                Text = message,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(20, 20)
+            };
+            
+            Label spinnerLabel = new Label
+            {
+                Text = "⏳",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 40),
+                ForeColor = Theme.AccentBlue,
+                Location = new Point(110, 30),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Width = 80,
+                Height = 80
+            };
+            
+            contentPanel.Controls.Add(messageLabel);
+            contentPanel.Controls.Add(spinnerLabel);
+            loadingForm.Controls.Add(contentPanel);
+            
+            System.Windows.Forms.Timer animationTimer = new System.Windows.Forms.Timer();
+            int spinnerIndex = 0;
+            string[] spinners = new string[] { "⏳", "⌛" };
+            
+            animationTimer.Interval = 500;
+            animationTimer.Tick += (s, e) =>
+            {
+                try
+                {
+                    if (spinnerLabel.InvokeRequired)
+                    {
+                        spinnerLabel.Invoke((MethodInvoker)delegate
+                        {
+                            spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                            spinnerLabel.Text = spinners[spinnerIndex];
+                        });
+                    }
+                    else
+                    {
+                        spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                        spinnerLabel.Text = spinners[spinnerIndex];
+                    }
+                }
+                catch { }
+            };
+            animationTimer.Start();
+            
+            loadingForm.FormClosed += (s, e) =>
+            {
+                animationTimer.Stop();
+                animationTimer.Dispose();
+            };
+            
+            loadingForm.Show(this);
+        }
+        
+        private void HideLoadingScreen()
+        {
+            if (loadingForm != null && !loadingForm.IsDisposed)
+            {
+                try
+                {
+                    Invoke((MethodInvoker)delegate
+                    {
+                        loadingForm?.Close();
+                        loadingForm?.Dispose();
+                        loadingForm = null;
+                        isLoading = false;
+                    });
+                }
+                catch { }
+            }
+        }
+        
         private void LoadImages(bool showDeleted, string searchQuery = "")
         {
-            galleryTable.Controls.Clear();
-            galleryTable.RowCount = 0;
-            selectedCard = null;
-            lblSelectedFile.Text = "Selected: (none)";
-            lblDateAdded.Text = "Date Added: N/A";
-            btnRestore.Enabled = false;
-            btnDelete.Enabled = true;
-            btnPermanentlyDelete.Enabled = false;
+            ShowLoadingScreen("Loading images...");
+            
+            System.ComponentModel.BackgroundWorker worker = new System.ComponentModel.BackgroundWorker();
+            worker.DoWork += (s, e) =>
+            {
+                e.Result = new { ShowDeleted = showDeleted, SearchQuery = searchQuery };
+            };
+            worker.RunWorkerCompleted += (s, e) =>
+            {
+                try
+                {
+                    LoadImagesSync(showDeleted, searchQuery);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in LoadImagesSync: {ex.Message}");
+                }
+                finally
+                {
+                    HideLoadingScreen();
+                }
+            };
+            worker.RunWorkerAsync();
+        }
+        
+        private void LoadImagesSync(bool showDeleted, string searchQuery)
+        {
+            Invoke((MethodInvoker)delegate
+            {
+                galleryTable.Controls.Clear();
+                galleryTable.RowCount = 0;
+                selectedCard = null;
+                lblSelectedFile.Text = "Selected: (none)";
+                lblDateAdded.Text = "Date Added: N/A";
+                btnRestore.Enabled = false;
+                btnDelete.Enabled = true;
+                btnPermanentlyDelete.Enabled = false;
+            });
             
             string folder = showDeleted ? deletedFolder : saveFolder;
             if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
@@ -327,11 +462,6 @@ namespace ReturnPoint
             
             foreach (var item in list)
             {
-                if (columnIndex == 0)
-                {
-                    galleryTable.RowCount++;
-                }
-                
                 try
                 {
                     string filePath = item.File;
@@ -340,79 +470,88 @@ namespace ReturnPoint
                     using (MemoryStream ms = new MemoryStream())
                     {
                         fs.CopyTo(ms);
+                        ms.Position = 0;
                         img = Image.FromStream(ms);
                     }
                     
-                    var card = new Panel
+                    Invoke((MethodInvoker)delegate
                     {
-                        Width = IMAGE_SIZE,
-                        Height = IMAGE_SIZE + 20,
-                        BackColor = Theme.MediumTeal,
-                        Margin = new Padding(10),
-                        Padding = new Padding(5),
-                        BorderStyle = BorderStyle.FixedSingle,
-                        Tag = filePath,
-                        Cursor = Cursors.Hand
-                    };
-                    
-                    // 4:3 aspect ratio: width = 210 (220 - 10 padding), height = 157.5
-                    int picWidth = IMAGE_SIZE - 10;
-                    int picHeight = (int)(picWidth * 3 / 4.0); // 157px for 4:3 ratio
-                    
-                    PictureBox pic = new PictureBox
-                    {
-                        Image = img,
-                        SizeMode = PictureBoxSizeMode.Zoom,
-                        Width = picWidth,
-                        Height = picHeight,
-                        Cursor = Cursors.Hand,
-                        Dock = DockStyle.Top
-                    };
-                    
-                    Label lblDate = new Label
-                    {
-                        Text = item.Date.ToString("MM/dd/yyyy"),
-                        Dock = DockStyle.Top,
-                        TextAlign = ContentAlignment.MiddleCenter,
-                        Font = new Font("Segoe UI", 8),
-                        ForeColor = Color.White,
-                        BackColor = Theme.DarkTeal,
-                        Height = 22
-                    };
-                    
-                    Button btnInfo = new Button
-                    {
-                        Text = "Info",
-                        Dock = DockStyle.Bottom,
-                        BackColor = Theme.AccentBlue,
-                        ForeColor = Color.White,
-                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                        FlatStyle = FlatStyle.Flat,
-                        Height = 28,
-                        Cursor = Cursors.Hand
-                    };
-                    btnInfo.FlatAppearance.BorderSize = 0;
-                    
-                    card.Controls.Add(pic);
-                    card.Controls.Add(lblDate);
-                    card.Controls.Add(btnInfo);
-                    
-                    // Add tag badges
-                    BuildTagBadges(card, filePath);
-                    
-                    string filePath_copy = filePath;
-                    btnInfo.Click += (s, e) => ShowFileInfo(filePath_copy);
-                    pic.Click += (s, e) => SelectAdminCard(card);
-                    card.Click += (s, e) => SelectAdminCard(card);
-                    
-                    galleryTable.Controls.Add(card, columnIndex, rowIndex);
-                    
-                    columnIndex++;
-                    if (columnIndex >= COLUMNS)
-                    {
-                        columnIndex = 0;
-                        rowIndex++;
-                    }
+                        if (columnIndex == 0)
+                        {
+                            galleryTable.RowCount++;
+                        }
+                        
+                        var card = new Panel
+                        {
+                            Width = IMAGE_SIZE,
+                            Height = IMAGE_SIZE + 20,
+                            BackColor = Theme.MediumTeal,
+                            Margin = new Padding(10),
+                            Padding = new Padding(5),
+                            BorderStyle = BorderStyle.FixedSingle,
+                            Tag = filePath,
+                            Cursor = Cursors.Hand
+                        };
+                        
+                        // 4:3 aspect ratio
+                        int picWidth = IMAGE_SIZE - 10;
+                        int picHeight = (int)(picWidth * 3 / 4.0);
+                        
+                        PictureBox pic = new PictureBox
+                        {
+                            Image = img,
+                            SizeMode = PictureBoxSizeMode.Zoom,
+                            Width = picWidth,
+                            Height = picHeight,
+                            Cursor = Cursors.Hand,
+                            Dock = DockStyle.Top
+                        };
+                        
+                        Label lblDate = new Label
+                        {
+                            Text = item.Date.ToString("MM/dd/yyyy"),
+                            Dock = DockStyle.Top,
+                            TextAlign = ContentAlignment.MiddleCenter,
+                            Font = new Font("Segoe UI", 8),
+                            ForeColor = Color.White,
+                            BackColor = Theme.DarkTeal,
+                            Height = 22
+                        };
+                        
+                        Button btnInfo = new Button
+                        {
+                            Text = "Info",
+                            Dock = DockStyle.Bottom,
+                            BackColor = Theme.AccentBlue,
+                            ForeColor = Color.White,
+                            Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                            FlatStyle = FlatStyle.Flat,
+                            Height = 28,
+                            Cursor = Cursors.Hand
+                        };
+                        btnInfo.FlatAppearance.BorderSize = 0;
+                        
+                        card.Controls.Add(pic);
+                        card.Controls.Add(lblDate);
+                        card.Controls.Add(btnInfo);
+                        
+                        // Add tag badges
+                        BuildTagBadges(card, filePath);
+                        
+                        string filePath_copy = filePath;
+                        btnInfo.Click += (s, e) => ShowFileInfo(filePath_copy);
+                        pic.Click += (s, e) => SelectAdminCard(card);
+                        card.Click += (s, e) => SelectAdminCard(card);
+                        
+                        galleryTable.Controls.Add(card, columnIndex, rowIndex);
+                        
+                        columnIndex++;
+                        if (columnIndex >= COLUMNS)
+                        {
+                            columnIndex = 0;
+                            rowIndex++;
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -475,9 +614,41 @@ namespace ReturnPoint
         }
         private void SelectAdminCard(Panel card)
         {
-            if (selectedCard != null) selectedCard.BorderStyle = BorderStyle.None;
+            // Deselect previous card
+            if (selectedCard != null)
+            {
+                selectedCard.BorderStyle = BorderStyle.None;
+                selectedCard.BackColor = Theme.MediumTeal;
+                
+                // Remove checkmark indicator if it exists
+                var checkmark = selectedCard.Controls.OfType<Label>().FirstOrDefault(l => l.Tag?.ToString() == "checkmark");
+                if (checkmark != null)
+                {
+                    selectedCard.Controls.Remove(checkmark);
+                    checkmark.Dispose();
+                }
+            }
+            
+            // Select new card
             selectedCard = card;
-            selectedCard.BorderStyle = BorderStyle.FixedSingle;
+            selectedCard.BorderStyle = BorderStyle.Fixed3D;
+            selectedCard.BackColor = Theme.AccentBlue;
+            
+            // Add checkmark indicator
+            Label checkmarkLabel = new Label
+            {
+                Text = "✓",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 24, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                Tag = "checkmark",
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            checkmarkLabel.Location = new Point(card.Width - 38, 5);
+            selectedCard.Controls.Add(checkmarkLabel);
+            selectedCard.BringToFront();
+            
             string filePath = (string)card.Tag;
             lblSelectedFile.Text = $"Selected: {Path.GetFileName(filePath)}";
             lblDateAdded.Text = "Date Added: " + File.GetCreationTime(filePath).ToString("g");

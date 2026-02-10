@@ -257,21 +257,45 @@ namespace ReturnPoint
             {
                 previewForm.Text = "Is this photo correct?";
                 previewForm.StartPosition = FormStartPosition.CenterParent;
-                previewForm.Size = new Size(600, 800);
                 previewForm.FormBorderStyle = FormBorderStyle.FixedDialog;
                 previewForm.MaximizeBox = false;
                 previewForm.MinimizeBox = false;
+
+                // Calculate aspect ratio of the captured image and size the form accordingly
+                float aspectRatio = (float)preview.Width / preview.Height;
+                int formWidth, formHeight;
+                int picHeight;
+                int buttonAreaHeight = 70;
+
+                // If landscape (wider than tall), make form wider; if portrait, make form taller
+                if (aspectRatio > 1) // Landscape
+                {
+                    formHeight = 600;
+                    picHeight = formHeight - buttonAreaHeight;
+                    formWidth = (int)(picHeight * aspectRatio) + 20;
+                }
+                else // Portrait or square
+                {
+                    formWidth = 500;
+                    picHeight = (int)(formWidth / aspectRatio) - buttonAreaHeight;
+                    formHeight = picHeight + buttonAreaHeight;
+                }
+
+                previewForm.Size = new Size(formWidth, formHeight);
 
                 PictureBox pic = new PictureBox
                 {
                     Image = preview,
                     SizeMode = PictureBoxSizeMode.Zoom,
                     Dock = DockStyle.Top,
-                    Height = 680
+                    Height = picHeight
                 };
 
-                Button btnSave = new Button { Text = "Save", Width = 120, Height = 36, Left = 260, Top = 690, DialogResult = DialogResult.OK };
-                Button btnRetake = new Button { Text = "Retake", Width = 120, Height = 36, Left = 400, Top = 690, DialogResult = DialogResult.Retry };
+                int buttonY = picHeight + 10;
+                int leftMargin = (formWidth - 260) / 2;
+
+                Button btnSave = new Button { Text = "Save", Width = 120, Height = 36, Left = leftMargin, Top = buttonY, DialogResult = DialogResult.OK };
+                Button btnRetake = new Button { Text = "Retake", Width = 120, Height = 36, Left = leftMargin + 140, Top = buttonY, DialogResult = DialogResult.Retry };
 
                 previewForm.Controls.Add(pic);
                 previewForm.Controls.Add(btnSave);
@@ -281,6 +305,7 @@ namespace ReturnPoint
 
                 var dr = previewForm.ShowDialog(this);
                 savePhoto = dr == DialogResult.OK;
+                // Form automatically closes when ShowDialog returns
             }
 
             if (!savePhoto)

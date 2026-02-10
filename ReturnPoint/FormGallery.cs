@@ -61,6 +61,78 @@ namespace ReturnPoint
                 return path;
             }
         }
+        
+        public class RoundedButton : Button
+        {
+            public int CornerRadius { get; set; } = 20;
+            
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                e.Graphics.Clear(this.BackColor);
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                
+                var rect = new Rectangle(0, 0, this.Width - 1, this.Height - 1);
+                var path = GetRoundedRect(rect, CornerRadius);
+                
+                // Draw background
+                using (Brush brush = new SolidBrush(this.BackColor))
+                {
+                    e.Graphics.FillPath(brush, path);
+                }
+                
+                // Draw text
+                TextRenderer.DrawText(e.Graphics, this.Text, this.Font, rect, this.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                
+                // Draw border
+                using (Pen pen = new Pen(this.BackColor, 1))
+                {
+                    e.Graphics.DrawPath(pen, path);
+                }
+            }
+            
+            protected override void OnMouseEnter(EventArgs e)
+            {
+                base.OnMouseEnter(e);
+                this.BackColor = Theme.MediumTeal;
+                this.FlatAppearance.MouseOverBackColor = Theme.MediumTeal;
+                this.Invalidate();
+            }
+            
+            protected override void OnMouseLeave(EventArgs e)
+            {
+                base.OnMouseLeave(e);
+                this.BackColor = Theme.TealGreen;
+                this.Invalidate();
+            }
+            
+            protected override void OnMouseDown(MouseEventArgs e)
+            {
+                base.OnMouseDown(e);
+                this.BackColor = Theme.DarkTeal;
+                this.FlatAppearance.MouseDownBackColor = Theme.DarkTeal;
+                this.Invalidate();
+            }
+            
+            protected override void OnMouseUp(MouseEventArgs e)
+            {
+                base.OnMouseUp(e);
+                this.BackColor = Theme.TealGreen;
+                this.Invalidate();
+            }
+            
+            private GraphicsPath GetRoundedRect(Rectangle rect, int radius)
+            {
+                int d = radius * 2;
+                GraphicsPath path = new GraphicsPath();
+                path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+                path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+                path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+                path.CloseFigure();
+                return path;
+            }
+        }
+        
         public FormGallery()
         {
             if (string.IsNullOrWhiteSpace(saveFolder))
@@ -312,7 +384,8 @@ namespace ReturnPoint
                 Font = new Font("Segoe UI", 10),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle,
-                ForeColor = Theme.NearBlack
+                ForeColor = Theme.NearBlack,
+                PlaceholderText = "Add tags for image here"
             };
             btnAddTag = new Button 
             { 
@@ -336,37 +409,36 @@ namespace ReturnPoint
             searchPanel.Controls.Add(txtNewTag);
             searchPanel.Controls.Add(btnAddTag);
             this.Controls.Add(searchPanel);
-            openCameraButton = new Button
+            openCameraButton = new RoundedButton
             {
                 Text = "+",
-                Width = 60,
-                Height = 60,
+                Width = 100,
+                Height = 100,
                 BackColor = Theme.TealGreen,
                 ForeColor = Theme.SoftWhite,
-                Font = new Font("Arial", 20, FontStyle.Bold),
+                Font = new Font("Arial", 40, FontStyle.Bold),
                 FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                CornerRadius = 25
             };
             openCameraButton.FlatAppearance.BorderSize = 0;
-            openCameraButton.FlatAppearance.MouseDownBackColor = Theme.DarkTeal;
-            openCameraButton.FlatAppearance.MouseOverBackColor = Theme.MediumTeal;
             openCameraButton.Click += OpenCameraButton_Click;
             this.Controls.Add(outerPanel);
             
             this.Controls.Add(openCameraButton);
             openCameraButton.BringToFront();
             openCameraButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            openCameraButton.Location = new Point(this.ClientSize.Width - 90, this.ClientSize.Height - 90);
+            openCameraButton.Location = new Point(this.ClientSize.Width - 110, this.ClientSize.Height - 110);
             this.Resize += (s, e) =>
             {
-                openCameraButton.Location = new Point(this.ClientSize.Width - 90, this.ClientSize.Height - 90);
+                openCameraButton.Location = new Point(this.ClientSize.Width - 110, this.ClientSize.Height - 110);
                 outerPanel.PerformLayout();
             };
             btnSearch.Click += (s, e) => PerformSearch(txtSearch.Text.Trim());
             btnClearSearch.Click += (s, e) =>
             {
                 txtSearch.Text = "";
-                LoadSavedImages();
+                LoadSavedImagesAsync();
             };
             btnAddTag.Click += (s, e) =>
             {
@@ -377,6 +449,22 @@ namespace ReturnPoint
                 LoadTagsForCard(selectedCard);
                 txtNewTag.Text = "";
             };
+            Button btnHelp = new Button
+            {
+                Text = "Help",
+                Width = 100,
+                Height = 36,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Theme.AccentBlue,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnHelp.FlatAppearance.BorderSize = 0;
+            btnHelp.Click += (s, e) => ShowTutorial();
+            this.Controls.Add(btnHelp);
+            
             btnLogout = new Button
             {
                 Text = "Logout",
@@ -399,30 +487,37 @@ namespace ReturnPoint
                 }
             };
             this.Controls.Add(btnLogout);
-            this.Load += (s, e) => PositionLogout();
-            this.Resize += (s, e) => PositionLogout();
-            void PositionLogout()
+            this.Load += (s, e) => PositionButtons();
+            this.Resize += (s, e) => PositionButtons();
+            void PositionButtons()
             {
                 int rightMargin = 20;
-                int x = searchPanel.Left - btnLogout.Width - 10;
-                btnLogout.Location = new System.Drawing.Point(Math.Max(20, x), 16);
+                int x = searchPanel.Left - btnLogout.Width - btnHelp.Width - 30;
+                btnLogout.Location = new System.Drawing.Point(Math.Max(20, x + btnHelp.Width + 10), 16);
+                btnHelp.Location = new System.Drawing.Point(Math.Max(20, x), 16);
                 btnLogout.BringToFront();
+                btnHelp.BringToFront();
             }
             galleryTable.BackColor = Theme.GetBackgroundTeal();
             outerPanel.BackColor = Theme.GetBackgroundTeal();
-            LoadSavedImages();
+            // Load images asynchronously after form is shown
+            this.Load += (s, e) => LoadSavedImagesAsync();
             Theme.Apply(this);
             AddLogoCopyright();
             SetLogoTransparentBackground();
         }
         private void OpenCameraButton_Click(object sender, EventArgs e)
         {
+            ShowLoadingScreen("Initializing camera...");
+            
             var uploader = GetLoggedInUser();
             
             string? selectedDevice = null;
             try
             {
                 var videoDevices = new AForge.Video.DirectShow.FilterInfoCollection(AForge.Video.DirectShow.FilterCategory.VideoInputDevice);
+                
+                HideLoadingScreen();
                 
                 if (videoDevices.Count == 0)
                 {
@@ -463,8 +558,9 @@ namespace ReturnPoint
                     var meta = PromptForImageMetadata(uploader);
                     if (meta == null)
                     {
-                        LoadSavedImages();
+                        LoadSavedImagesAsync();
                         LogImageToGoogleSheets(filePath, "", uploader);
+                        camForm.Close();
                         return;
                     }
                     string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
@@ -497,7 +593,8 @@ namespace ReturnPoint
                     }
                 }
                 catch {  }
-                LoadSavedImages();
+                LoadSavedImagesAsync();
+                camForm.Close();
             };
             camForm.ShowDialog();
         }
@@ -618,14 +715,191 @@ namespace ReturnPoint
                 }
             }
         }
+
+        private void LoadSavedImagesAsync()
+        {
+            ShowLoadingScreen("Loading gallery...");
+            
+            var backgroundWorker = new System.ComponentModel.BackgroundWorker();
+            backgroundWorker.DoWork += (s, e) =>
+            {
+                e.Result = GetImageList();
+            };
+            backgroundWorker.RunWorkerCompleted += (s, e) =>
+            {
+                HideLoadingScreen();
+                if (e.Error == null && e.Result != null)
+                {
+                    var imageList = (List<(string File, DateTime Date)>)e.Result;
+                    DisplayImages(imageList);
+                }
+            };
+            backgroundWorker.RunWorkerAsync();
+        }
+
+        private List<(string File, DateTime Date)> GetImageList()
+        {
+            return Directory.GetFiles(saveFolder, "*.jpg")
+                .Select(f =>
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(f);
+                    DateTime dt = DateTime.MinValue;
+                    if (fileName.StartsWith("photo_") && fileName.Length >= 20)
+                    {
+                        string dateStr = fileName.Substring(6, 15);
+                        if (DateTime.TryParseExact(dateStr, "yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out dt))
+                        {
+                            // parsed successfully
+                        }
+                    }
+                    if (dt == DateTime.MinValue)
+                    {
+                        dt = File.GetCreationTimeUtc(f);
+                        if (dt == DateTime.MinValue) dt = File.GetLastWriteTimeUtc(f);
+                    }
+                    return (File: f, Date: dt);
+                })
+                .OrderByDescending(x => x.Date)
+                .ToList();
+        }
+
+        private void DisplayImages(List<(string File, DateTime Date)> imageList)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => DisplayImages(imageList)));
+                return;
+            }
+
+            galleryTable.Controls.Clear();
+            galleryTable.RowCount = 0;
+
+            int columnIndex = 0;
+            int rowIndex = 0;
+
+            foreach (var item in imageList)
+            {
+                if (columnIndex == 0)
+                {
+                    galleryTable.RowCount++;
+                }
+
+                try
+                {
+                    string filePath = item.File;
+                    Image img = Image.FromFile(filePath);
+
+                    var card = new Panel
+                    {
+                        Width = IMAGE_SIZE,
+                        Height = IMAGE_SIZE + 20,
+                        BackColor = Theme.MediumTeal,
+                        Margin = new Padding(10),
+                        Padding = new Padding(5),
+                        BorderStyle = BorderStyle.FixedSingle,
+                        Tag = filePath,
+                        Cursor = Cursors.Hand
+                    };
+
+                    // 4:3 aspect ratio: width = 210 (220 - 10 padding), height = 157.5
+                    int picWidth = IMAGE_SIZE - 10;
+                    int picHeight = (int)(picWidth * 3 / 4.0); // 157px for 4:3 ratio
+
+                    PictureBox pic = new PictureBox
+                    {
+                        Image = img,
+                        SizeMode = PictureBoxSizeMode.Zoom,
+                        Width = picWidth,
+                        Height = picHeight,
+                        Cursor = Cursors.Hand,
+                        Dock = DockStyle.Top
+                    };
+
+                    Label lblDate = new Label
+                    {
+                        Text = item.Date.ToString("MM/dd/yyyy"),
+                        Dock = DockStyle.Top,
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Font = new Font("Segoe UI", 8),
+                        ForeColor = Color.White,
+                        BackColor = Theme.DarkTeal,
+                        Height = 22
+                    };
+
+                    Button btnInfo = new Button
+                    {
+                        Text = "Info",
+                        Dock = DockStyle.Bottom,
+                        BackColor = Theme.AccentBlue,
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                        FlatStyle = FlatStyle.Flat,
+                        Height = 28,
+                        Cursor = Cursors.Hand
+                    };
+                    btnInfo.FlatAppearance.BorderSize = 0;
+
+                    card.Controls.Add(pic);
+                    card.Controls.Add(lblDate);
+                    card.Controls.Add(btnInfo);
+
+                    string filePath_copy = filePath;
+                    btnInfo.Click += (s, e) => ShowItemInfo(filePath_copy);
+                    pic.Click += (s, e) => SelectCard(card);
+                    card.Click += (s, e) => SelectCard(card);
+
+                    galleryTable.Controls.Add(card, columnIndex, rowIndex);
+
+                    columnIndex++;
+                    if (columnIndex >= COLUMNS)
+                    {
+                        columnIndex = 0;
+                        rowIndex++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading image: {ex.Message}");
+                }
+            }
+        }
         private void SelectCard(Panel card)
         {
+            // Deselect previous card
             if (selectedCard != null)
             {
                 selectedCard.BorderStyle = BorderStyle.None;
+                selectedCard.BackColor = Theme.MediumTeal;
+                
+                // Remove checkmark indicator if it exists
+                var checkmark = selectedCard.Controls.OfType<Label>().FirstOrDefault(l => l.Tag?.ToString() == "checkmark");
+                if (checkmark != null)
+                {
+                    selectedCard.Controls.Remove(checkmark);
+                    checkmark.Dispose();
+                }
             }
+            
+            // Select new card
             selectedCard = card;
-            selectedCard.BorderStyle = BorderStyle.FixedSingle;
+            selectedCard.BorderStyle = BorderStyle.Fixed3D;
+            selectedCard.BackColor = Theme.AccentBlue;
+            
+            // Add checkmark indicator
+            Label checkmarkLabel = new Label
+            {
+                Text = "✓",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 24, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                Tag = "checkmark",
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            checkmarkLabel.Location = new Point(card.Width - 38, 5);
+            selectedCard.Controls.Add(checkmarkLabel);
+            selectedCard.BringToFront();
+            
             LoadTagsForCard(card);
         }
         private void ShowItemInfo(string filePath)
@@ -653,11 +927,25 @@ namespace ReturnPoint
             string gradeSection = map.TryGetValue("GradeSection", out var g) ? g : "N/A";
             string location = map.TryGetValue("Location", out var l) ? l : "N/A";
             string dateFound = map.TryGetValue("Date", out var d) ? d : (map.TryGetValue("DateFound", out var d2) ? d2 : "N/A");
+            
+            // Load tags from _tags.txt file
+            string tagsPath = Path.Combine(Path.GetDirectoryName(filePath) ?? saveFolder,
+                Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
+            string tagsText = "No tags";
+            if (File.Exists(tagsPath))
+            {
+                var tags = File.ReadAllLines(tagsPath).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+                if (tags.Count > 0)
+                {
+                    tagsText = string.Join(", ", tags.Select(t => t.Trim()));
+                }
+            }
+            
             Form infoForm = new Form
             {
                 Text = "Item Information",
                 StartPosition = FormStartPosition.CenterParent,
-                Size = new Size(420, 260)
+                Size = new Size(420, 320)
             };
             Label uploaderLabel = new Label
             {
@@ -691,10 +979,23 @@ namespace ReturnPoint
                 AutoSize = true,
                 Font = new Font("Arial", 11, FontStyle.Bold)
             };
+            Label tagsLabel = new Label
+            {
+                Text = $"Tags: {tagsText}",
+                Top = 144,
+                Left = 20,
+                AutoSize = false,
+                Width = 380,
+                Height = 100,
+                Font = new Font("Arial", 10),
+                BackColor = Theme.LightGray,
+                Padding = new Padding(5)
+            };
             infoForm.Controls.Add(uploaderLabel);
             infoForm.Controls.Add(gradeLabel);
             infoForm.Controls.Add(locationLabel);
             infoForm.Controls.Add(dateLabel);
+            infoForm.Controls.Add(tagsLabel);
             infoForm.ShowDialog();
         }
         private void stringToFileAppend(string path, string text)
@@ -737,12 +1038,12 @@ namespace ReturnPoint
             if (string.IsNullOrWhiteSpace(query))
             {
                 // Show all images
-                LoadSavedImages();
+                LoadSavedImagesAsync();
                 return;
             }
             query = query.ToLowerInvariant();
             // Filter logic would go here - for now we reload all
-            LoadSavedImages();
+            LoadSavedImagesAsync();
         }
         private class UploaderInfo { 
             public string Name; 
@@ -1167,6 +1468,357 @@ namespace ReturnPoint
             { 
                 System.Diagnostics.Debug.WriteLine($"Error loading logo background: {ex.Message}");
             }
+        }
+        
+        private Form? loadingForm;
+        private bool isLoading = false;
+        
+        private void ShowLoadingScreen(string message = "Loading...")
+        {
+            if (isLoading) return;
+            isLoading = true;
+            
+            loadingForm = new Form
+            {
+                Text = "Loading",
+                FormBorderStyle = FormBorderStyle.None,
+                Size = new Size(300, 150),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Theme.GetBackgroundTeal(),
+                TopMost = true,
+                ControlBox = false
+            };
+            
+            Panel contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.DarkTeal,
+                Padding = new Padding(20)
+            };
+            
+            Label messageLabel = new Label
+            {
+                Text = message,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(20, 20)
+            };
+            
+            Label spinnerLabel = new Label
+            {
+                Text = "⏳",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 40),
+                ForeColor = Theme.AccentBlue,
+                Location = new Point(110, 30),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Width = 80,
+                Height = 80
+            };
+            
+            contentPanel.Controls.Add(messageLabel);
+            contentPanel.Controls.Add(spinnerLabel);
+            loadingForm.Controls.Add(contentPanel);
+            
+            System.Windows.Forms.Timer animationTimer = new System.Windows.Forms.Timer();
+            int spinnerIndex = 0;
+            string[] spinners = new string[] { "⏳", "⌛" };
+            
+            animationTimer.Interval = 500;
+            animationTimer.Tick += (s, e) =>
+            {
+                try
+                {
+                    if (spinnerLabel.InvokeRequired)
+                    {
+                        spinnerLabel.Invoke((MethodInvoker)delegate
+                        {
+                            spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                            spinnerLabel.Text = spinners[spinnerIndex];
+                        });
+                    }
+                    else
+                    {
+                        spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                        spinnerLabel.Text = spinners[spinnerIndex];
+                    }
+                }
+                catch { }
+            };
+            animationTimer.Start();
+            
+            loadingForm.FormClosed += (s, e) =>
+            {
+                animationTimer.Stop();
+                animationTimer.Dispose();
+            };
+            
+            loadingForm.Show(this);
+        }
+        
+        private void HideLoadingScreen()
+        {
+            if (loadingForm != null && !loadingForm.IsDisposed)
+            {
+                try
+                {
+                    Invoke((MethodInvoker)delegate
+                    {
+                        loadingForm?.Close();
+                        loadingForm?.Dispose();
+                        loadingForm = null;
+                        isLoading = false;
+                    });
+                }
+                catch { }
+            }
+        }
+
+        private void ShowTutorial()
+        {
+            Form tutorialForm = new Form
+            {
+                Text = "Gallery Tutorial - How to Use",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(600, 700),
+                BackColor = Theme.GetBackgroundTeal(),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            Panel contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Theme.GetBackgroundTeal(),
+                Padding = new Padding(20)
+            };
+
+            int yPos = 0;
+            const int headerHeight = 30;
+            const int contentHeight = 80;
+            const int spacing = 10;
+
+            // Title
+            Label titleLabel = new Label
+            {
+                Text = "Gallery Features Guide",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(0, yPos)
+            };
+            contentPanel.Controls.Add(titleLabel);
+            yPos += 40;
+
+            // Camera Button
+            Panel cameraSection = new Panel
+            {
+                Width = contentPanel.Width - 40,
+                Height = contentHeight,
+                Location = new Point(0, yPos),
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(10)
+            };
+            Label cameraTitleLabel = new Label
+            {
+                Text = "📷 Camera Button (+ icon, Bottom Right)",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(10, 5)
+            };
+            Label cameraDescLabel = new Label
+            {
+                Text = "Click the green '+' button to open your camera and capture images of lost items.",
+                AutoSize = false,
+                Width = cameraSection.Width - 20,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.White,
+                Location = new Point(10, 30),
+                Padding = new Padding(5)
+            };
+            cameraSection.Controls.Add(cameraTitleLabel);
+            cameraSection.Controls.Add(cameraDescLabel);
+            contentPanel.Controls.Add(cameraSection);
+            yPos += contentHeight + spacing;
+
+            // Select Image
+            Panel selectSection = new Panel
+            {
+                Width = contentPanel.Width - 40,
+                Height = contentHeight,
+                Location = new Point(0, yPos),
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(10)
+            };
+            Label selectTitleLabel = new Label
+            {
+                Text = "✓ Click on an Image",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(10, 5)
+            };
+            Label selectDescLabel = new Label
+            {
+                Text = "Click any image to select it. The selected image will have a border highlight. Once selected, you can add tags to it.",
+                AutoSize = false,
+                Width = selectSection.Width - 20,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.White,
+                Location = new Point(10, 30),
+                Padding = new Padding(5)
+            };
+            selectSection.Controls.Add(selectTitleLabel);
+            selectSection.Controls.Add(selectDescLabel);
+            contentPanel.Controls.Add(selectSection);
+            yPos += contentHeight + spacing;
+
+            // Info Button
+            Panel infoSection = new Panel
+            {
+                Width = contentPanel.Width - 40,
+                Height = contentHeight,
+                Location = new Point(0, yPos),
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(10)
+            };
+            Label infoTitleLabel = new Label
+            {
+                Text = "ℹ️ Info Button (on Image Card)",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(10, 5)
+            };
+            Label infoDescLabel = new Label
+            {
+                Text = "Click the 'Info' button on any image card to view item details including Uploader, Location, Date Found, and Tags.",
+                AutoSize = false,
+                Width = infoSection.Width - 20,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.White,
+                Location = new Point(10, 30),
+                Padding = new Padding(5)
+            };
+            infoSection.Controls.Add(infoTitleLabel);
+            infoSection.Controls.Add(infoDescLabel);
+            contentPanel.Controls.Add(infoSection);
+            yPos += contentHeight + spacing;
+
+            // Tags
+            Panel tagsSection = new Panel
+            {
+                Width = contentPanel.Width - 40,
+                Height = contentHeight,
+                Location = new Point(0, yPos),
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(10)
+            };
+            Label tagsTitleLabel = new Label
+            {
+                Text = "🏷️  Adding Tags",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(10, 5)
+            };
+            Label tagsDescLabel = new Label
+            {
+                Text = "1) Select an image. 2) Enter tag in the input box (e.g., 'Blue Backpack', 'Found in Library'). 3) Click 'Add' button. Tags are shown in the item's Info.",
+                AutoSize = false,
+                Width = tagsSection.Width - 20,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.White,
+                Location = new Point(10, 30),
+                Padding = new Padding(5)
+            };
+            tagsSection.Controls.Add(tagsTitleLabel);
+            tagsSection.Controls.Add(tagsDescLabel);
+            contentPanel.Controls.Add(tagsSection);
+            yPos += contentHeight + spacing;
+
+            // Tags List
+            Panel tagsListSection = new Panel
+            {
+                Width = contentPanel.Width - 40,
+                Height = contentHeight,
+                Location = new Point(0, yPos),
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(10)
+            };
+            Label tagsListTitleLabel = new Label
+            {
+                Text = "📋 Tags Panel (Right Sidebar)",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(10, 5)
+            };
+            Label tagsListDescLabel = new Label
+            {
+                Text = "View all tags for the currently selected image in the right sidebar. Tags help categorize and identify items.",
+                AutoSize = false,
+                Width = tagsListSection.Width - 20,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.White,
+                Location = new Point(10, 30),
+                Padding = new Padding(5)
+            };
+            tagsListSection.Controls.Add(tagsListTitleLabel);
+            tagsListSection.Controls.Add(tagsListDescLabel);
+            contentPanel.Controls.Add(tagsListSection);
+            yPos += contentHeight + spacing;
+
+            // Search
+            Panel searchSection = new Panel
+            {
+                Width = contentPanel.Width - 40,
+                Height = contentHeight,
+                Location = new Point(0, yPos),
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(10)
+            };
+            Label searchTitleLabel = new Label
+            {
+                Text = "🔍 Search Feature",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(10, 5)
+            };
+            Label searchDescLabel = new Label
+            {
+                Text = "Use the search box to find items by searching through image properties. Click 'Clear' to reset and view all images.",
+                AutoSize = false,
+                Width = searchSection.Width - 20,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.White,
+                Location = new Point(10, 30),
+                Padding = new Padding(5)
+            };
+            searchSection.Controls.Add(searchTitleLabel);
+            searchSection.Controls.Add(searchDescLabel);
+            contentPanel.Controls.Add(searchSection);
+            yPos += contentHeight + spacing;
+
+            tutorialForm.Controls.Add(contentPanel);
+            tutorialForm.ShowDialog(this);
         }
     }
 }

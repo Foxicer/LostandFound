@@ -56,7 +56,7 @@ namespace ReturnPoint
             };
             txtPass = new TextBox 
             { 
-                Width = 380,
+                Width = 340,
                 Height = 44,
                 UseSystemPasswordChar = true, 
                 Font = inputFont, 
@@ -218,7 +218,40 @@ titlePanel.Controls.Add(textPanel);
             centerPanel.Controls.Add(new Label { Height = 16 });
             centerPanel.Controls.Add(lblP);
             centerPanel.Controls.Add(new Label { Height = 6 });
-            centerPanel.Controls.Add(txtPass);
+            
+            // Create password field container with show/hide toggle
+            var passwordContainer = new Panel
+            {
+                Width = 380,
+                Height = 44,
+                BackColor = Color.Transparent,
+                AutoSize = false
+            };
+            var btnTogglePassword = new Button
+            {
+                Text = "👁️",
+                Width = 40,
+                Height = 44,
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                FlatStyle = FlatStyle.Flat,
+                Font = new System.Drawing.Font("Segoe UI", 12F),
+                Dock = DockStyle.Right
+            };
+            btnTogglePassword.FlatAppearance.BorderSize = 0;
+            btnTogglePassword.Tag = false; // false = password hidden, true = password visible
+            btnTogglePassword.Click += (s, e) =>
+            {
+                bool isVisible = (bool)btnTogglePassword.Tag;
+                txtPass.UseSystemPasswordChar = isVisible;
+                btnTogglePassword.Tag = !isVisible;
+                btnTogglePassword.Text = isVisible ? "👁️" : "👁️‍🗨️";
+            };
+            txtPass.Dock = DockStyle.Fill;
+            passwordContainer.Controls.Add(txtPass);
+            passwordContainer.Controls.Add(btnTogglePassword);
+            
+            centerPanel.Controls.Add(passwordContainer);
             centerPanel.Controls.Add(new Label { Height = 16 });
             centerPanel.Controls.Add(lblMsg);
             centerPanel.Controls.Add(new Label { Height = 20 });
@@ -300,37 +333,13 @@ titlePanel.Controls.Add(textPanel);
         
         private void ResetLoadingState()
         {
+            HideLoadingScreen();
             Invoke((MethodInvoker)delegate
             {
                 btnLogin.Enabled = true;
                 btnRegister.Enabled = true;
                 txtEmail.Enabled = true;
                 txtPass.Enabled = true;
-                
-                // Find and hide the loading label in the center panel
-                foreach (Control c in panelMain.Controls)
-                {
-                    if (c is Panel containerPanel)
-                    {
-                        foreach (Control bc in containerPanel.Controls)
-                        {
-                            if (bc is Panel borderPanel)
-                            {
-                                foreach (Control cp in borderPanel.Controls)
-                                {
-                                    if (cp is FlowLayoutPanel centerPanel)
-                                    {
-                                        foreach (Control fc in centerPanel.Controls)
-                                        {
-                                            if (fc is Label lbl && lbl.Text == "Signing in...")
-                                                lbl.Visible = false;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             });
         }
 
@@ -359,30 +368,7 @@ titlePanel.Controls.Add(textPanel);
             txtEmail.Enabled = false;
             txtPass.Enabled = false;
             
-            // Find and show the loading label
-            foreach (Control c in panelMain.Controls)
-            {
-                if (c is Panel containerPanel)
-                {
-                    foreach (Control bc in containerPanel.Controls)
-                    {
-                        if (bc is Panel borderPanel)
-                        {
-                            foreach (Control cp in borderPanel.Controls)
-                            {
-                                if (cp is FlowLayoutPanel centerPanel)
-                                {
-                                    foreach (Control fc in centerPanel.Controls)
-                                    {
-                                        if (fc is Label lbl && lbl.Text == "Signing in...")
-                                            lbl.Visible = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            ShowLoadingScreen("Signing in...");
             
             // Try to login via Flask API first (Google Sheets)
             Task.Run(async () => await LoginViaAPI(email, pass));
@@ -690,6 +676,111 @@ titlePanel.Controls.Add(textPanel);
             catch (Exception ex) 
             { 
                 System.Diagnostics.Debug.WriteLine($"Error loading logo background: {ex.Message}");
+            }
+        }
+        
+        private Form? loadingForm;
+        private bool isLoading = false;
+        
+        private void ShowLoadingScreen(string message = "Loading...")
+        {
+            if (isLoading) return;
+            isLoading = true;
+            
+            loadingForm = new Form
+            {
+                Text = "Loading",
+                FormBorderStyle = FormBorderStyle.None,
+                Size = new Size(300, 150),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Theme.GetBackgroundTeal(),
+                TopMost = true,
+                ControlBox = false
+            };
+            
+            Panel contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.DarkTeal,
+                Padding = new Padding(20)
+            };
+            
+            Label messageLabel = new Label
+            {
+                Text = message,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(20, 20)
+            };
+            
+            Label spinnerLabel = new Label
+            {
+                Text = "⏳",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 40),
+                ForeColor = Theme.AccentBlue,
+                Location = new Point(110, 30),
+                TextAlign = ContentAlignment.MiddleCenter,
+                Width = 80,
+                Height = 80
+            };
+            
+            contentPanel.Controls.Add(messageLabel);
+            contentPanel.Controls.Add(spinnerLabel);
+            loadingForm.Controls.Add(contentPanel);
+            
+            System.Windows.Forms.Timer animationTimer = new System.Windows.Forms.Timer();
+            int spinnerIndex = 0;
+            string[] spinners = new string[] { "⏳", "⌛" };
+            
+            animationTimer.Interval = 500;
+            animationTimer.Tick += (s, e) =>
+            {
+                try
+                {
+                    if (spinnerLabel.InvokeRequired)
+                    {
+                        spinnerLabel.Invoke((MethodInvoker)delegate
+                        {
+                            spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                            spinnerLabel.Text = spinners[spinnerIndex];
+                        });
+                    }
+                    else
+                    {
+                        spinnerIndex = (spinnerIndex + 1) % spinners.Length;
+                        spinnerLabel.Text = spinners[spinnerIndex];
+                    }
+                }
+                catch { }
+            };
+            animationTimer.Start();
+            
+            loadingForm.FormClosed += (s, e) =>
+            {
+                animationTimer.Stop();
+                animationTimer.Dispose();
+            };
+            
+            loadingForm.Show(this);
+        }
+        
+        private void HideLoadingScreen()
+        {
+            if (loadingForm != null && !loadingForm.IsDisposed)
+            {
+                try
+                {
+                    Invoke((MethodInvoker)delegate
+                    {
+                        loadingForm?.Close();
+                        loadingForm?.Dispose();
+                        loadingForm = null;
+                        isLoading = false;
+                    });
+                }
+                catch { }
             }
         }
     }
