@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 namespace ReturnPoint
 {
-    public class FormGalleryAdmin : Form
+    public class FormGalleryHeadAdmin : Form
     {
         private Panel outerPanel;
         private TableLayoutPanel galleryTable;
@@ -24,6 +24,7 @@ namespace ReturnPoint
         private Button btnRefresh;
         private Button btnImageDetails;
         private Button btnTagManager;
+        private Button btnCreateAccount;
         private Button btnInbox;
         private Button btnLogout;
         private FlowLayoutPanel pnlTags;
@@ -37,9 +38,9 @@ namespace ReturnPoint
         private const int IMAGE_SIZE = 220;
         private Form? loadingForm;
         private bool isLoading = false;
-        public FormGalleryAdmin()
+        public FormGalleryHeadAdmin()
         {
-            Text = "Gallery Admin - ReturnPoint";
+            Text = "Gallery HeadAdmin - ReturnPoint";
             WindowState = FormWindowState.Maximized;
             BackColor = Theme.GetBackgroundTeal();
             this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
@@ -222,10 +223,24 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnTagManager.FlatAppearance.BorderSize = 0;
+            btnCreateAccount = new Button
+            {
+                Text = "➕ Create Account",
+                Top = 510,
+                Left = 15,
+                Width = 270,
+                Height = 40,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = Theme.Success,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCreateAccount.FlatAppearance.BorderSize = 0;
             btnInbox = new Button
             {
                 Text = "📬 Inbox",
-                Top = 510,
+                Top = 560,
                 Left = 15,
                 Width = 270,
                 Height = 40,
@@ -238,7 +253,7 @@ namespace ReturnPoint
             btnInbox.FlatAppearance.BorderSize = 0;
             cbViewMode = new ComboBox
             {
-                Top = 560,
+                Top = 610,
                 Left = 15,
                 Width = 270,
                 Height = 36,
@@ -251,7 +266,7 @@ namespace ReturnPoint
             btnLogout = new Button
             {
                 Text = "🚪 Logout",
-                Top = 610,
+                Top = 660,
                 Left = 15,
                 Width = 270,
                 Height = 40,
@@ -270,6 +285,10 @@ namespace ReturnPoint
                     Application.ExitThread();
                 }
             };
+            btnCreateAccount.Click += (s, e) =>
+            {
+                OpenCreateAccountForm();
+            };
             rightPanel.Controls.Add(lblSearchTitle);
             rightPanel.Controls.Add(txtSearch);
             rightPanel.Controls.Add(lblSelected);
@@ -281,6 +300,7 @@ namespace ReturnPoint
             rightPanel.Controls.Add(btnRefresh);
             rightPanel.Controls.Add(btnImageDetails);
             rightPanel.Controls.Add(btnTagManager);
+            rightPanel.Controls.Add(btnCreateAccount);
             rightPanel.Controls.Add(btnInbox);
             rightPanel.Controls.Add(cbViewMode);
             rightPanel.Controls.Add(btnLogout);
@@ -298,6 +318,164 @@ namespace ReturnPoint
             LoadImages(false);
             AddLogoCopyright();
             SetLogoTransparentBackground();
+        }
+        
+        private void OpenCreateAccountForm()
+        {
+            Form createAccountForm = new Form
+            {
+                Text = "Create Account - ReturnPoint",
+                Width = 600,
+                Height = 400,
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Theme.SoftWhite,
+                Font = new Font("Segoe UI", 11),
+                Owner = this
+            };
+
+            Label lblRole = new Label
+            {
+                Text = "Select Role:",
+                AutoSize = true,
+                Top = 30,
+                Left = 30,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+
+            ComboBox cbRole = new ComboBox
+            {
+                Top = 60,
+                Left = 30,
+                Width = 540,
+                Height = 36,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack
+            };
+            cbRole.Items.AddRange(new[] { "Claimant", "Admin", "HeadAdmin" });
+
+            Label lblEmail = new Label
+            {
+                Text = "Email:",
+                AutoSize = true,
+                Top = 110,
+                Left = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+
+            TextBox txtEmail = new TextBox
+            {
+                Top = 140,
+                Left = 30,
+                Width = 540,
+                Height = 36,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack
+            };
+
+            Label lblPassword = new Label
+            {
+                Text = "Password:",
+                AutoSize = true,
+                Top = 190,
+                Left = 30,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+
+            TextBox txtPassword = new TextBox
+            {
+                Top = 220,
+                Left = 30,
+                Width = 540,
+                Height = 36,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                UseSystemPasswordChar = true
+            };
+
+            Button btnCreate = new Button
+            {
+                Text = "✓ Create Account",
+                Top = 280,
+                Left = 30,
+                Width = 250,
+                Height = 40,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Theme.Success,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCreate.FlatAppearance.BorderSize = 0;
+
+            Button btnCancel = new Button
+            {
+                Text = "Cancel",
+                Top = 280,
+                Left = 320,
+                Width = 250,
+                Height = 40,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Theme.DeepRed,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+
+            btnCreate.Click += (s, e) =>
+            {
+                if (cbRole.SelectedItem == null)
+                {
+                    MessageBox.Show("Please select a role.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                string email = txtEmail.Text.Trim();
+                string password = txtPassword.Text;
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    MessageBox.Show("Please enter an email address.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    MessageBox.Show("Please enter a password.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                try
+                {
+                    string role = cbRole.SelectedItem.ToString();
+                    MessageBox.Show($"Account created successfully!\n\nEmail: {email}\nRole: {role}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    createAccountForm.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error creating account: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+
+            btnCancel.Click += (s, e) => createAccountForm.Close();
+
+            createAccountForm.Controls.Add(lblRole);
+            createAccountForm.Controls.Add(cbRole);
+            createAccountForm.Controls.Add(lblEmail);
+            createAccountForm.Controls.Add(txtEmail);
+            createAccountForm.Controls.Add(lblPassword);
+            createAccountForm.Controls.Add(txtPassword);
+            createAccountForm.Controls.Add(btnCreate);
+            createAccountForm.Controls.Add(btnCancel);
+
+            createAccountForm.ShowDialog(this);
         }
         
         private void ShowLoadingScreen(string message = "Loading...")
@@ -1293,16 +1471,16 @@ namespace ReturnPoint
                     string json = JsonSerializer.Serialize(data);
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                     HttpResponseMessage response = await client.PostAsync("http://localhost:5000/api/delete-captured-image", content);
-                    System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Delete image from Sheets: {response.StatusCode}");
+                    System.Diagnostics.Debug.WriteLine($"[FormGalleryHeadAdmin] Delete image from Sheets: {response.StatusCode}");
                 }
             }
             catch (HttpRequestException ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Flask unavailable for delete: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryHeadAdmin] Flask unavailable for delete: {ex.Message}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Error deleting image from Sheets: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryHeadAdmin] Error deleting image from Sheets: {ex.Message}");
             }
         }
         private async void RestoreImageInGoogleSheets(string filename)
@@ -1315,16 +1493,16 @@ namespace ReturnPoint
                     string json = JsonSerializer.Serialize(data);
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                     HttpResponseMessage response = await client.PostAsync("http://localhost:5000/api/restore-captured-image", content);
-                    System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Restore image in Sheets: {response.StatusCode}");
+                    System.Diagnostics.Debug.WriteLine($"[FormGalleryHeadAdmin] Restore image in Sheets: {response.StatusCode}");
                 }
             }
             catch (HttpRequestException ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Flask unavailable for restore: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryHeadAdmin] Flask unavailable for restore: {ex.Message}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[FormGalleryAdmin] Error restoring image in Sheets: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[FormGalleryHeadAdmin] Error restoring image in Sheets: {ex.Message}");
             }
         }
 

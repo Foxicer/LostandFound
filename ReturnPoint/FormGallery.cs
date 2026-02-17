@@ -678,26 +678,52 @@ namespace ReturnPoint
                         Height = 22
                     };
                     
+                    // Create button panel to hold Info and Claim buttons side by side
+                    Panel buttonPanel = new Panel
+                    {
+                        Dock = DockStyle.Bottom,
+                        Height = 28,
+                        AutoSize = false
+                    };
+                    
                     Button btnInfo = new Button
                     {
                         Text = "Info",
-                        Dock = DockStyle.Bottom,
+                        Dock = DockStyle.Left,
                         BackColor = Theme.AccentBlue,
                         ForeColor = Color.White,
                         Font = new Font("Segoe UI", 9, FontStyle.Bold),
                         FlatStyle = FlatStyle.Flat,
-                        Height = 28,
+                        Width = 105,
                         Cursor = Cursors.Hand
                     };
                     btnInfo.FlatAppearance.BorderSize = 0;
                     
+                    Button btnClaim = new Button
+                    {
+                        Text = "Claim",
+                        Dock = DockStyle.Left,
+                        BackColor = Theme.AccentBlue,
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                        FlatStyle = FlatStyle.Flat,
+                        Width = 105,
+                        Cursor = Cursors.Hand
+                    };
+                    btnClaim.FlatAppearance.BorderSize = 0;
+                    
+                    buttonPanel.Controls.Add(btnInfo);
+                    buttonPanel.Controls.Add(btnClaim);
+                    
                     card.Controls.Add(pic);
                     card.Controls.Add(lblDate);
-                    card.Controls.Add(btnInfo);
+                    card.Controls.Add(buttonPanel);
                     
                     string filePath_copy = filePath;
                     btnInfo.Click += (s, e) => ShowItemInfo(filePath_copy);
+                    btnClaim.Click += (s, e) => OpenClaimForm(filePath_copy);
                     pic.Click += (s, e) => SelectCard(card);
+                    pic.DoubleClick += (s, e) => ShowImagePreview(filePath_copy);
                     card.Click += (s, e) => SelectCard(card);
                     
                     galleryTable.Controls.Add(card, columnIndex, rowIndex);
@@ -826,26 +852,52 @@ namespace ReturnPoint
                         Height = 22
                     };
 
+                    // Create button panel to hold Info and Claim buttons side by side
+                    Panel buttonPanel = new Panel
+                    {
+                        Dock = DockStyle.Bottom,
+                        Height = 28,
+                        AutoSize = false
+                    };
+                    
                     Button btnInfo = new Button
                     {
                         Text = "Info",
-                        Dock = DockStyle.Bottom,
+                        Dock = DockStyle.Left,
                         BackColor = Theme.AccentBlue,
                         ForeColor = Color.White,
                         Font = new Font("Segoe UI", 9, FontStyle.Bold),
                         FlatStyle = FlatStyle.Flat,
-                        Height = 28,
+                        Width = 105,
                         Cursor = Cursors.Hand
                     };
                     btnInfo.FlatAppearance.BorderSize = 0;
+                    
+                    Button btnClaim = new Button
+                    {
+                        Text = "Claim",
+                        Dock = DockStyle.Left,
+                        BackColor = Theme.AccentBlue,
+                        ForeColor = Color.White,
+                        Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                        FlatStyle = FlatStyle.Flat,
+                        Width = 105,
+                        Cursor = Cursors.Hand
+                    };
+                    btnClaim.FlatAppearance.BorderSize = 0;
+                    
+                    buttonPanel.Controls.Add(btnInfo);
+                    buttonPanel.Controls.Add(btnClaim);
 
                     card.Controls.Add(pic);
                     card.Controls.Add(lblDate);
-                    card.Controls.Add(btnInfo);
+                    card.Controls.Add(buttonPanel);
 
                     string filePath_copy = filePath;
                     btnInfo.Click += (s, e) => ShowItemInfo(filePath_copy);
+                    btnClaim.Click += (s, e) => OpenClaimForm(filePath_copy);
                     pic.Click += (s, e) => SelectCard(card);
+                    pic.DoubleClick += (s, e) => ShowImagePreview(filePath_copy);
                     card.Click += (s, e) => SelectCard(card);
 
                     galleryTable.Controls.Add(card, columnIndex, rowIndex);
@@ -1050,7 +1102,8 @@ namespace ReturnPoint
             public string FirstName;
             public string MiddleName;
             public string LastName;
-            public string GradeSection; 
+            public string GradeSection;
+            public string Email;
         }
         private void ParseFullName(string fullName, UploaderInfo info)
         {
@@ -1196,7 +1249,8 @@ namespace ReturnPoint
                                 FirstName = firstName ?? "",
                                 MiddleName = middleName ?? "",
                                 LastName = lastName ?? "",
-                                GradeSection = gradeSection ?? "N/A"
+                                GradeSection = gradeSection ?? "N/A",
+                                Email = currentUserEmail ?? ""
                             };
                             
                             if (string.IsNullOrWhiteSpace(result.FirstName) && !string.IsNullOrWhiteSpace(result.Name))
@@ -1819,6 +1873,207 @@ namespace ReturnPoint
 
             tutorialForm.Controls.Add(contentPanel);
             tutorialForm.ShowDialog(this);
+        }
+
+        private void OpenClaimForm(string filePath)
+        {
+            // Get image
+            Bitmap? img = null;
+            try
+            {
+                img = new Bitmap(filePath);
+            }
+            catch
+            {
+                MessageBox.Show("Could not load image.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            Form claimForm = new Form
+            {
+                Text = "Claim Item",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(500, 600),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            // Display image
+            PictureBox picturebox = new PictureBox
+            {
+                Image = img,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Dock = DockStyle.Top,
+                Height = 250
+            };
+
+            // Image details label
+            Label detailsLabel = new Label
+            {
+                Text = $"Image: {Path.GetFileName(filePath)}",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10),
+                Left = 20,
+                Top = 260,
+                Width = 450
+            };
+
+            // Confirmation message
+            Label confirmLabel = new Label
+            {
+                Text = "Are you sure you want to claim this item?",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Left = 20,
+                Top = 290,
+                Width = 450,
+                Height = 40
+            };
+
+            // Confirm Claim button
+            Button btnConfirmClaim = new Button
+            {
+                Text = "Confirm Claim",
+                Width = 200,
+                Height = 40,
+                Left = 150,
+                Top = 340,
+                BackColor = Theme.TealGreen,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnConfirmClaim.FlatAppearance.BorderSize = 0;
+
+            // Cancel button
+            Button btnCancel = new Button
+            {
+                Text = "Cancel",
+                Width = 200,
+                Height = 40,
+                Left = 150,
+                Top = 390,
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+
+            btnConfirmClaim.Click += (s, e) =>
+            {
+                // Get current user information
+                UploaderInfo currentUser = GetLoggedInUser();
+                
+                // Get claim data
+                string claimFileName = Path.Combine(
+                    Path.GetDirectoryName(filePath) ?? saveFolder,
+                    Path.GetFileNameWithoutExtension(filePath) + "_claim.txt"
+                );
+
+                // Build claim data string
+                string fullName = $"{currentUser.FirstName} {currentUser.MiddleName} {currentUser.LastName}".Trim();
+                string claimData = $"ClaimantEmail: {currentUser.Email}\n" +
+                                   $"ClaimantName: {fullName}\n" +
+                                   $"ClaimantGradeSection: {currentUser.GradeSection}\n" +
+                                   $"DateClaimed: {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n" +
+                                   $"Status: pending";
+
+                // Save claim data to file
+                try
+                {
+                    File.WriteAllText(claimFileName, claimData);
+                    MessageBox.Show("Your claim has been submitted successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    claimForm.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving claim: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+
+            btnCancel.Click += (s, e) => claimForm.Close();
+
+            claimForm.Controls.Add(picturebox);
+            claimForm.Controls.Add(detailsLabel);
+            claimForm.Controls.Add(confirmLabel);
+            claimForm.Controls.Add(btnConfirmClaim);
+            claimForm.Controls.Add(btnCancel);
+
+            claimForm.ShowDialog();
+        }
+
+        private void ShowImagePreview(string filePath)
+        {
+            try
+            {
+                Bitmap? img = null;
+                try
+                {
+                    img = new Bitmap(filePath);
+                }
+                catch
+                {
+                    MessageBox.Show("Could not load image.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                Form previewForm = new Form
+                {
+                    Text = $"Image Preview - {Path.GetFileName(filePath)}",
+                    StartPosition = FormStartPosition.CenterParent,
+                    WindowState = FormWindowState.Maximized,
+                    BackColor = Color.Black,
+                    FormBorderStyle = FormBorderStyle.Sizable,
+                    MinimizeBox = false,
+                    MaximizeBox = true
+                };
+
+                PictureBox previewPicturebox = new PictureBox
+                {
+                    Image = img,
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.Black,
+                    Cursor = Cursors.Hand
+                };
+
+                Label closeLabel = new Label
+                {
+                    Text = "(Double-click or press Escape to close)",
+                    AutoSize = true,
+                    BackColor = Color.Black,
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 10),
+                    Padding = new Padding(10),
+                    Dock = DockStyle.Bottom,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Height = 40
+                };
+
+                previewForm.Controls.Add(previewPicturebox);
+                previewForm.Controls.Add(closeLabel);
+
+                previewPicturebox.DoubleClick += (s, e) => previewForm.Close();
+                previewForm.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Escape)
+                    {
+                        previewForm.Close();
+                        e.Handled = true;
+                    }
+                };
+
+                previewForm.ShowDialog(this);
+                img?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error displaying image preview: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

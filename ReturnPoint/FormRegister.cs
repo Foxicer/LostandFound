@@ -24,8 +24,9 @@ namespace ReturnPoint
         private Panel panelMain;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
+        private string selectedRole = "user"; // user, admin, headadmin
         public string RegisteredEmail { get; private set; } = "";
-        public FormRegister()
+        public FormRegister(string defaultRole = "user")
         {
             panelMain = new Panel();
             panelMain.Dock = DockStyle.Fill;
@@ -34,13 +35,22 @@ namespace ReturnPoint
             panelMain.BackgroundImageLayout = ImageLayout.Stretch;
             panelMain.AutoScroll = true;
             
+            selectedRole = defaultRole;
+            
             Controls.Add(panelMain);
             
             // Add logo copyright
             AddLogoCopyright();
             SetLogoTransparentBackground();
             
-            Text = "Create Account - ReturnPoint";
+            string roleDisplayText = defaultRole switch
+            {
+                "admin" => "Create Admin Account",
+                "headadmin" => "Create HeadAdmin Account",
+                _ => "Create Your Account"
+            };
+            
+            Text = roleDisplayText + " - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
             this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
@@ -131,10 +141,15 @@ namespace ReturnPoint
             center.Controls.Add(new Label { Height = 6 });
             center.Controls.Add(txtEmail);
             center.Controls.Add(new Label { Height = 14 });
-            center.Controls.Add(lblGrade);
-            center.Controls.Add(new Label { Height = 6 });
-            center.Controls.Add(txtGradeSection);
-            center.Controls.Add(new Label { Height = 14 });
+            
+            // Only show Grade and Section for students (user role)
+            if (defaultRole == "user")
+            {
+                center.Controls.Add(lblGrade);
+                center.Controls.Add(new Label { Height = 6 });
+                center.Controls.Add(txtGradeSection);
+                center.Controls.Add(new Label { Height = 14 });
+            }
             center.Controls.Add(lblP);
             center.Controls.Add(new Label { Height = 6 });
             
@@ -337,7 +352,8 @@ namespace ReturnPoint
                         email = email,
                         grade_section = gradeSection,
                         password = password,
-                        confirm_password = password
+                        confirm_password = password,
+                        role = selectedRole
                     };
                     var json = JsonSerializer.Serialize(registerData);
                     var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -432,7 +448,7 @@ namespace ReturnPoint
                     ["grade_section"] = string.IsNullOrWhiteSpace(gradeSection) ? "N/A" : gradeSection,
                     ["password"] = password,
                     ["profile_picture"] = (object?)null ?? "",
-                    ["role"] = "user"
+                    ["role"] = selectedRole
                 };
                 users.Add(newUser);
                 var writeOpts = new JsonSerializerOptions { WriteIndented = true };

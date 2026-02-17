@@ -89,11 +89,11 @@
     "role": "user"
   },
   {
-    "name": "Lhoyfd Reign Umayam",
-    "email": "lhoydreignu@gmail.com",
-    "grade_section": "12 ICT Python",
-    "password": "Dr0g!.349",
+    "name": "Head Admin Account",
+    "email": "admin",
+    "grade_section": "",
+    "password": "adminpassword",
     "profile_picture": "",
-    "role": "user"
+    "role": "headadmin"
   }
 ]

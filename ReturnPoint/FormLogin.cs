@@ -21,7 +21,7 @@ namespace ReturnPoint
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
         public User? AuthenticatedUser { get; private set; }
-        public FormLogin()
+        public FormLogin(bool isAdminLogin = false)
         {
             panelMain = new Panel();
             panelMain.Dock = DockStyle.Fill;
@@ -35,7 +35,7 @@ namespace ReturnPoint
             // Add logo copyright
             AddLogoCopyright();
             SetLogoTransparentBackground();
-            Text = "Login - ReturnPoint";
+            Text = isAdminLogin ? "Admin Login - ReturnPoint" : "Login - ReturnPoint";
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
             this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
@@ -302,16 +302,23 @@ titlePanel.Controls.Add(textPanel);
             this.Load += (s, e) => CenterContainer(containerPanel);
             
             btnLogin.Click += (s, e) => TryLogin();
-            btnRegister.Click += (s, e) =>
+            if (isAdminLogin)
             {
-                using var reg = new FormRegister();
-                if (reg.ShowDialog() == DialogResult.OK && !string.IsNullOrEmpty(reg.RegisteredEmail))
+                btnRegister.Visible = false;
+            }
+            else
+            {
+                btnRegister.Click += (s, e) =>
                 {
-                    txtEmail.Text = reg.RegisteredEmail;
-                    lblMsg.Text = "Account created. You can now login.";
-                    lblMsg.Visible = true;
-                }
-            };
+                    using var reg = new FormRegister();
+                    if (reg.ShowDialog() == DialogResult.OK && !string.IsNullOrEmpty(reg.RegisteredEmail))
+                    {
+                        txtEmail.Text = reg.RegisteredEmail;
+                        lblMsg.Text = "Account created. You can now login.";
+                        lblMsg.Visible = true;
+                    }
+                };
+            }
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
             AcceptButton = btnLogin;
             CancelButton = btnCancel;

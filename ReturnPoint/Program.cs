@@ -23,25 +23,25 @@ namespace ReturnPoint
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            using (var login = new FormLogin())
+            using (var roleSelection = new FormRoleSelection())
             {
                 try
                 {
                     string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
                     if (System.IO.File.Exists(logoPath))
                     {
-                        login.Icon = new System.Drawing.Icon(logoPath);
+                        roleSelection.Icon = new System.Drawing.Icon(logoPath);
                     }
                 }
                 catch { /* Logo not found, continue without icon */ }
 
-                var dr = login.ShowDialog();
-                if (dr != DialogResult.OK || login.AuthenticatedUser == null)
+                var dr = roleSelection.ShowDialog();
+                if (dr != DialogResult.OK || CurrentUser == null)
                 {
                     return;
                 }
 
-                var auth = login.AuthenticatedUser;
+                var auth = CurrentUser;
                 
                 if (string.IsNullOrWhiteSpace(auth.FirstName) && !string.IsNullOrWhiteSpace(auth.Name))
                 {
@@ -54,9 +54,9 @@ namespace ReturnPoint
                         auth.LastName = string.Join(" ", parts.Skip(2));
                 }
                 
-                CurrentUser = auth;
+                string role = auth.Role ?? "user";
                 
-                if (string.Equals(auth.Role ?? "user", "admin", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
                 {
                     var adminForm = new FormGalleryAdmin();
                     try
@@ -69,6 +69,20 @@ namespace ReturnPoint
                     }
                     catch { /* Logo not found, continue without icon */ }
                     Application.Run(adminForm);
+                }
+                else if (string.Equals(role, "headadmin", StringComparison.OrdinalIgnoreCase))
+                {
+                    var headAdminForm = new FormGalleryHeadAdmin();
+                    try
+                    {
+                        string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                        if (System.IO.File.Exists(logoPath))
+                        {
+                            headAdminForm.Icon = new System.Drawing.Icon(logoPath);
+                        }
+                    }
+                    catch { /* Logo not found, continue without icon */ }
+                    Application.Run(headAdminForm);
                 }
                 else
                 {
