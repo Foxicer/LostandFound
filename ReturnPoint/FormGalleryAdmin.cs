@@ -26,17 +26,24 @@ namespace ReturnPoint
         private Button btnTagManager;
         private Button btnInbox;
         private Button btnLogout;
-        private FlowLayoutPanel pnlTags;
-        private TextBox txtNewTag;
         private string saveFolder;
         private string deletedFolder;
-        private Panel selectedCard;
+        private Panel? selectedCard;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
-        private const int COLUMNS = 5;
         private const int IMAGE_SIZE = 220;
+        private int currentColumnCount = 5;
         private Form? loadingForm;
         private bool isLoading = false;
+        
+        private int CalculateColumnsForWidth(int availableWidth)
+        {
+            // Minimum space per column: IMAGE_SIZE + margins + padding
+            int minSpacePerColumn = IMAGE_SIZE + 30; // 220 + 10 margins on each side + some padding
+            int cols = Math.Max(1, availableWidth / minSpacePerColumn);
+            return Math.Min(cols, 8); // Cap at 8 columns maximum
+        }
+        
         public FormGalleryAdmin()
         {
             Text = "Gallery Admin - ReturnPoint";
@@ -48,198 +55,42 @@ namespace ReturnPoint
             deletedFolder = Path.Combine(saveFolder, "Deleted");
             Directory.CreateDirectory(saveFolder);
             Directory.CreateDirectory(deletedFolder);
-            outerPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackColor = Theme.GetBackgroundTeal(),
-                BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
-                BackgroundImageLayout = ImageLayout.Stretch,
-                AutoScroll = false,
-                Padding = new Padding(0),
-                BorderStyle = BorderStyle.FixedSingle
-            };
             
-            // Create a scrollable container for the gallery table
-            Panel scrollableContainer = new Panel
-            {
-                Dock = DockStyle.Fill,
-                AutoScroll = true,
-                BackColor = Theme.GetBackgroundTeal(),
-                BackgroundImageLayout = ImageLayout.Stretch,
-                Padding = new Padding(0)
-            };
-            
-            galleryTable = new TableLayoutPanel
-            {
-                ColumnCount = COLUMNS,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(30, 20, 30, 20),
-                BackColor = Theme.GetBackgroundTeal(),
-                Dock = DockStyle.None,
-                Location = new Point(0, 0)
-            };
-            
-            // Set column styles
-            for (int i = 0; i < COLUMNS; i++)
-            {
-                galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            }
-            
-            scrollableContainer.Controls.Add(galleryTable);
-            outerPanel.Controls.Add(scrollableContainer);
-            
-            // Create responsive right panel using FlowLayoutPanel
-            FlowLayoutPanel rightPanelFlow = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Right,
-                Width = Math.Max(300, (int)(Screen.PrimaryScreen.Bounds.Width * 0.15)),
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.None,
-                Padding = new Padding(15),
-                AutoScroll = true,
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false
-            };
-            rightPanel = rightPanelFlow;
-            
-            // Helper function to create responsive label
-            Label CreateLabel(string text, bool bold = false) => new Label
-            {
-                Text = text,
-                AutoSize = true,
-                Font = new Font("Segoe UI", 11, bold ? FontStyle.Bold : FontStyle.Regular),
-                ForeColor = Theme.NearBlack,
-                MaximumSize = new Size(rightPanelFlow.Width - 40, 0),
-                Margin = new Padding(0, 10, 0, 5)
-            };
-            
-            // Helper for responsive textbox
-            TextBox CreateTextBox(int height = 35) => new TextBox
+            // ===== TOP HEADER PANEL =====
+            Panel headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = height,
-                Font = new Font("Segoe UI", 11),
-                BackColor = Theme.SoftWhite,
-                ForeColor = Theme.NearBlack,
-                Margin = new Padding(0, 5, 0, 10)
-            };
-            
-            // Helper for responsive button
-            Button CreateButton(string text, Color bgColor) => new Button
-            {
-                Text = text,
-                Dock = DockStyle.Top,
-                Height = 40,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                BackColor = bgColor,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand,
-                Margin = new Padding(0, 5, 0, 5)
-            };
-            
-            Label lblSearchTitle = CreateLabel("🔍 Search", true);
-            txtSearch = CreateTextBox(35);
-            
-            Label lblSelected = CreateLabel("Selected File", true);
-            lblSelectedFile = new Label
-            {
-                Text = "(none)",
-                AutoSize = false,
-                Dock = DockStyle.Top,
-                Height = 60,
+                Height = 70,
+                BackColor = Theme.DarkTeal,
                 BorderStyle = BorderStyle.FixedSingle,
-                BackColor = Theme.GetBackgroundTeal(),
-                ForeColor = Theme.NearBlack,
-                Font = new Font("Segoe UI", 10),
-                Padding = new Padding(8),
-                Margin = new Padding(0, 5, 0, 10)
+                Padding = new Padding(15),
+                AutoScroll = false
             };
             
-            lblDateAdded = new Label
+            Label lblWelcome = new Label
             {
-                Text = "📅 Added: N/A",
-                AutoSize = false,
-                Dock = DockStyle.Top,
-                Height = 50,
-                Font = new Font("Segoe UI", 9),
-                ForeColor = Theme.NearBlack,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0, 5, 0, 10)
-            };
-            
-            // Delete and Restore buttons in a row
-            FlowLayoutPanel deleteRestorePanel = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                Dock = DockStyle.Top,
-                Height = 50,
-                AutoSize = false,
-                Margin = new Padding(0, 5, 0, 5)
-            };
-            
-            btnDelete = new Button
-            {
-                Text = "🗑️ Delete",
-                Width = 130,
-                Height = 40,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                BackColor = Theme.WarmGold,
+                Text = "🔐 Admin Gallery Manager",
+                Dock = DockStyle.Left,
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
+                AutoSize = false,
+                Width = 400,
+                TextAlign = ContentAlignment.MiddleLeft
             };
-            btnDelete.FlatAppearance.BorderSize = 0;
             
-            btnRestore = new Button
+            btnLogout = new Button
             {
-                Text = "✓ Restore",
-                Width = 130,
-                Height = 40,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                BackColor = Theme.Success,
+                Text = "🚪 Logout",
+                Dock = DockStyle.Right,
+                Width = 100,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = Theme.DeepRed,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
-                Enabled = false,
-                Margin = new Padding(5, 0, 0, 0)
+                Margin = new Padding(10, 0, 0, 0)
             };
-            btnRestore.FlatAppearance.BorderSize = 0;
-            
-            deleteRestorePanel.Controls.Add(btnDelete);
-            deleteRestorePanel.Controls.Add(btnRestore);
-            
-            btnPermanentlyDelete = CreateButton("❌ Delete Permanently", Theme.DeepRed);
-            btnRefresh = CreateButton("🔄 Refresh", Theme.AccentBlue);
-            btnImageDetails = CreateButton("📋 Image Details", Theme.MediumTeal);
-            btnTagManager = CreateButton("🏷️ Manage Tags", Theme.TealGreen);
-            btnInbox = CreateButton("📬 Inbox", Theme.WarmGold);
-            
-            Label lblPendingCount = new Label
-            {
-                Text = "",
-                AutoSize = true,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                ForeColor = Theme.DeepRed,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0, -5, 0, 10)
-            };
-            
-            cbViewMode = new ComboBox
-            {
-                Dock = DockStyle.Top,
-                Height = 36,
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 10),
-                BackColor = Theme.GetBackgroundTeal(),
-                Margin = new Padding(0, 5, 0, 10)
-            };
-            cbViewMode.Items.AddRange(new[] { "Active Items", "Deleted Items" });
-            cbViewMode.SelectedIndex = 0;
-            
-            btnLogout = CreateButton("🚪 Logout", Theme.DeepRed);
-            
+            btnLogout.FlatAppearance.BorderSize = 0;
             btnLogout.Click += (s, e) =>
             {
                 if (MessageBox.Show("Logout and return to login?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
@@ -249,24 +100,254 @@ namespace ReturnPoint
                 }
             };
             
-            // Add all controls to the responsive panel
-            rightPanelFlow.Controls.Add(lblSearchTitle);
-            rightPanelFlow.Controls.Add(txtSearch);
-            rightPanelFlow.Controls.Add(lblSelected);
-            rightPanelFlow.Controls.Add(lblSelectedFile);
-            rightPanelFlow.Controls.Add(lblDateAdded);
-            rightPanelFlow.Controls.Add(deleteRestorePanel);
-            rightPanelFlow.Controls.Add(btnPermanentlyDelete);
-            rightPanelFlow.Controls.Add(btnRefresh);
-            rightPanelFlow.Controls.Add(btnImageDetails);
-            rightPanelFlow.Controls.Add(btnTagManager);
-            rightPanelFlow.Controls.Add(btnInbox);
-            rightPanelFlow.Controls.Add(lblPendingCount);
-            rightPanelFlow.Controls.Add(cbViewMode);
-            rightPanelFlow.Controls.Add(btnLogout);
+            headerPanel.Controls.Add(btnLogout);
+            headerPanel.Controls.Add(lblWelcome);
             
-            Controls.Add(rightPanel);
-            Controls.Add(outerPanel);
+            // ===== MAIN CONTENT CONTAINER =====
+            Panel mainContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.GetBackgroundTeal(),
+                Padding = new Padding(0)
+            };
+            
+            // ===== LEFT SIDE - GALLERY AREA =====
+            Panel galleryAreaPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.GetBackgroundTeal(),
+                BorderStyle = BorderStyle.FixedSingle,
+                AutoScroll = false,
+                Padding = new Padding(0)
+            };
+            
+            Panel scrollableContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Theme.GetBackgroundTeal(),
+                Padding = new Padding(15)
+            };
+            
+            galleryTable = new TableLayoutPanel
+            {
+                ColumnCount = 5,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(10),
+                BackColor = Theme.GetBackgroundTeal(),
+                Dock = DockStyle.None,
+                Location = new Point(0, 0)
+            };
+            
+            for (int i = 0; i < 5; i++)
+            {
+                galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            }
+            
+            scrollableContainer.Controls.Add(galleryTable);
+            galleryAreaPanel.Controls.Add(scrollableContainer);
+            
+            // ===== RIGHT SIDE - CONTROL PANEL =====
+            Panel controlPanel = new Panel
+            {
+                Dock = DockStyle.Right,
+                Width = Math.Max(320, (int)(Screen.PrimaryScreen.Bounds.Width * 0.20)),
+                BackColor = Theme.MediumTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(0),
+                AutoScroll = true
+            };
+            
+            FlowLayoutPanel controlFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Padding = new Padding(15),
+                BackColor = Theme.MediumTeal
+            };
+            
+            // Helper for section title
+            Label CreateSectionTitle(string text) => new Label
+            {
+                Text = text,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = true,
+                Margin = new Padding(0, 15, 0, 10),
+                Dock = DockStyle.Top,
+                Height = 25
+            };
+            
+            // Helper for textbox
+            TextBox CreateInputBox(int height = 36) => new TextBox
+            {
+                Dock = DockStyle.Top,
+                Height = height,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.LightGray,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            
+            // Helper for button
+            Button CreateButton(string text, Color bgColor, int height = 36) => new Button
+            {
+                Text = text,
+                Dock = DockStyle.Top,
+                Height = height,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = bgColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            
+            // --- VIEW MODE SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("👁️ View Mode"));
+            
+            cbViewMode = new ComboBox
+            {
+                Dock = DockStyle.Top,
+                Height = 36,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.LightGray,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            cbViewMode.Items.AddRange(new[] { "Active Items", "Deleted Items" });
+            cbViewMode.SelectedIndex = 0;
+            controlFlow.Controls.Add(cbViewMode);
+            
+            // --- SEARCH SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("🔍 Search"));
+            
+            txtSearch = CreateInputBox();
+            txtSearch.PlaceholderText = "Search items...";
+            controlFlow.Controls.Add(txtSearch);
+            
+            // --- SELECTED FILE SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("📄 Selected File"));
+            
+            lblSelectedFile = new Label
+            {
+                Text = "(none)",
+                Dock = DockStyle.Top,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.White,
+                AutoSize = false,
+                Height = 50,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            controlFlow.Controls.Add(lblSelectedFile);
+            
+            lblDateAdded = new Label
+            {
+                Text = "📅 Added: N/A",
+                Dock = DockStyle.Top,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Theme.LightGray,
+                AutoSize = false,
+                Height = 30,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            controlFlow.Controls.Add(lblDateAdded);
+            
+            // --- FILE MANAGEMENT SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("🗂️ File Management"));
+            
+            FlowLayoutPanel deleteRestorePanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 80,
+                AutoSize = false,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                Margin = new Padding(0, 5, 0, 10),
+                BackColor = Theme.MediumTeal
+            };
+            
+            btnDelete = new Button
+            {
+                Text = "🗑️ Delete",
+                Width = 250,
+                Height = 36,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                BackColor = Theme.WarmGold,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0)
+            };
+            btnDelete.FlatAppearance.BorderSize = 0;
+            
+            btnRestore = new Button
+            {
+                Text = "✓ Restore",
+                Width = 250,
+                Height = 36,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                BackColor = Theme.Success,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Enabled = false,
+                Margin = new Padding(0, 5, 0, 0)
+            };
+            btnRestore.FlatAppearance.BorderSize = 0;
+            
+            deleteRestorePanel.Controls.Add(btnDelete);
+            deleteRestorePanel.Controls.Add(btnRestore);
+            controlFlow.Controls.Add(deleteRestorePanel);
+            
+            btnPermanentlyDelete = CreateButton("❌ Delete Permanently", Theme.DeepRed);
+            controlFlow.Controls.Add(btnPermanentlyDelete);
+            
+            // --- GALLERY TOOLS SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("🎨 Gallery Tools"));
+            
+            btnRefresh = CreateButton("🔄 Refresh", Theme.AccentBlue);
+            btnImageDetails = CreateButton("📋 Image Details", Theme.MediumTeal);
+            btnTagManager = CreateButton("🏷️ Manage Tags", Theme.TealGreen);
+            
+            controlFlow.Controls.Add(btnRefresh);
+            controlFlow.Controls.Add(btnImageDetails);
+            controlFlow.Controls.Add(btnTagManager);
+            
+            // --- INBOX SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("📬 Claims Inbox"));
+            
+            btnInbox = CreateButton("📬 Open Inbox", Theme.WarmGold);
+            controlFlow.Controls.Add(btnInbox);
+            
+            Label lblPendingCount = new Label
+            {
+                Text = "",
+                Dock = DockStyle.Top,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Theme.DeepRed,
+                AutoSize = true,
+                Margin = new Padding(0, -5, 0, 10)
+            };
+            controlFlow.Controls.Add(lblPendingCount);
+            
+            controlPanel.Controls.Add(controlFlow);
+            
+            // ===== COMBINE MAIN CONTENT =====
+            mainContainer.Controls.Add(galleryAreaPanel);
+            mainContainer.Controls.Add(controlPanel);
+            
+            // ===== ADD ALL TO FORM =====
+            this.Controls.Add(mainContainer);
+            this.Controls.Add(headerPanel);
+            
+            // ===== EVENT HANDLERS =====
+            rightPanel = controlPanel;  // Keep reference for compatibility
+            outerPanel = galleryAreaPanel;  // Keep reference for compatibility
+            
             cbViewMode.SelectedIndexChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             btnRefresh.Click += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             btnDelete.Click += (s, e) => DeleteSelected();
@@ -281,6 +362,25 @@ namespace ReturnPoint
                 OpenInbox();
             };
             txtSearch.TextChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
+            
+            this.Resize += (s, e) =>
+            {
+                // Recalculate columns based on new width
+                int columnCount = CalculateColumnsForWidth(galleryAreaPanel.Width - 60);
+                if (columnCount != currentColumnCount)
+                {
+                    galleryTable.ColumnCount = columnCount;
+                    currentColumnCount = columnCount;
+                    for (int i = 0; i < columnCount; i++)
+                    {
+                        if (i < galleryTable.ColumnStyles.Count)
+                            galleryTable.ColumnStyles[i] = new ColumnStyle(SizeType.AutoSize);
+                        else
+                            galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                    }
+                }
+            };
+            
             LoadImages(false);
             AddLogoCopyright();
             SetLogoTransparentBackground();
@@ -550,7 +650,7 @@ namespace ReturnPoint
                         galleryTable.Controls.Add(card, columnIndex, rowIndex);
                         
                         columnIndex++;
-                        if (columnIndex >= COLUMNS)
+                        if (columnIndex >= currentColumnCount)
                         {
                             columnIndex = 0;
                             rowIndex++;
@@ -1389,8 +1489,8 @@ namespace ReturnPoint
             Form inboxForm = new Form
             {
                 Text = "Claim Inbox - ReturnPoint",
-                Width = 1200,
-                Height = 600,
+                Width = 1400,
+                Height = 700,
                 StartPosition = FormStartPosition.CenterParent,
                 BackColor = Theme.SoftWhite,
                 Font = new Font("Segoe UI", 10),
@@ -1399,6 +1499,22 @@ namespace ReturnPoint
 
             // Load claims data
             List<ClaimData> claims = LoadClaimsData();
+
+            // Main container
+            Panel mainPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.SoftWhite
+            };
+
+            // Left side - DataGridView
+            Panel leftPanel = new Panel
+            {
+                Dock = DockStyle.Left,
+                Width = 700,
+                BackColor = Theme.SoftWhite,
+                BorderStyle = BorderStyle.FixedSingle
+            };
 
             // DataGridView for claims
             DataGridView dgvClaims = new DataGridView
@@ -1422,12 +1538,11 @@ namespace ReturnPoint
             dgvClaims.Columns.AddRange(
                 new DataGridViewColumn[]
                 {
-                    new DataGridViewTextBoxColumn { HeaderText = "Claimant", DataPropertyName = "ClaimantName", Width = 150, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Email", DataPropertyName = "ClaimantEmail", Width = 150, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Grade/Section", DataPropertyName = "ClaimantGradeSection", Width = 120, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Image", DataPropertyName = "ImageName", Width = 150, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Date Claimed", DataPropertyName = "DateClaimed", Width = 150, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Status", DataPropertyName = "Status", Width = 80, ReadOnly = true }
+                    new DataGridViewTextBoxColumn { HeaderText = "Claimant", DataPropertyName = "ClaimantName", Width = 120, ReadOnly = true },
+                    new DataGridViewTextBoxColumn { HeaderText = "Email", DataPropertyName = "ClaimantEmail", Width = 120, ReadOnly = true },
+                    new DataGridViewTextBoxColumn { HeaderText = "Grade/Sec", DataPropertyName = "ClaimantGradeSection", Width = 100, ReadOnly = true },
+                    new DataGridViewTextBoxColumn { HeaderText = "Image", DataPropertyName = "ImageName", Width = 120, ReadOnly = true },
+                    new DataGridViewTextBoxColumn { HeaderText = "Date Claimed", DataPropertyName = "DateClaimed", Width = 110, ReadOnly = true }
                 }
             );
 
@@ -1438,15 +1553,131 @@ namespace ReturnPoint
                     claim.ClaimantEmail,
                     claim.ClaimantGradeSection,
                     claim.ImageName,
-                    claim.DateClaimed,
-                    claim.Status
+                    claim.DateClaimed
                 );
             }
 
+            leftPanel.Controls.Add(dgvClaims);
+
+            // Right side - Details panel
+            Panel rightPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.MediumTeal,
+                Padding = new Padding(15),
+                AutoScroll = true
+            };
+
+            // Details content
+            Panel detailsContent = new Panel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                BackColor = Theme.MediumTeal
+            };
+
+            // Image preview
+            PictureBox picItemImage = new PictureBox
+            {
+                Dock = DockStyle.Top,
+                Height = 250,
+                BackColor = Theme.DarkTeal,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 0, 0, 15)
+            };
+
+            // Create labels for details
+            Label CreateDetailLabel(string label) => new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 25,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Theme.MediumTeal,
+                Margin = new Padding(0, 10, 0, 5),
+                AutoSize = false,
+                Text = label
+            };
+
+            Label CreateValueLabel() => new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 45,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Theme.LightGray,
+                BackColor = Theme.DarkTeal,
+                Margin = new Padding(5, 0, 5, 5),
+                BorderStyle = BorderStyle.FixedSingle,
+                AutoSize = false,
+                TextAlign = ContentAlignment.TopLeft
+            };
+
+            detailsContent.Controls.Add(picItemImage);
+
+            Label lblItemDetails = CreateDetailLabel("📦 Item Details");
+            Label txtItem = CreateValueLabel();
+            detailsContent.Controls.Add(lblItemDetails);
+            detailsContent.Controls.Add(txtItem);
+
+            Label lblItemFinder = CreateDetailLabel("🔍 Found By");
+            Label txtFinder = CreateValueLabel();
+            detailsContent.Controls.Add(lblItemFinder);
+            detailsContent.Controls.Add(txtFinder);
+
+            Label lblItemDate = CreateDetailLabel("📅 Date Found");
+            Label txtDateFound = CreateValueLabel();
+            detailsContent.Controls.Add(lblItemDate);
+            detailsContent.Controls.Add(txtDateFound);
+
+            Label lblClaimDetails = CreateDetailLabel("👤 Claimant Details");
+            Label txtClaimant = CreateValueLabel();
+            detailsContent.Controls.Add(lblClaimDetails);
+            detailsContent.Controls.Add(txtClaimant);
+
+            Label lblClaimEmail = CreateDetailLabel("📧 Email");
+            Label txtEmail = CreateValueLabel();
+            detailsContent.Controls.Add(lblClaimEmail);
+            detailsContent.Controls.Add(txtEmail);
+
+            rightPanel.Controls.Add(detailsContent);
+
+            // Row selection handler to update details
+            dgvClaims.SelectionChanged += (s, e) =>
+            {
+                if (dgvClaims.SelectedRows.Count > 0)
+                {
+                    int rowIndex = dgvClaims.SelectedRows[0].Index;
+                    if (rowIndex < claims.Count)
+                    {
+                        var claim = claims[rowIndex];
+
+                        // Load image
+                        string imagePath = claim.FilePath.Replace("_claim.txt", "");
+                        if (File.Exists(imagePath))
+                        {
+                            try
+                            {
+                                picItemImage.Image = Image.FromFile(imagePath);
+                            }
+                            catch { }
+                        }
+
+                        // Update details
+                        txtItem.Text = claim.Item ?? "N/A";
+                        txtFinder.Text = claim.Finder ?? "N/A";
+                        txtDateFound.Text = claim.DateFound ?? "N/A";
+                        txtClaimant.Text = claim.ClaimantName ?? "N/A";
+                        txtEmail.Text = claim.ClaimantEmail ?? "N/A";
+                    }
+                }
+            };
+
+            // Bottom button panel
             Panel buttonPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 50,
+                Height = 60,
                 BackColor = Theme.LightGray,
                 Padding = new Padding(10)
             };
@@ -1455,7 +1686,7 @@ namespace ReturnPoint
             {
                 Text = "✓ Confirm Claim",
                 Width = 150,
-                Height = 35,
+                Height = 40,
                 BackColor = Theme.Success,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
@@ -1466,17 +1697,32 @@ namespace ReturnPoint
             };
             btnConfirm.FlatAppearance.BorderSize = 0;
 
-            Button btnClose = new Button
+            Button btnReject = new Button
             {
-                Text = "Close",
+                Text = "✗ Reject Claim",
                 Width = 150,
-                Height = 35,
-                BackColor = Theme.DarkGray,
+                Height = 40,
+                BackColor = Theme.DeepRed,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
                 Left = 170,
+                Top = 10
+            };
+            btnReject.FlatAppearance.BorderSize = 0;
+
+            Button btnClose = new Button
+            {
+                Text = "Close",
+                Width = 150,
+                Height = 40,
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Left = 330,
                 Top = 10
             };
             btnClose.FlatAppearance.BorderSize = 0;
@@ -1500,11 +1746,34 @@ namespace ReturnPoint
                 }
             };
 
+            btnReject.Click += (s, e) =>
+            {
+                if (dgvClaims.SelectedRows.Count > 0)
+                {
+                    int rowIndex = dgvClaims.SelectedRows[0].Index;
+                    if (rowIndex < claims.Count)
+                    {
+                        var claim = claims[rowIndex];
+                        RejectClaim(claim);
+                        inboxForm.Close();
+                        OpenInbox(); // Refresh the inbox
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please select a claim to reject.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            };
+
             btnClose.Click += (s, e) => inboxForm.Close();
 
             buttonPanel.Controls.Add(btnConfirm);
+            buttonPanel.Controls.Add(btnReject);
             buttonPanel.Controls.Add(btnClose);
-            inboxForm.Controls.Add(dgvClaims);
+
+            mainPanel.Controls.Add(rightPanel);
+            mainPanel.Controls.Add(leftPanel);
+            inboxForm.Controls.Add(mainPanel);
             inboxForm.Controls.Add(buttonPanel);
 
             inboxForm.ShowDialog(this);
@@ -1564,6 +1833,24 @@ namespace ReturnPoint
                             if (parts.Length > 1)
                                 claimData.ConfirmedBy = parts[1].Trim();
                         }
+                        else if (line.Contains("Item:"))
+                        {
+                            var parts = line.Split(new[] { "Item:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.Item = parts[1].Trim();
+                        }
+                        else if (line.Contains("Finder:"))
+                        {
+                            var parts = line.Split(new[] { "Finder:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.Finder = parts[1].Trim();
+                        }
+                        else if (line.Contains("DateFound:"))
+                        {
+                            var parts = line.Split(new[] { "DateFound:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.DateFound = parts[1].Trim();
+                        }
                     }
 
                     // Get image name from claim file
@@ -1616,6 +1903,41 @@ namespace ReturnPoint
             catch (Exception ex)
             {
                 MessageBox.Show($"Error confirming claim: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void RejectClaim(ClaimData claim)
+        {
+            try
+            {
+                string adminName = Program.CurrentUser?.Name ?? "Unknown Admin";
+                string[] claimLines = File.ReadAllLines(claim.FilePath);
+                var updatedLines = new List<string>();
+
+                foreach (var line in claimLines)
+                {
+                    if (line.Contains("Status:"))
+                        updatedLines.Add("Status: rejected");
+                    else if (line.Contains("RejectedBy:"))
+                        updatedLines.Add($"RejectedBy: {adminName}");
+                    else
+                        updatedLines.Add(line);
+                }
+
+                // Add RejectedBy if not present
+                if (!updatedLines.Any(l => l.Contains("RejectedBy:")))
+                {
+                    updatedLines.Add($"RejectedBy: {adminName}");
+                }
+
+                // Update claim file with rejected status
+                File.WriteAllLines(claim.FilePath, updatedLines);
+
+                MessageBox.Show("Claim rejected successfully! Item remains in gallery.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error rejecting claim: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1683,6 +2005,9 @@ namespace ReturnPoint
             public string ImageName { get; set; }
             public string Status { get; set; } = "pending";
             public string ConfirmedBy { get; set; } = "";
+            public string Item { get; set; } = "";
+            public string Finder { get; set; } = "";
+            public string DateFound { get; set; } = "";
         }
 
         private void ShowImagePreview(string filePath)

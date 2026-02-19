@@ -2,4 +2,5 @@ ClaimantEmail:
 ClaimantName: Jayden Daza Tordesillas
 ClaimantGradeSection: 12 - PYTHON
 DateClaimed: 2026-02-18 08:50:13
-Status: pending
+Status: confirmed
+ConfirmedBy: System Administrator
