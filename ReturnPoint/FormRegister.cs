@@ -28,149 +28,262 @@ namespace ReturnPoint
         public string RegisteredEmail { get; private set; } = "";
         public FormRegister(string defaultRole = "user")
         {
-            panelMain = new Panel();
-            panelMain.Dock = DockStyle.Fill;
-            panelMain.BackColor = Theme.LightGray;
-            panelMain.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
-            panelMain.BackgroundImageLayout = ImageLayout.Stretch;
-            panelMain.AutoScroll = true;
-            
             selectedRole = defaultRole;
-            
-            Controls.Add(panelMain);
-            
-            // Add logo copyright
-            AddLogoCopyright();
-            SetLogoTransparentBackground();
-            
+
             string roleDisplayText = defaultRole switch
             {
-                "admin" => "Create Admin Account",
-                "headadmin" => "Create HeadAdmin Account",
-                _ => "Create Your Account"
+                "admin" => "🔐 Admin Registration",
+                "headadmin" => "👑 HeadAdmin Registration",
+                _ => "📝 User Registration"
             };
-            
+
             Text = roleDisplayText + " - ReturnPoint";
-            FormBorderStyle = FormBorderStyle.None;
-            WindowState = FormWindowState.Maximized;
-            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
-            this.BackgroundImageLayout = ImageLayout.Stretch;
-            var titleFont = new System.Drawing.Font("Segoe UI", 32F, System.Drawing.FontStyle.Bold);
-            var subtitleFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Regular);
-            var labelFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular);
-            var inputFont = new System.Drawing.Font("Segoe UI", 12F);
-            txtFirst = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "First name", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtMiddle = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "Middle", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtLast = new TextBox { Width = 120, Height = 40, Font = inputFont, PlaceholderText = "Last name", BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtEmail = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtGradeSection = new TextBox { Width = 370, Height = 40, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtPassword = new TextBox { Width = 330, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            txtConfirm = new TextBox { Width = 330, Height = 40, UseSystemPasswordChar = true, Font = inputFont, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle };
-            btnRegister = new Button 
-            { 
-                Text = "Create Account", 
-                Width = 180, 
-                Height = 44, 
-                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold),
-                BackColor = Theme.TealGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnRegister.FlatAppearance.BorderSize = 0;
-            btnCancel = new Button 
-            { 
-                Text = "Back", 
-                Width = 180, 
-                Height = 44, 
-                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular),
-                BackColor = Theme.DarkGray,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnCancel.FlatAppearance.BorderSize = 0;
-            lblMsg = new Label { AutoSize = false, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, Height = 32, ForeColor = Theme.DeepRed, Font = inputFont, Visible = false };
-            var lblTitle = new Label { Text = "Create Your Account", AutoSize = true, Font = titleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, ForeColor = Theme.NearBlack };
-            var lblSubtitle = new Label { Text = "Join ReturnPoint today", AutoSize = true, Font = subtitleFont, TextAlign = System.Drawing.ContentAlignment.MiddleCenter, ForeColor = Theme.DarkGray };
-            var lblFirst = new Label { Text = "Full Name", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            var lblEmail = new Label { Text = "Email Address", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            var lblGrade = new Label { Text = "Grade and Section", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            var lblP = new Label { Text = "Password", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            var lblC = new Label { Text = "Confirm Password", AutoSize = true, Font = labelFont, ForeColor = Theme.NearBlack };
-            
-            // Container panel for centering
-            var containerPanel = new Panel
+            Width = 950;
+            Height = 800;
+            StartPosition = FormStartPosition.CenterScreen;
+            BackColor = Theme.GetBackgroundTeal();
+            BackgroundImage = Theme.CreateGradientBitmap(950, 800, vertical: true);
+            BackgroundImageLayout = ImageLayout.Stretch;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+
+            // ===== MAIN CONTAINER =====
+            Panel mainContainer = new Panel
             {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(20)
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(40),
+                AutoScroll = true
             };
-            
-            // Create a border panel
-            var borderPanel = new Panel
+
+            // ===== BORDERED REGISTRATION AREA =====
+            Panel registerBox = new Panel
             {
-                Padding = new Padding(3),
-                BackColor = Color.White,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
+                Dock = DockStyle.Top,
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(30),
+                AutoSize = true
             };
-            
-            var center = new FlowLayoutPanel
+
+            FlowLayoutPanel formFlow = new FlowLayoutPanel
             {
+                Dock = DockStyle.Top,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                Width = 400,
                 AutoSize = true,
-                Padding = new Padding(30),
-                BackColor = Theme.GetBackgroundTeal()
+                BackColor = Theme.DarkTeal
             };
-            
-            center.Controls.Add(lblTitle);
-            center.Controls.Add(lblSubtitle);
-            center.Controls.Add(new Label { Height = 28 });
-            center.Controls.Add(lblFirst);
-            center.Controls.Add(new Label { Height = 6 });
-            var nameRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 370 };
-            nameRow.Controls.Add(txtFirst);
-            nameRow.Controls.Add(new Label { Width = 8 });
-            nameRow.Controls.Add(txtMiddle);
-            nameRow.Controls.Add(new Label { Width = 8 });
-            nameRow.Controls.Add(txtLast);
-            center.Controls.Add(nameRow);
-            center.Controls.Add(new Label { Height = 14 });
-            center.Controls.Add(lblEmail);
-            center.Controls.Add(new Label { Height = 6 });
-            center.Controls.Add(txtEmail);
-            center.Controls.Add(new Label { Height = 14 });
-            
-            // Only show Grade and Section for students (user role)
+
+            // ===== HEADER =====
+            Label lblTitle = new Label
+            {
+                Text = roleDisplayText,
+                Dock = DockStyle.Top,
+                Height = 40,
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 0, 0, 5)
+            };
+            formFlow.Controls.Add(lblTitle);
+
+            Label lblSubtitle = new Label
+            {
+                Text = "Fill in your information below",
+                Dock = DockStyle.Top,
+                Height = 22,
+                Font = new Font("Segoe UI", 11),
+                ForeColor = Theme.LightGray,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 0, 0, 20)
+            };
+            formFlow.Controls.Add(lblSubtitle);
+
+            // ===== FULL NAME SECTION =====
+            Label lblName = new Label
+            {
+                Text = "👤 Full Name",
+                Dock = DockStyle.Top,
+                Height = 20,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Margin = new Padding(0, 10, 0, 8)
+            };
+            formFlow.Controls.Add(lblName);
+
+            // First name
+            Label lblFirstName = new Label
+            {
+                Text = "First name",
+                Dock = DockStyle.Top,
+                Height = 16,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Theme.LightGray,
+                Margin = new Padding(0, 0, 0, 3)
+            };
+            formFlow.Controls.Add(lblFirstName);
+
+            txtFirst = new TextBox
+            {
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 0, 0, 12)
+            };
+            formFlow.Controls.Add(txtFirst);
+
+            // Middle name
+            Label lblMiddleName = new Label
+            {
+                Text = "Middle name",
+                Dock = DockStyle.Top,
+                Height = 16,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Theme.LightGray,
+                Margin = new Padding(0, 0, 0, 3)
+            };
+            formFlow.Controls.Add(lblMiddleName);
+
+            txtMiddle = new TextBox
+            {
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 0, 0, 12)
+            };
+            formFlow.Controls.Add(txtMiddle);
+
+            // Last name
+            Label lblLastName = new Label
+            {
+                Text = "Last name",
+                Dock = DockStyle.Top,
+                Height = 16,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Theme.LightGray,
+                Margin = new Padding(0, 0, 0, 3)
+            };
+            formFlow.Controls.Add(lblLastName);
+
+            txtLast = new TextBox
+            {
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 0, 0, 15)
+            };
+            formFlow.Controls.Add(txtLast);
+
+            // ===== EMAIL SECTION =====
+            Label lblEmail = new Label
+            {
+                Text = "📧 Email Address",
+                Dock = DockStyle.Top,
+                Height = 20,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Margin = new Padding(0, 10, 0, 8)
+            };
+            formFlow.Controls.Add(lblEmail);
+
+            txtEmail = new TextBox
+            {
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 0, 0, 15)
+            };
+            formFlow.Controls.Add(txtEmail);
+
+            // ===== GRADE/SECTION - Only for students =====
             if (defaultRole == "user")
             {
-                center.Controls.Add(lblGrade);
-                center.Controls.Add(new Label { Height = 6 });
-                center.Controls.Add(txtGradeSection);
-                center.Controls.Add(new Label { Height = 14 });
+                Label lblGrade = new Label
+                {
+                    Text = "🏫 Grade and Section",
+                    Dock = DockStyle.Top,
+                    Height = 20,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    ForeColor = Color.White,
+                    Margin = new Padding(0, 10, 0, 8)
+                };
+                formFlow.Controls.Add(lblGrade);
+
+                txtGradeSection = new TextBox
+                {
+                    Width = 350,
+                    Height = 40,
+                    Font = new Font("Segoe UI", 10),
+                    BackColor = Color.White,
+                    ForeColor = Theme.NearBlack,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    PlaceholderText = "e.g., Grade 10-A",
+                    Margin = new Padding(0, 0, 0, 15)
+                };
+                formFlow.Controls.Add(txtGradeSection);
             }
-            center.Controls.Add(lblP);
-            center.Controls.Add(new Label { Height = 6 });
-            
-            // Create password field container with show/hide toggle
-            var passwordContainer = new Panel
+            else
             {
-                Width = 370,
+                // Pre-fill for admin/headadmin
+                txtGradeSection = new TextBox { Visible = false };
+                txtGradeSection.Text = defaultRole;
+            }
+
+            // ===== PASSWORD SECTION =====
+            Label lblPassword = new Label
+            {
+                Text = "🔒 Password",
+                Dock = DockStyle.Top,
+                Height = 20,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Margin = new Padding(0, 10, 0, 8)
+            };
+            formFlow.Controls.Add(lblPassword);
+
+            Panel passwordPanel = new Panel
+            {
+                Width = 350,
                 Height = 40,
                 BackColor = Color.Transparent,
-                AutoSize = false
+                Margin = new Padding(0, 0, 0, 15)
             };
-            var btnTogglePassword = new Button
+
+            txtPassword = new TextBox
+            {
+                UseSystemPasswordChar = true,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+
+            Button btnTogglePassword = new Button
             {
                 Text = "👁️",
-                Width = 40,
-                Height = 40,
+                Font = new Font("Segoe UI", 11),
                 BackColor = Color.White,
                 ForeColor = Theme.NearBlack,
                 FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 11F),
-                Dock = DockStyle.Right
+                Width = 40,
+                Height = 40,
+                Dock = DockStyle.Right,
+                Margin = new Padding(0)
             };
             btnTogglePassword.FlatAppearance.BorderSize = 0;
             btnTogglePassword.Tag = false;
@@ -181,33 +294,53 @@ namespace ReturnPoint
                 btnTogglePassword.Tag = !isVisible;
                 btnTogglePassword.Text = isVisible ? "👁️" : "👁️‍🗨️";
             };
-            txtPassword.Dock = DockStyle.Fill;
-            passwordContainer.Controls.Add(txtPassword);
-            passwordContainer.Controls.Add(btnTogglePassword);
-            
-            center.Controls.Add(passwordContainer);
-            center.Controls.Add(new Label { Height = 14 });
-            center.Controls.Add(lblC);
-            center.Controls.Add(new Label { Height = 6 });
-            
-            // Create confirm password field container with show/hide toggle
-            var confirmContainer = new Panel
+
+            passwordPanel.Controls.Add(txtPassword);
+            passwordPanel.Controls.Add(btnTogglePassword);
+            formFlow.Controls.Add(passwordPanel);
+
+            // ===== CONFIRM PASSWORD SECTION =====
+            Label lblConfirm = new Label
             {
-                Width = 370,
+                Text = "🔒 Confirm Password",
+                Dock = DockStyle.Top,
+                Height = 20,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Margin = new Padding(0, 10, 0, 8)
+            };
+            formFlow.Controls.Add(lblConfirm);
+
+            Panel confirmPanel = new Panel
+            {
+                Width = 350,
                 Height = 40,
                 BackColor = Color.Transparent,
-                AutoSize = false
+                Margin = new Padding(0, 0, 0, 20)
             };
-            var btnToggleConfirm = new Button
+
+            txtConfirm = new TextBox
+            {
+                UseSystemPasswordChar = true,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+
+            Button btnToggleConfirm = new Button
             {
                 Text = "👁️",
-                Width = 40,
-                Height = 40,
+                Font = new Font("Segoe UI", 11),
                 BackColor = Color.White,
                 ForeColor = Theme.NearBlack,
                 FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 11F),
-                Dock = DockStyle.Right
+                Width = 40,
+                Height = 40,
+                Dock = DockStyle.Right,
+                Margin = new Padding(0)
             };
             btnToggleConfirm.FlatAppearance.BorderSize = 0;
             btnToggleConfirm.Tag = false;
@@ -218,54 +351,78 @@ namespace ReturnPoint
                 btnToggleConfirm.Tag = !isVisible;
                 btnToggleConfirm.Text = isVisible ? "👁️" : "👁️‍🗨️";
             };
-            txtConfirm.Dock = DockStyle.Fill;
-            confirmContainer.Controls.Add(txtConfirm);
-            confirmContainer.Controls.Add(btnToggleConfirm);
-            
-            center.Controls.Add(confirmContainer);
-            center.Controls.Add(new Label { Height = 14 });
-            center.Controls.Add(lblMsg);
-            center.Controls.Add(new Label { Height = 20 });
-            
-            // Loading indicator
-            var lblLoading = new Label
+
+            confirmPanel.Controls.Add(txtConfirm);
+            confirmPanel.Controls.Add(btnToggleConfirm);
+            formFlow.Controls.Add(confirmPanel);
+
+            // ===== ERROR MESSAGE =====
+            lblMsg = new Label
             {
-                Text = "Creating account...",
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Theme.DeepRed,
+                BackColor = Theme.DarkTeal,
+                TextAlign = ContentAlignment.TopLeft,
                 AutoSize = false,
-                Height = 20,
-                Width = 370,
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                ForeColor = Theme.AccentBlue,
-                Font = new System.Drawing.Font("Segoe UI", 10F),
-                Visible = false
+                Visible = false,
+                Margin = new Padding(0, 10, 0, 20)
             };
-            center.Controls.Add(lblLoading);
-            center.Controls.Add(new Label { Height = 10 });
-            
-            var btnRow = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, Width = 370 };
-            btnRow.Controls.Add(btnRegister);
-            btnRow.Controls.Add(new Label { Width = 20 }); 
-            btnRow.Controls.Add(btnCancel);
-            center.Controls.Add(btnRow);
-            
-            // Add panels in hierarchy
-            borderPanel.Controls.Add(center);
-            containerPanel.Controls.Add(borderPanel);
-            panelMain.Controls.Add(containerPanel);
-            
-            // Center the container when resizing
-            this.Resize += (s, e) => CenterContainer(containerPanel);
-            this.Load += (s, e) => CenterContainer(containerPanel);
-            
+            formFlow.Controls.Add(lblMsg);
+
+            // ===== BUTTONS =====
+            FlowLayoutPanel buttonPanel = new FlowLayoutPanel
+            {
+                Width = 350,
+                AutoSize = true,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                BackColor = Theme.DarkTeal
+            };
+
+            btnRegister = new Button
+            {
+                Text = "✓ Create Account",
+                Width = 350,
+                Height = 44,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Theme.Success,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            btnRegister.FlatAppearance.BorderSize = 0;
+            buttonPanel.Controls.Add(btnRegister);
+
+            btnCancel = new Button
+            {
+                Text = "✕ Back",
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+            buttonPanel.Controls.Add(btnCancel);
+
+            formFlow.Controls.Add(buttonPanel);
+            registerBox.Controls.Add(formFlow);
+            mainContainer.Controls.Add(registerBox);
+            Controls.Add(mainContainer);
+
+            // ===== EVENT HANDLERS =====
             btnRegister.Click += (s, e) => DoRegister();
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
             AcceptButton = btnRegister;
             CancelButton = btnCancel;
+            AddLogoCopyright();
+            SetLogoTransparentBackground();
             Theme.Apply(this);
-            BackColor = Theme.GetBackgroundTeal();
-            panelMain.BackColor = Theme.GetBackgroundTeal();
-            containerPanel.BackColor = Theme.GetBackgroundTeal();
-            btnRow.BackColor = Theme.GetBackgroundTeal();
         }
         
         private void CenterContainer(Panel container)

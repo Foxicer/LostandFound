@@ -23,223 +23,136 @@ namespace ReturnPoint
         public User? AuthenticatedUser { get; private set; }
         public FormLogin(bool isAdminLogin = false)
         {
-            panelMain = new Panel();
-            panelMain.Dock = DockStyle.Fill;
-            panelMain.BackColor = Theme.LightGray;
-            panelMain.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
-            panelMain.BackgroundImageLayout = ImageLayout.Stretch;
-            panelMain.AutoScroll = true;
-            
-            Controls.Add(panelMain);
-            
-            // Add logo copyright
-            AddLogoCopyright();
-            SetLogoTransparentBackground();
             Text = isAdminLogin ? "Admin Login - ReturnPoint" : "Login - ReturnPoint";
-            FormBorderStyle = FormBorderStyle.None;
-            WindowState = FormWindowState.Maximized;
-            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
-            this.BackgroundImageLayout = ImageLayout.Stretch;
-            var titleFont = new System.Drawing.Font("Segoe UI", 32F, System.Drawing.FontStyle.Bold);
-            var subtitleFont = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Regular);
-            var labelFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular);
-            var inputFont = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular);
-            txtEmail = new TextBox 
-            { 
-                Width = 380, 
-                Height = 44,
-                Font = inputFont, 
-                Padding = new Padding(10),
-                BackColor = Color.White,
-                ForeColor = Theme.NearBlack,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            txtPass = new TextBox 
-            { 
-                Width = 340,
-                Height = 44,
-                UseSystemPasswordChar = true, 
-                Font = inputFont, 
-                Padding = new Padding(10),
-                BackColor = Color.White,
-                ForeColor = Theme.NearBlack,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            btnLogin = new Button 
-            { 
-                Text = "Sign In", 
-                Width = 180, 
-                Height = 44, 
-                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold),
-                BackColor = Theme.TealGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnLogin.FlatAppearance.BorderSize = 0;
-            btnRegister = new Button 
-            { 
-                Text = "Create Account", 
-                Width = 180, 
-                Height = 44, 
-                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular),
-                BackColor = Theme.AccentBlue,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnRegister.FlatAppearance.BorderSize = 0;
-            btnCancel = new Button 
-            { 
-                Text = "Exit", 
-                Width = 180, 
-                Height = 44, 
-                Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Regular),
-                BackColor = Theme.DarkGray,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnCancel.FlatAppearance.BorderSize = 0;
-            lblMsg = new Label 
-            { 
-                AutoSize = false, 
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter, 
-                Height = 32, 
-                ForeColor = Theme.DeepRed, 
-                Font = labelFont,
-                Visible = false
-            };
-            var lblTitle = new Label 
-            { 
-                Text = "Welcome Back", 
-                AutoSize = true, 
-                Font = titleFont, 
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                ForeColor = Theme.NearBlack
-            };
-            var lblSubtitle = new Label 
-            { 
-                Text = "Sign in to your account", 
-                AutoSize = true, 
-                Font = subtitleFont, 
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                ForeColor = Theme.DarkGray
-            };
-            PictureBox logoLeft = new PictureBox
-            {
-            SizeMode = PictureBoxSizeMode.Zoom,
-            Width = 60,
-            Height = 80,
-            Margin = new Padding(0, 0, 12, 0),
-            BackColor = Color.Transparent
-           };
-           
-           // Load logo image if it exists
-           try
-           {
-               string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
-               if (File.Exists(logoPath))
-               {
-                   logoLeft.Image = Image.FromFile(logoPath);
-               }
-           }
-           catch { /* Logo not found, continue without it */ }
-           logoLeft.Size = new Size(150,100 );
-           logoLeft.MinimumSize = logoLeft.Size;
-var titlePanel = new FlowLayoutPanel
-{
-    FlowDirection = FlowDirection.LeftToRight,
-    AutoSize = true,
-    Width = 400,
-    Height = 100,   
-    WrapContents = false,
-    BackColor = Color.Transparent,
-    Margin = new Padding(0, 0, 0, 10)
-};
-var textPanel = new FlowLayoutPanel
-{
-     FlowDirection = FlowDirection.TopDown,
-    AutoSize = true,
-    WrapContents = false,
-    BackColor = Color.Transparent,
-    Margin = new Padding(0, 10, 0, 0)
-};
+            Width = 900;
+            Height = 700;
+            StartPosition = FormStartPosition.CenterScreen;
+            BackColor = Theme.GetBackgroundTeal();
+            BackgroundImage = Theme.CreateGradientBitmap(900, 700, vertical: true);
+            BackgroundImageLayout = ImageLayout.Stretch;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
 
-textPanel.Controls.Add(lblTitle);
-textPanel.Controls.Add(lblSubtitle);
+            // ===== MAIN CONTAINER =====
+            Panel mainContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(40)
+            };
 
-titlePanel.Controls.Add(logoLeft);
-titlePanel.Controls.Add(textPanel);
-            var lblEmail = new Label 
-            { 
-                Text = "Email Address", 
-                AutoSize = true, 
-                Font = labelFont,
-                ForeColor = Theme.NearBlack
-            };
-            var lblP = new Label 
-            { 
-                Text = "Password", 
-                AutoSize = true, 
-                Font = labelFont,
-                ForeColor = Theme.NearBlack
-            };
-            
-            // Container panel for centering
-            var containerPanel = new Panel
+            // ===== BORDERED LOGIN AREA =====
+            Panel loginBox = new Panel
             {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(20)
+                Dock = DockStyle.Fill,
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(30)
             };
-            
-            // Create a border panel
-            var borderPanel = new Panel
+
+            FlowLayoutPanel formFlow = new FlowLayoutPanel
             {
-                Padding = new Padding(3),
-                BackColor = Color.White,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink
-            };
-            
-            var centerPanel = new FlowLayoutPanel
-            {
+                Dock = DockStyle.Top,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                Width = 420,
                 AutoSize = true,
-                Padding = new Padding(30),
-                BackColor = Theme.GetBackgroundTeal()
+                BackColor = Theme.DarkTeal
             };
-            
-            centerPanel.Controls.Add(titlePanel);
-            centerPanel.Controls.Add(new Label { Height = 30 });
-            centerPanel.Controls.Add(lblEmail);
-            centerPanel.Controls.Add(new Label { Height = 6 });
-            centerPanel.Controls.Add(txtEmail);
-            centerPanel.Controls.Add(new Label { Height = 16 });
-            centerPanel.Controls.Add(lblP);
-            centerPanel.Controls.Add(new Label { Height = 6 });
-            
-            // Create password field container with show/hide toggle
-            var passwordContainer = new Panel
+
+            // ===== HEADER =====
+            Label lblTitle = new Label
             {
-                Width = 380,
-                Height = 44,
-                BackColor = Color.Transparent,
-                AutoSize = false
+                Text = isAdminLogin ? "🔐 Admin Login" : "🔓 User Login",
+                Dock = DockStyle.Top,
+                Height = 40,
+                Font = new Font("Segoe UI", 20, FontStyle.Bold),
+                ForeColor = Color.White,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 0, 0, 10)
             };
-            var btnTogglePassword = new Button
+            formFlow.Controls.Add(lblTitle);
+
+            Label lblSubtitle = new Label
+            {
+                Text = "Sign in to your ReturnPoint account",
+                Dock = DockStyle.Top,
+                Height = 25,
+                Font = new Font("Segoe UI", 11),
+                ForeColor = Theme.LightGray,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 0, 0, 20)
+            };
+            formFlow.Controls.Add(lblSubtitle);
+
+            // ===== EMAIL FIELD =====
+            Label lblEmail = new Label
+            {
+                Text = "📧 Email Address",
+                Dock = DockStyle.Top,
+                Height = 20,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Margin = new Padding(0, 10, 0, 5)
+            };
+            formFlow.Controls.Add(lblEmail);
+
+            txtEmail = new TextBox
+            {
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 0, 0, 15)
+            };
+            formFlow.Controls.Add(txtEmail);
+
+            // ===== PASSWORD FIELD =====
+            Label lblPassword = new Label
+            {
+                Text = "🔒 Password",
+                Dock = DockStyle.Top,
+                Height = 20,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Margin = new Padding(0, 10, 0, 5)
+            };
+            formFlow.Controls.Add(lblPassword);
+
+            Panel passwordPanel = new Panel
+            {
+                Width = 350,
+                Height = 40,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0, 0, 0, 15)
+            };
+
+            txtPass = new TextBox
+            {
+                UseSystemPasswordChar = true,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0)
+            };
+
+            Button btnTogglePassword = new Button
             {
                 Text = "👁️",
-                Width = 40,
-                Height = 44,
+                Font = new Font("Segoe UI", 12),
                 BackColor = Color.White,
                 ForeColor = Theme.NearBlack,
                 FlatStyle = FlatStyle.Flat,
-                Font = new System.Drawing.Font("Segoe UI", 12F),
-                Dock = DockStyle.Right
+                Width = 40,
+                Height = 40,
+                Dock = DockStyle.Right,
+                Margin = new Padding(0)
             };
             btnTogglePassword.FlatAppearance.BorderSize = 0;
-            btnTogglePassword.Tag = false; // false = password hidden, true = password visible
+            btnTogglePassword.Tag = false;
             btnTogglePassword.Click += (s, e) =>
             {
                 bool isVisible = (bool)btnTogglePassword.Tag;
@@ -247,66 +160,94 @@ titlePanel.Controls.Add(textPanel);
                 btnTogglePassword.Tag = !isVisible;
                 btnTogglePassword.Text = isVisible ? "👁️" : "👁️‍🗨️";
             };
-            txtPass.Dock = DockStyle.Fill;
-            passwordContainer.Controls.Add(txtPass);
-            passwordContainer.Controls.Add(btnTogglePassword);
-            
-            centerPanel.Controls.Add(passwordContainer);
-            centerPanel.Controls.Add(new Label { Height = 16 });
-            centerPanel.Controls.Add(lblMsg);
-            centerPanel.Controls.Add(new Label { Height = 20 });
-            
-            // Loading indicator
-            var lblLoading = new Label
+
+            passwordPanel.Controls.Add(txtPass);
+            passwordPanel.Controls.Add(btnTogglePassword);
+            formFlow.Controls.Add(passwordPanel);
+
+            // ===== ERROR MESSAGE =====
+            lblMsg = new Label
             {
-                Text = "Signing in...",
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Theme.DeepRed,
+                BackColor = Theme.DarkTeal,
+                TextAlign = ContentAlignment.TopLeft,
                 AutoSize = false,
-                Height = 20,
-                Width = 380,
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                ForeColor = Theme.AccentBlue,
-                Font = new System.Drawing.Font("Segoe UI", 10F),
-                Visible = false
+                Visible = false,
+                Margin = new Padding(0, 10, 0, 15)
             };
-            centerPanel.Controls.Add(lblLoading);
-            centerPanel.Controls.Add(new Label { Height = 10 });
-            
-            var btnRow = new FlowLayoutPanel 
-            { 
-                FlowDirection = FlowDirection.TopDown, 
-                AutoSize = true, 
-                WrapContents = false,
-                Width = 380
-            };
-            btnRow.Controls.Add(btnLogin);
-            btnRow.Controls.Add(new Label { Height = 10 });
-            var secondRowBtns = new FlowLayoutPanel 
-            { 
-                FlowDirection = FlowDirection.LeftToRight, 
-                AutoSize = true, 
-                WrapContents = false
-            };
-            secondRowBtns.Controls.Add(btnRegister);
-            secondRowBtns.Controls.Add(new Label { Width = 20 });
-            secondRowBtns.Controls.Add(btnCancel);
-            btnRow.Controls.Add(secondRowBtns);
-            centerPanel.Controls.Add(btnRow);
-            
-            // Add panels in hierarchy
-            borderPanel.Controls.Add(centerPanel);
-            containerPanel.Controls.Add(borderPanel);
-            panelMain.Controls.Add(containerPanel);
-            
-            // Center the container when resizing
-            this.Resize += (s, e) => CenterContainer(containerPanel);
-            this.Load += (s, e) => CenterContainer(containerPanel);
-            
-            btnLogin.Click += (s, e) => TryLogin();
-            if (isAdminLogin)
+            formFlow.Controls.Add(lblMsg);
+
+            // ===== BUTTONS =====
+            FlowLayoutPanel buttonPanel = new FlowLayoutPanel
             {
-                btnRegister.Visible = false;
+                Width = 350,
+                AutoSize = true,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                BackColor = Theme.DarkTeal,
+                Margin = new Padding(0, 20, 0, 0)
+            };
+
+            btnLogin = new Button
+            {
+                Text = "✓ Sign In",
+                Width = 350,
+                Height = 44,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                BackColor = Theme.Success,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 0, 0, 10)
+            };
+            btnLogin.FlatAppearance.BorderSize = 0;
+            buttonPanel.Controls.Add(btnLogin);
+
+            if (!isAdminLogin)
+            {
+                btnRegister = new Button
+                {
+                    Text = "+ Create Account",
+                    Width = 350,
+                    Height = 40,
+                    Font = new Font("Segoe UI", 10),
+                    BackColor = Theme.AccentBlue,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(0, 0, 0, 10)
+                };
+                btnRegister.FlatAppearance.BorderSize = 0;
+                buttonPanel.Controls.Add(btnRegister);
             }
-            else
+
+            btnCancel = new Button
+            {
+                Text = "✕ Exit",
+                Width = 350,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.DarkGray,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+            buttonPanel.Controls.Add(btnCancel);
+
+            formFlow.Controls.Add(buttonPanel);
+            loginBox.Controls.Add(formFlow);
+            mainContainer.Controls.Add(loginBox);
+            Controls.Add(mainContainer);
+
+            // ===== EVENT HANDLERS =====
+            btnLogin.Click += (s, e) => TryLogin();
+            btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
+
+            if (!isAdminLogin && btnRegister != null)
             {
                 btnRegister.Click += (s, e) =>
                 {
@@ -315,17 +256,17 @@ titlePanel.Controls.Add(textPanel);
                     {
                         txtEmail.Text = reg.RegisteredEmail;
                         lblMsg.Text = "Account created. You can now login.";
+                        lblMsg.ForeColor = Color.White;
                         lblMsg.Visible = true;
                     }
                 };
             }
-            btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
+
             AcceptButton = btnLogin;
             CancelButton = btnCancel;
+            AddLogoCopyright();
+            SetLogoTransparentBackground();
             Theme.Apply(this);
-            panelMain.BackColor = Theme.GetBackgroundTeal();
-            containerPanel.BackColor = Theme.GetBackgroundTeal();
-            btnRow.BackColor = Theme.GetBackgroundTeal();
         }
         
         private void CenterContainer(Panel container)
@@ -344,7 +285,8 @@ titlePanel.Controls.Add(textPanel);
             Invoke((MethodInvoker)delegate
             {
                 btnLogin.Enabled = true;
-                btnRegister.Enabled = true;
+                if (btnRegister != null)
+                    btnRegister.Enabled = true;
                 txtEmail.Enabled = true;
                 txtPass.Enabled = true;
             });
@@ -371,7 +313,8 @@ titlePanel.Controls.Add(textPanel);
             
             // Disable inputs and show loading
             btnLogin.Enabled = false;
-            btnRegister.Enabled = false;
+            if (btnRegister != null)
+                btnRegister.Enabled = false;
             txtEmail.Enabled = false;
             txtPass.Enabled = false;
             

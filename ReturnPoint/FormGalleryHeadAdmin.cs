@@ -1867,26 +1867,14 @@ namespace ReturnPoint
                     {
                         Image = Image.FromFile(logoPath),
                         SizeMode = PictureBoxSizeMode.Zoom,
-                        Width = 40,
-                        Height = 40,
+                        Width = 50,
+                        Height = 50,
                         BackColor = Color.Transparent,
-                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                        Top = 15,
+                        Left = 15
                     };
-                    logoPictureBox.Location = new System.Drawing.Point(ClientSize.Width - 60, ClientSize.Height - 60);
-
-                    var copyrightLabel = new Label
-                    {
-                        Text = "© ReturnPoint 2026",
-                        AutoSize = true,
-                        BackColor = Color.Transparent,
-                        ForeColor = Theme.DarkGray,
-                        Font = new System.Drawing.Font("Segoe UI", 8F),
-                        Anchor = AnchorStyles.Bottom | AnchorStyles.Right
-                    };
-                    copyrightLabel.Location = new System.Drawing.Point(ClientSize.Width - 140, ClientSize.Height - 30);
-
                     this.Controls.Add(logoPictureBox);
-                    this.Controls.Add(copyrightLabel);
+                    logoPictureBox.BringToFront();
                 }
             }
             catch { /* Logo not found, continue without it */ }

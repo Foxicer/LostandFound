@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace ReturnPoint
 {
@@ -7,8 +8,7 @@ namespace ReturnPoint
     {
         private Button btnStudent;
         private Button btnAdmin;
-        private Label lblTitle;
-        private Label lblSubtitle;
+        private PictureBox logoPictureBox;
 
         public FormRoleSelection()
         {
@@ -19,101 +19,250 @@ namespace ReturnPoint
             BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
             BackgroundImageLayout = ImageLayout.Stretch;
 
-            var titleFont = new System.Drawing.Font("Segoe UI", 48F, System.Drawing.FontStyle.Bold);
-            var subtitleFont = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular);
-            var buttonFont = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
-
-            // Title
-            lblTitle = new Label
+            // ===== TOP HEADER WITH TITLE =====
+            Panel headerPanel = new Panel
             {
-                Text = "Welcome to ReturnPoint",
-                Font = titleFont,
-                ForeColor = System.Drawing.Color.White,
-                AutoSize = true,
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+                Dock = DockStyle.Top,
+                Height = 120,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0)
             };
 
-            // Subtitle
-            lblSubtitle = new Label
+            Label lblTitle = new Label
             {
-                Text = "Please select your role to continue",
-                Font = subtitleFont,
-                ForeColor = System.Drawing.Color.White,
-                AutoSize = true,
-                TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+                Text = "ReturnPoint: SHA's Lost and Found",
+                Font = new Font("Segoe UI", 36, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Dock = DockStyle.Fill
+            };
+            headerPanel.Controls.Add(lblTitle);
+
+            Controls.Add(headerPanel);
+
+            // ===== MAIN CONTAINER - 50/50 SPLIT =====
+            Panel mainContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent
             };
 
-            // Student Button
+            // ===== LEFT SIDE - STUDENT =====
+            Panel studentPanel = new Panel
+            {
+                Dock = DockStyle.Left,
+                Width = 960,
+                BackColor = Color.FromArgb(41, 128, 128),
+                Cursor = Cursors.Hand
+            };
+
+            // Create a centered container for student content
+            TableLayoutPanel studentLayout = new TableLayoutPanel
+            {
+                ColumnCount = 3,
+                RowCount = 5,
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0)
+            };
+            // Center columns and rows
+            studentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            studentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            studentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            studentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+            studentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            studentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            studentLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            studentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+
+            Label lblStudentIcon = new Label
+            {
+                Text = "👨‍🎓",
+                Font = new Font("Segoe UI", 80),
+                ForeColor = Color.White,
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            studentLayout.Controls.Add(lblStudentIcon, 1, 1);
+
+            Label lblStudentTitle = new Label
+            {
+                Text = "STUDENT",
+                Font = new Font("Segoe UI", 32, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            studentLayout.Controls.Add(lblStudentTitle, 1, 2);
+
+            Label lblStudentDesc = new Label
+            {
+                Text = "Report lost or found items\nManage your claims\nTrack item status",
+                Font = new Font("Segoe UI", 14),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            studentLayout.Controls.Add(lblStudentDesc, 1, 3);
+
             btnStudent = new Button
             {
-                Text = "Student",
-                Width = 250,
-                Height = 80,
-                Font = buttonFont,
-                BackColor = Theme.TealGreen,
-                ForeColor = System.Drawing.Color.White,
+                Text = "→ Enter as Student",
+                Width = 300,
+                Height = 60,
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                BackColor = Color.FromArgb(26, 200, 200),
+                ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Cursor = System.Windows.Forms.Cursors.Hand
+                Cursor = Cursors.Hand,
+                AutoSize = false,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             btnStudent.FlatAppearance.BorderSize = 0;
             btnStudent.Click += BtnStudent_Click;
-            btnStudent.MouseEnter += (s, e) => { btnStudent.BackColor = Theme.MediumTeal; };
-            btnStudent.MouseLeave += (s, e) => { btnStudent.BackColor = Theme.TealGreen; };
+            btnStudent.MouseEnter += (s, e) => 
+            { 
+                btnStudent.BackColor = Color.FromArgb(0, 220, 220);
+                btnStudent.Font = new Font("Segoe UI", 15, FontStyle.Bold);
+                studentPanel.BackColor = Color.FromArgb(51, 148, 148);
+            };
+            btnStudent.MouseLeave += (s, e) => 
+            { 
+                btnStudent.BackColor = Color.FromArgb(26, 200, 200);
+                btnStudent.Font = new Font("Segoe UI", 14, FontStyle.Bold);
+                studentPanel.BackColor = Color.FromArgb(41, 128, 128);
+            };
+            studentLayout.Controls.Add(btnStudent, 1, 4);
+            studentLayout.SetCellPosition(btnStudent, new TableLayoutPanelCellPosition(1, 4));
 
-            // Admin Button
+            studentPanel.Controls.Add(studentLayout);
+            mainContainer.Controls.Add(studentPanel);
+
+            // ===== RIGHT SIDE - ADMIN =====
+            Panel adminPanel = new Panel
+            {
+                Dock = DockStyle.Right,
+                Width = 960,
+                BackColor = Color.FromArgb(100, 80, 120),
+                Cursor = Cursors.Hand
+            };
+
+            // Create a centered container for admin content
+            TableLayoutPanel adminLayout = new TableLayoutPanel
+            {
+                ColumnCount = 3,
+                RowCount = 5,
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0)
+            };
+            // Center columns and rows
+            adminLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            adminLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            adminLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            adminLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+            adminLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            adminLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            adminLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            adminLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
+
+            Label lblAdminIcon = new Label
+            {
+                Text = "🔐",
+                Font = new Font("Segoe UI", 80),
+                ForeColor = Color.White,
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            adminLayout.Controls.Add(lblAdminIcon, 1, 1);
+
+            Label lblAdminTitle = new Label
+            {
+                Text = "ADMIN",
+                Font = new Font("Segoe UI", 32, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            adminLayout.Controls.Add(lblAdminTitle, 1, 2);
+
+            Label lblAdminDesc = new Label
+            {
+                Text = "Manage lost and found items\nReview student claims\nAdminister system",
+                Font = new Font("Segoe UI", 14),
+                ForeColor = Color.FromArgb(220, 220, 220),
+                AutoSize = true,
+                BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            adminLayout.Controls.Add(lblAdminDesc, 1, 3);
+
             btnAdmin = new Button
             {
-                Text = "Admin",
-                Width = 250,
-                Height = 80,
-                Font = buttonFont,
-                BackColor = System.Drawing.Color.FromArgb(100, 150, 150),
-                ForeColor = System.Drawing.Color.White,
+                Text = "→ Enter as Admin",
+                Width = 300,
+                Height = 60,
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                BackColor = Color.FromArgb(180, 100, 200),
+                ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Cursor = System.Windows.Forms.Cursors.Hand
+                Cursor = Cursors.Hand,
+                AutoSize = false,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             btnAdmin.FlatAppearance.BorderSize = 0;
             btnAdmin.Click += BtnAdmin_Click;
-            btnAdmin.MouseEnter += (s, e) => { btnAdmin.BackColor = System.Drawing.Color.FromArgb(80, 130, 130); };
-            btnAdmin.MouseLeave += (s, e) => { btnAdmin.BackColor = System.Drawing.Color.FromArgb(100, 150, 150); };
-
-            // Center panel
-            var centerPanel = new TableLayoutPanel
-            {
-                ColumnCount = 1,
-                RowCount = 4,
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20),
-                BackColor = System.Drawing.Color.Transparent
+            btnAdmin.MouseEnter += (s, e) => 
+            { 
+                btnAdmin.BackColor = Color.FromArgb(200, 120, 220);
+                btnAdmin.Font = new Font("Segoe UI", 15, FontStyle.Bold);
+                adminPanel.BackColor = Color.FromArgb(120, 100, 140);
             };
-
-            centerPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
-            centerPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-            centerPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-            centerPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
-
-            centerPanel.Controls.Add(lblTitle, 0, 0);
-            centerPanel.Controls.Add(lblSubtitle, 0, 1);
-
-            var buttonPanel = new TableLayoutPanel
-            {
-                ColumnCount = 2,
-                RowCount = 1,
-                Dock = DockStyle.None,
-                Width = 550,
-                Height = 100,
-                BackColor = System.Drawing.Color.Transparent,
-                Margin = new Padding(50)
+            btnAdmin.MouseLeave += (s, e) => 
+            { 
+                btnAdmin.BackColor = Color.FromArgb(180, 100, 200);
+                btnAdmin.Font = new Font("Segoe UI", 14, FontStyle.Bold);
+                adminPanel.BackColor = Color.FromArgb(100, 80, 120);
             };
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            buttonPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            adminLayout.Controls.Add(btnAdmin, 1, 4);
 
-            buttonPanel.Controls.Add(btnStudent, 0, 0);
-            buttonPanel.Controls.Add(btnAdmin, 1, 0);
+            adminPanel.Controls.Add(adminLayout);
+            mainContainer.Controls.Add(adminPanel);
 
-            centerPanel.Controls.Add(buttonPanel, 0, 2);
+            Controls.Add(mainContainer);
 
-            Controls.Add(centerPanel);
+            // ===== LOGO IN TOP-LEFT =====
+            AddLogoTopLeft();
+        }
+
+        private void AddLogoTopLeft()
+        {
+            try
+            {
+                string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../../logo.png");
+                if (System.IO.File.Exists(logoPath))
+                {
+                    logoPictureBox = new PictureBox
+                    {
+                        Image = Image.FromFile(logoPath),
+                        SizeMode = PictureBoxSizeMode.Zoom,
+                        Width = 60,
+                        Height = 60,
+                        BackColor = Color.Transparent,
+                        Top = 20,
+                        Left = 20
+                    };
+                    Controls.Add(logoPictureBox);
+                    logoPictureBox.BringToFront();
+                }
+            }
+            catch { /* Logo not found, continue without it */ }
         }
 
         private void BtnStudent_Click(object sender, EventArgs e)
