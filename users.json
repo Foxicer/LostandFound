@@ -94,6 +94,17 @@
     "grade_section": "",
     "password": "adminpassword",
     "profile_picture": "",
+    "role": "admin"
+  },
+  {
+    "name": "System Administrator",
+    "first_name": "System",
+    "middle_name": "Head",
+    "last_name": "Administrator",
+    "email": "headadmin@gmail.com",
+    "grade_section": "Administration",
+    "password": "Password",
+    "profile_picture": "",
     "role": "headadmin"
   }
 ]

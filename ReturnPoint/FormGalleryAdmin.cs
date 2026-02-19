@@ -236,6 +236,16 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnInbox.FlatAppearance.BorderSize = 0;
+            Label lblPendingCount = new Label
+            {
+                Text = "",
+                Top = 555,
+                Left = 15,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Theme.DeepRed,
+                BackColor = Color.Transparent
+            };
             cbViewMode = new ComboBox
             {
                 Top = 560,
@@ -282,6 +292,7 @@ namespace ReturnPoint
             rightPanel.Controls.Add(btnImageDetails);
             rightPanel.Controls.Add(btnTagManager);
             rightPanel.Controls.Add(btnInbox);
+            rightPanel.Controls.Add(lblPendingCount);
             rightPanel.Controls.Add(cbViewMode);
             rightPanel.Controls.Add(btnLogout);
             Controls.Add(rightPanel);
@@ -293,7 +304,12 @@ namespace ReturnPoint
             btnPermanentlyDelete.Click += (s, e) => PermanentlyDeleteSelected();
             btnImageDetails.Click += (s, e) => OpenImageDetailsForm();
             btnTagManager.Click += (s, e) => OpenTagManager();
-            btnInbox.Click += (s, e) => OpenInbox();
+            btnInbox.Click += (s, e) =>
+            {
+                int pending = LoadClaimsData().Count(c => c.Status == "pending");
+                lblPendingCount.Text = pending > 0 ? $"({pending} pending)" : "";
+                OpenInbox();
+            };
             txtSearch.TextChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             LoadImages(false);
             AddLogoCopyright();
@@ -1413,27 +1429,6 @@ namespace ReturnPoint
 
             // Load claims data
             List<ClaimData> claims = LoadClaimsData();
-            int pendingCount = claims.Count(c => c.Status == "pending");
-
-            Panel headerPanel = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 50,
-                BackColor = Theme.MediumTeal,
-                Padding = new Padding(15)
-            };
-
-            Label headerLabel = new Label
-            {
-                Text = $"📬 Pending Claims: {pendingCount}",
-                AutoSize = true,
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = Color.Transparent
-            };
-
-            headerPanel.Controls.Add(headerLabel);
-            inboxForm.Controls.Add(headerPanel);
 
             // DataGridView for claims
             DataGridView dgvClaims = new DataGridView
@@ -1539,8 +1534,8 @@ namespace ReturnPoint
 
             buttonPanel.Controls.Add(btnConfirm);
             buttonPanel.Controls.Add(btnClose);
-            inboxForm.Controls.Add(buttonPanel);
             inboxForm.Controls.Add(dgvClaims);
+            inboxForm.Controls.Add(buttonPanel);
 
             inboxForm.ShowDialog(this);
         }
@@ -1549,45 +1544,67 @@ namespace ReturnPoint
         {
             List<ClaimData> claims = new List<ClaimData>();
 
-            string[] folders = new string[] { saveFolder, deletedFolder };
-            foreach (var folder in folders)
+            // Only search in saveFolder for pending claims
+            if (!Directory.Exists(saveFolder))
+                return claims;
+
+            string[] claimFiles = Directory.GetFiles(saveFolder, "*_claim.txt");
+            foreach (var claimFile in claimFiles)
             {
-                if (!Directory.Exists(folder)) continue;
-
-                string[] claimFiles = Directory.GetFiles(folder, "*_claim.txt");
-                foreach (var claimFile in claimFiles)
+                try
                 {
-                    try
-                    {
-                        string[] lines = File.ReadAllLines(claimFile);
-                        var claimData = new ClaimData { FilePath = claimFile };
+                    string[] lines = File.ReadAllLines(claimFile);
+                    var claimData = new ClaimData { FilePath = claimFile };
 
-                        foreach (var line in lines)
+                    foreach (var line in lines)
+                    {
+                        if (line.Contains("ClaimantEmail:"))
                         {
-                            if (line.StartsWith("ClaimantEmail:"))
-                                claimData.ClaimantEmail = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("ClaimantName:"))
-                                claimData.ClaimantName = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("ClaimantGradeSection:"))
-                                claimData.ClaimantGradeSection = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("DateClaimed:"))
-                                claimData.DateClaimed = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("Status:"))
-                                claimData.Status = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("ConfirmedBy:"))
-                                claimData.ConfirmedBy = line.Split(':')[1].Trim();
+                            var parts = line.Split(new[] { "ClaimantEmail:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ClaimantEmail = parts[1].Trim();
                         }
-
-                        // Get image name from claim file
-                        string baseName = Path.GetFileNameWithoutExtension(claimFile).Replace("_claim", "");
-                        claimData.ImageName = baseName + ".jpg";
-
-                        claims.Add(claimData);
+                        else if (line.Contains("ClaimantName:"))
+                        {
+                            var parts = line.Split(new[] { "ClaimantName:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ClaimantName = parts[1].Trim();
+                        }
+                        else if (line.Contains("ClaimantGradeSection:"))
+                        {
+                            var parts = line.Split(new[] { "ClaimantGradeSection:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ClaimantGradeSection = parts[1].Trim();
+                        }
+                        else if (line.Contains("DateClaimed:"))
+                        {
+                            var parts = line.Split(new[] { "DateClaimed:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.DateClaimed = parts[1].Trim();
+                        }
+                        else if (line.Contains("Status:"))
+                        {
+                            var parts = line.Split(new[] { "Status:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.Status = parts[1].Trim();
+                        }
+                        else if (line.Contains("ConfirmedBy:"))
+                        {
+                            var parts = line.Split(new[] { "ConfirmedBy:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ConfirmedBy = parts[1].Trim();
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading claim: {ex.Message}");
-                    }
+
+                    // Get image name from claim file
+                    string baseName = Path.GetFileNameWithoutExtension(claimFile).Replace("_claim", "");
+                    claimData.ImageName = baseName + ".jpg";
+
+                    claims.Add(claimData);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading claim: {ex.Message}");
                 }
             }
 
@@ -1604,26 +1621,85 @@ namespace ReturnPoint
 
                 foreach (var line in claimLines)
                 {
-                    if (line.StartsWith("Status:"))
+                    if (line.Contains("Status:"))
                         updatedLines.Add("Status: confirmed");
-                    else if (line.StartsWith("ConfirmedBy:"))
+                    else if (line.Contains("ConfirmedBy:"))
                         updatedLines.Add($"ConfirmedBy: {adminName}");
                     else
                         updatedLines.Add(line);
                 }
 
                 // Add ConfirmedBy if not present
-                if (!updatedLines.Any(l => l.StartsWith("ConfirmedBy:")))
+                if (!updatedLines.Any(l => l.Contains("ConfirmedBy:")))
                 {
                     updatedLines.Add($"ConfirmedBy: {adminName}");
                 }
 
+                // Update claim file with confirmed status
                 File.WriteAllLines(claim.FilePath, updatedLines);
-                MessageBox.Show("Claim confirmed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Move image and all associated files to deleted folder (marked as claimed)
+                MoveClaimedImageToDeleted(claim);
+
+                MessageBox.Show("Claim confirmed successfully! Image moved to claimed items.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error confirming claim: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void MoveClaimedImageToDeleted(ClaimData claim)
+        {
+            try
+            {
+                // Get the image file path
+                string imagePath = Path.Combine(saveFolder, claim.ImageName);
+                if (!File.Exists(imagePath))
+                {
+                    // Try to find the image file
+                    var imageFiles = Directory.GetFiles(saveFolder, Path.GetFileNameWithoutExtension(claim.ImageName) + ".*");
+                    if (imageFiles.Length > 0)
+                        imagePath = imageFiles[0];
+                    else
+                        return; // Image not found
+                }
+
+                string baseName = Path.GetFileNameWithoutExtension(imagePath);
+                string destinationPath = Path.Combine(deletedFolder, Path.GetFileName(imagePath));
+                
+                // Ensure deleted folder exists
+                Directory.CreateDirectory(deletedFolder);
+
+                // Move the image file
+                if (File.Exists(imagePath))
+                {
+                    if (File.Exists(destinationPath))
+                        File.Delete(destinationPath);
+                    File.Move(imagePath, destinationPath);
+                }
+
+                // Move associated metadata files
+                string[] associatedExtensions = { "_claim.txt", "_tags.txt", "_info.txt", "_claimant.txt" };
+                foreach (var ext in associatedExtensions)
+                {
+                    string sourcePath = Path.Combine(saveFolder, baseName + ext);
+                    string destPath = Path.Combine(deletedFolder, baseName + ext);
+                    
+                    if (File.Exists(sourcePath))
+                    {
+                        if (File.Exists(destPath))
+                            File.Delete(destPath);
+                        File.Move(sourcePath, destPath);
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[ConfirmClaim] Moved image {claim.ImageName} to deleted folder");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ConfirmClaim] Error moving image: {ex.Message}");
+                throw;
             }
         }
 

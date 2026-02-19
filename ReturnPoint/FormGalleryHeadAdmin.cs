@@ -251,6 +251,16 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnInbox.FlatAppearance.BorderSize = 0;
+            Label lblPendingCount = new Label
+            {
+                Text = "",
+                Top = 605,
+                Left = 15,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Theme.DeepRed,
+                BackColor = Color.Transparent
+            };
             cbViewMode = new ComboBox
             {
                 Top = 610,
@@ -302,6 +312,7 @@ namespace ReturnPoint
             rightPanel.Controls.Add(btnTagManager);
             rightPanel.Controls.Add(btnCreateAccount);
             rightPanel.Controls.Add(btnInbox);
+            rightPanel.Controls.Add(lblPendingCount);
             rightPanel.Controls.Add(cbViewMode);
             rightPanel.Controls.Add(btnLogout);
             Controls.Add(rightPanel);
@@ -313,7 +324,12 @@ namespace ReturnPoint
             btnPermanentlyDelete.Click += (s, e) => PermanentlyDeleteSelected();
             btnImageDetails.Click += (s, e) => OpenImageDetailsForm();
             btnTagManager.Click += (s, e) => OpenTagManager();
-            btnInbox.Click += (s, e) => OpenInbox();
+            btnInbox.Click += (s, e) =>
+            {
+                int pending = LoadClaimsData().Count(c => c.Status == "pending");
+                lblPendingCount.Text = pending > 0 ? $"({pending} pending)" : "";
+                OpenInbox();
+            };
             txtSearch.TextChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             LoadImages(false);
             AddLogoCopyright();
@@ -325,86 +341,240 @@ namespace ReturnPoint
             Form createAccountForm = new Form
             {
                 Text = "Create Account - ReturnPoint",
-                Width = 600,
-                Height = 400,
+                Width = 700,
+                Height = 800,
                 StartPosition = FormStartPosition.CenterParent,
                 BackColor = Theme.SoftWhite,
-                Font = new Font("Segoe UI", 11),
-                Owner = this
+                Font = new Font("Segoe UI", 10),
+                Owner = this,
+                AutoScroll = true
             };
 
+            int yPos = 20;
+            int leftPos = 30;
+            int fieldWidth = 640;
+            int fieldHeight = 36;
+
+            // Role Selection
             Label lblRole = new Label
             {
-                Text = "Select Role:",
+                Text = "Role:",
                 AutoSize = true,
-                Top = 30,
-                Left = 30,
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Top = yPos,
+                Left = leftPos,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
+            yPos += 25;
 
             ComboBox cbRole = new ComboBox
             {
-                Top = 60,
-                Left = 30,
-                Width = 540,
-                Height = 36,
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 11),
                 BackColor = Color.White,
                 ForeColor = Theme.NearBlack
             };
-            cbRole.Items.AddRange(new[] { "Claimant", "Admin", "HeadAdmin" });
+            cbRole.Items.AddRange(new[] { "user", "admin", "headadmin" });
+            cbRole.SelectedIndex = 0;
+            yPos += 60;
 
-            Label lblEmail = new Label
+            // First Name
+            Label lblFirst = new Label
             {
-                Text = "Email:",
+                Text = "First Name:",
                 AutoSize = true,
-                Top = 110,
-                Left = 30,
+                Top = yPos,
+                Left = leftPos,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
+            yPos += 25;
 
-            TextBox txtEmail = new TextBox
+            TextBox txtFirst = new TextBox
             {
-                Top = 140,
-                Left = 30,
-                Width = 540,
-                Height = 36,
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
                 Font = new Font("Segoe UI", 11),
                 BackColor = Color.White,
                 ForeColor = Theme.NearBlack
             };
+            yPos += 50;
 
+            // Middle Name
+            Label lblMiddle = new Label
+            {
+                Text = "Middle Name:",
+                AutoSize = true,
+                Top = yPos,
+                Left = leftPos,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 25;
+
+            TextBox txtMiddle = new TextBox
+            {
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 50;
+
+            // Last Name
+            Label lblLast = new Label
+            {
+                Text = "Last Name:",
+                AutoSize = true,
+                Top = yPos,
+                Left = leftPos,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 25;
+
+            TextBox txtLast = new TextBox
+            {
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 50;
+
+            // Email
+            Label lblEmail = new Label
+            {
+                Text = "Email:",
+                AutoSize = true,
+                Top = yPos,
+                Left = leftPos,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 25;
+
+            TextBox txtEmail = new TextBox
+            {
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 50;
+
+            // Grade Section
+            Label lblGrade = new Label
+            {
+                Text = "Grade Section:",
+                AutoSize = true,
+                Top = yPos,
+                Left = leftPos,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 25;
+
+            TextBox txtGrade = new TextBox
+            {
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 50;
+
+            // Password
             Label lblPassword = new Label
             {
                 Text = "Password:",
                 AutoSize = true,
-                Top = 190,
-                Left = 30,
+                Top = yPos,
+                Left = leftPos,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 ForeColor = Theme.NearBlack
             };
+            yPos += 25;
 
             TextBox txtPassword = new TextBox
             {
-                Top = 220,
-                Left = 30,
-                Width = 540,
-                Height = 36,
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
                 Font = new Font("Segoe UI", 11),
                 BackColor = Color.White,
                 ForeColor = Theme.NearBlack,
                 UseSystemPasswordChar = true
             };
+            yPos += 50;
 
+            // Confirm Password
+            Label lblConfirm = new Label
+            {
+                Text = "Confirm Password:",
+                AutoSize = true,
+                Top = yPos,
+                Left = leftPos,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Theme.NearBlack
+            };
+            yPos += 25;
+
+            TextBox txtConfirm = new TextBox
+            {
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = fieldHeight,
+                Font = new Font("Segoe UI", 11),
+                BackColor = Color.White,
+                ForeColor = Theme.NearBlack,
+                UseSystemPasswordChar = true
+            };
+            yPos += 50;
+
+            // Error message label
+            Label lblMsg = new Label
+            {
+                Text = "",
+                AutoSize = false,
+                Top = yPos,
+                Left = leftPos,
+                Width = fieldWidth,
+                Height = 40,
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Theme.DeepRed,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Visible = false
+            };
+            yPos += 60;
+
+            // Create Button
             Button btnCreate = new Button
             {
                 Text = "✓ Create Account",
-                Top = 280,
-                Left = 30,
-                Width = 250,
+                Top = yPos,
+                Left = leftPos,
+                Width = 300,
                 Height = 40,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Theme.Success,
@@ -414,12 +584,13 @@ namespace ReturnPoint
             };
             btnCreate.FlatAppearance.BorderSize = 0;
 
+            // Cancel Button
             Button btnCancel = new Button
             {
                 Text = "Cancel",
-                Top = 280,
-                Left = 320,
-                Width = 250,
+                Top = yPos,
+                Left = leftPos + 320,
+                Width = 300,
                 Height = 40,
                 Font = new Font("Segoe UI", 11, FontStyle.Bold),
                 BackColor = Theme.DeepRed,
@@ -431,36 +602,64 @@ namespace ReturnPoint
 
             btnCreate.Click += (s, e) =>
             {
+                lblMsg.Text = "";
+                lblMsg.Visible = false;
+
+                // Validation
                 if (cbRole.SelectedItem == null)
                 {
-                    MessageBox.Show("Please select a role.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    lblMsg.Text = "Please select a role.";
+                    lblMsg.Visible = true;
                     return;
                 }
 
-                string email = txtEmail.Text.Trim();
-                string password = txtPassword.Text;
+                string first = txtFirst.Text?.Trim() ?? "";
+                string middle = txtMiddle.Text?.Trim() ?? "";
+                string last = txtLast.Text?.Trim() ?? "";
+                string email = txtEmail.Text?.Trim() ?? "";
+                string grade = txtGrade.Text?.Trim() ?? "";
+                string password = txtPassword.Text ?? "";
+                string confirm = txtConfirm.Text ?? "";
 
-                if (string.IsNullOrWhiteSpace(email))
+                if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(last))
                 {
-                    MessageBox.Show("Please enter an email address.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    lblMsg.Text = "First name and last name are required.";
+                    lblMsg.Visible = true;
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(password))
+                if (string.IsNullOrEmpty(email))
                 {
-                    MessageBox.Show("Please enter a password.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    lblMsg.Text = "Email is required.";
+                    lblMsg.Visible = true;
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(password))
+                {
+                    lblMsg.Text = "Password is required.";
+                    lblMsg.Visible = true;
+                    return;
+                }
+
+                if (!password.Equals(confirm))
+                {
+                    lblMsg.Text = "Passwords do not match.";
+                    lblMsg.Visible = true;
                     return;
                 }
 
                 try
                 {
                     string role = cbRole.SelectedItem.ToString();
-                    MessageBox.Show($"Account created successfully!\n\nEmail: {email}\nRole: {role}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    SaveAccountToJSON(first, middle, last, email, grade, password, role);
+                    MessageBox.Show("Account created successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     createAccountForm.Close();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error creating account: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    lblMsg.Text = "Error: " + ex.Message;
+                    lblMsg.Visible = true;
                 }
             };
 
@@ -468,14 +667,77 @@ namespace ReturnPoint
 
             createAccountForm.Controls.Add(lblRole);
             createAccountForm.Controls.Add(cbRole);
+            createAccountForm.Controls.Add(lblFirst);
+            createAccountForm.Controls.Add(txtFirst);
+            createAccountForm.Controls.Add(lblMiddle);
+            createAccountForm.Controls.Add(txtMiddle);
+            createAccountForm.Controls.Add(lblLast);
+            createAccountForm.Controls.Add(txtLast);
             createAccountForm.Controls.Add(lblEmail);
             createAccountForm.Controls.Add(txtEmail);
+            createAccountForm.Controls.Add(lblGrade);
+            createAccountForm.Controls.Add(txtGrade);
             createAccountForm.Controls.Add(lblPassword);
             createAccountForm.Controls.Add(txtPassword);
+            createAccountForm.Controls.Add(lblConfirm);
+            createAccountForm.Controls.Add(txtConfirm);
+            createAccountForm.Controls.Add(lblMsg);
             createAccountForm.Controls.Add(btnCreate);
             createAccountForm.Controls.Add(btnCancel);
 
             createAccountForm.ShowDialog(this);
+        }
+
+        private void SaveAccountToJSON(string firstName, string middleName, string lastName, string email, string gradeSection, string password, string role)
+        {
+            try
+            {
+                var name = string.Join(" ", new[] { firstName, middleName, lastName }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim();
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\users.json");
+                path = Path.GetFullPath(path);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                
+                List<Dictionary<string, object>> users = new();
+                if (File.Exists(path))
+                {
+                    var json = File.ReadAllText(path);
+                    var des = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(json, opts);
+                    if (des != null) users = des;
+                }
+
+                // Check if email already exists
+                foreach (var u in users)
+                {
+                    if (u.TryGetValue("email", out var eVal) && eVal?.ToString()?.Equals(email, StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        throw new Exception("Email already registered.");
+                    }
+                }
+
+                var newUser = new Dictionary<string, object>
+                {
+                    ["name"] = name,
+                    ["first_name"] = firstName,
+                    ["middle_name"] = middleName,
+                    ["last_name"] = lastName,
+                    ["email"] = email,
+                    ["grade_section"] = string.IsNullOrWhiteSpace(gradeSection) ? "N/A" : gradeSection,
+                    ["password"] = password,
+                    ["profile_picture"] = "",
+                    ["role"] = role.ToLower()
+                };
+
+                users.Add(newUser);
+                var writeOpts = new JsonSerializerOptions { WriteIndented = true };
+                var outJson = System.Text.Json.JsonSerializer.Serialize(users, writeOpts);
+                File.WriteAllText(path, outJson);
+
+                System.Diagnostics.Debug.WriteLine($"[HeadAdmin] Account created: {email} with role: {role}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to save account: {ex.Message}");
+            }
         }
         
         private void ShowLoadingScreen(string message = "Loading...")
@@ -1591,27 +1853,6 @@ namespace ReturnPoint
 
             // Load claims data
             List<ClaimData> claims = LoadClaimsData();
-            int pendingCount = claims.Count(c => c.Status == "pending");
-
-            Panel headerPanel = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 50,
-                BackColor = Theme.MediumTeal,
-                Padding = new Padding(15)
-            };
-
-            Label headerLabel = new Label
-            {
-                Text = $"📬 Pending Claims: {pendingCount}",
-                AutoSize = true,
-                Font = new Font("Segoe UI", 14, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = Color.Transparent
-            };
-
-            headerPanel.Controls.Add(headerLabel);
-            inboxForm.Controls.Add(headerPanel);
 
             // DataGridView for claims
             DataGridView dgvClaims = new DataGridView
@@ -1717,8 +1958,8 @@ namespace ReturnPoint
 
             buttonPanel.Controls.Add(btnConfirm);
             buttonPanel.Controls.Add(btnClose);
-            inboxForm.Controls.Add(buttonPanel);
             inboxForm.Controls.Add(dgvClaims);
+            inboxForm.Controls.Add(buttonPanel);
 
             inboxForm.ShowDialog(this);
         }
@@ -1727,45 +1968,67 @@ namespace ReturnPoint
         {
             List<ClaimData> claims = new List<ClaimData>();
 
-            string[] folders = new string[] { saveFolder, deletedFolder };
-            foreach (var folder in folders)
+            // Only search in saveFolder for pending claims
+            if (!Directory.Exists(saveFolder))
+                return claims;
+
+            string[] claimFiles = Directory.GetFiles(saveFolder, "*_claim.txt");
+            foreach (var claimFile in claimFiles)
             {
-                if (!Directory.Exists(folder)) continue;
-
-                string[] claimFiles = Directory.GetFiles(folder, "*_claim.txt");
-                foreach (var claimFile in claimFiles)
+                try
                 {
-                    try
-                    {
-                        string[] lines = File.ReadAllLines(claimFile);
-                        var claimData = new ClaimData { FilePath = claimFile };
+                    string[] lines = File.ReadAllLines(claimFile);
+                    var claimData = new ClaimData { FilePath = claimFile };
 
-                        foreach (var line in lines)
+                    foreach (var line in lines)
+                    {
+                        if (line.Contains("ClaimantEmail:"))
                         {
-                            if (line.StartsWith("ClaimantEmail:"))
-                                claimData.ClaimantEmail = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("ClaimantName:"))
-                                claimData.ClaimantName = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("ClaimantGradeSection:"))
-                                claimData.ClaimantGradeSection = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("DateClaimed:"))
-                                claimData.DateClaimed = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("Status:"))
-                                claimData.Status = line.Split(':')[1].Trim();
-                            else if (line.StartsWith("ConfirmedBy:"))
-                                claimData.ConfirmedBy = line.Split(':')[1].Trim();
+                            var parts = line.Split(new[] { "ClaimantEmail:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ClaimantEmail = parts[1].Trim();
                         }
-
-                        // Get image name from claim file
-                        string baseName = Path.GetFileNameWithoutExtension(claimFile).Replace("_claim", "");
-                        claimData.ImageName = baseName + ".jpg";
-
-                        claims.Add(claimData);
+                        else if (line.Contains("ClaimantName:"))
+                        {
+                            var parts = line.Split(new[] { "ClaimantName:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ClaimantName = parts[1].Trim();
+                        }
+                        else if (line.Contains("ClaimantGradeSection:"))
+                        {
+                            var parts = line.Split(new[] { "ClaimantGradeSection:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ClaimantGradeSection = parts[1].Trim();
+                        }
+                        else if (line.Contains("DateClaimed:"))
+                        {
+                            var parts = line.Split(new[] { "DateClaimed:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.DateClaimed = parts[1].Trim();
+                        }
+                        else if (line.Contains("Status:"))
+                        {
+                            var parts = line.Split(new[] { "Status:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.Status = parts[1].Trim();
+                        }
+                        else if (line.Contains("ConfirmedBy:"))
+                        {
+                            var parts = line.Split(new[] { "ConfirmedBy:" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                                claimData.ConfirmedBy = parts[1].Trim();
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading claim: {ex.Message}");
-                    }
+
+                    // Get image name from claim file
+                    string baseName = Path.GetFileNameWithoutExtension(claimFile).Replace("_claim", "");
+                    claimData.ImageName = baseName + ".jpg";
+
+                    claims.Add(claimData);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading claim: {ex.Message}");
                 }
             }
 
@@ -1782,26 +2045,85 @@ namespace ReturnPoint
 
                 foreach (var line in claimLines)
                 {
-                    if (line.StartsWith("Status:"))
+                    if (line.Contains("Status:"))
                         updatedLines.Add("Status: confirmed");
-                    else if (line.StartsWith("ConfirmedBy:"))
+                    else if (line.Contains("ConfirmedBy:"))
                         updatedLines.Add($"ConfirmedBy: {adminName}");
                     else
                         updatedLines.Add(line);
                 }
 
                 // Add ConfirmedBy if not present
-                if (!updatedLines.Any(l => l.StartsWith("ConfirmedBy:")))
+                if (!updatedLines.Any(l => l.Contains("ConfirmedBy:")))
                 {
                     updatedLines.Add($"ConfirmedBy: {adminName}");
                 }
 
+                // Update claim file with confirmed status
                 File.WriteAllLines(claim.FilePath, updatedLines);
-                MessageBox.Show("Claim confirmed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Move image and all associated files to deleted folder (marked as claimed)
+                MoveClaimedImageToDeleted(claim);
+
+                MessageBox.Show("Claim confirmed successfully! Image moved to claimed items.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error confirming claim: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void MoveClaimedImageToDeleted(ClaimData claim)
+        {
+            try
+            {
+                // Get the image file path
+                string imagePath = Path.Combine(saveFolder, claim.ImageName);
+                if (!File.Exists(imagePath))
+                {
+                    // Try to find the image file
+                    var imageFiles = Directory.GetFiles(saveFolder, Path.GetFileNameWithoutExtension(claim.ImageName) + ".*");
+                    if (imageFiles.Length > 0)
+                        imagePath = imageFiles[0];
+                    else
+                        return; // Image not found
+                }
+
+                string baseName = Path.GetFileNameWithoutExtension(imagePath);
+                string destinationPath = Path.Combine(deletedFolder, Path.GetFileName(imagePath));
+                
+                // Ensure deleted folder exists
+                Directory.CreateDirectory(deletedFolder);
+
+                // Move the image file
+                if (File.Exists(imagePath))
+                {
+                    if (File.Exists(destinationPath))
+                        File.Delete(destinationPath);
+                    File.Move(imagePath, destinationPath);
+                }
+
+                // Move associated metadata files
+                string[] associatedExtensions = { "_claim.txt", "_tags.txt", "_info.txt", "_claimant.txt" };
+                foreach (var ext in associatedExtensions)
+                {
+                    string sourcePath = Path.Combine(saveFolder, baseName + ext);
+                    string destPath = Path.Combine(deletedFolder, baseName + ext);
+                    
+                    if (File.Exists(sourcePath))
+                    {
+                        if (File.Exists(destPath))
+                            File.Delete(destPath);
+                        File.Move(sourcePath, destPath);
+                    }
+                }
+
+                System.Diagnostics.Debug.WriteLine($"[ConfirmClaim] Moved image {claim.ImageName} to deleted folder");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ConfirmClaim] Error moving image: {ex.Message}");
+                throw;
             }
         }
 
