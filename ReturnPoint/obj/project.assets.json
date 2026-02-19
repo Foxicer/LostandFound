@@ -195,24 +195,32 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Xean Yvan Rafael\\.nuget\\packages\\": {}
+    "C:\\Users\\jayde\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Xean Yvan Rafael\\Documents\\GitHub\\LostandFound\\ReturnPoint\\ReturnPoint.csproj",
+      "projectUniqueName": "C:\\Users\\jayde\\Downloads\\LostandFound\\ReturnPoint\\ReturnPoint.csproj",
       "projectName": "ReturnPoint",
-      "projectPath": "C:\\Users\\Xean Yvan Rafael\\Documents\\GitHub\\LostandFound\\ReturnPoint\\ReturnPoint.csproj",
-      "packagesPath": "C:\\Users\\Xean Yvan Rafael\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Xean Yvan Rafael\\Documents\\GitHub\\LostandFound\\ReturnPoint\\obj\\",
+      "projectPath": "C:\\Users\\jayde\\Downloads\\LostandFound\\ReturnPoint\\ReturnPoint.csproj",
+      "packagesPath": "C:\\Users\\jayde\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\jayde\\Downloads\\LostandFound\\ReturnPoint\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\Xean Yvan Rafael\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\jayde\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0-windows"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -231,7 +239,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net6.0-windows7.0": {
@@ -291,17 +299,11 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311\\RuntimeIdentifierGraph.json"
       }
     }
   },
   "logs": [
-    {
-      "code": "NU1900",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json."
-    },
     {
       "code": "NU1701",
       "level": "Warning",

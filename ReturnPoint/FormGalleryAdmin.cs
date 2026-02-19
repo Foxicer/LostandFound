@@ -74,74 +74,100 @@ namespace ReturnPoint
             }
             
             outerPanel.Controls.Add(galleryTable);
-            rightPanel = new Panel
+            
+            // Create responsive right panel using FlowLayoutPanel
+            FlowLayoutPanel rightPanelFlow = new FlowLayoutPanel
             {
                 Dock = DockStyle.Right,
-                Width = 320,
+                Width = Math.Max(300, (int)(Screen.PrimaryScreen.Bounds.Width * 0.15)),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.None,
                 Padding = new Padding(15),
-                AutoScroll = true
+                AutoScroll = true,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false
             };
-            Label lblSearchTitle = new Label
+            rightPanel = rightPanelFlow;
+            
+            // Helper function to create responsive label
+            Label CreateLabel(string text, bool bold = false) => new Label
             {
-                Text = "🔍 Search",
+                Text = text,
                 AutoSize = true,
-                Top = 15,
-                Left = 15,
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                ForeColor = Theme.NearBlack
+                Font = new Font("Segoe UI", 11, bold ? FontStyle.Bold : FontStyle.Regular),
+                ForeColor = Theme.NearBlack,
+                MaximumSize = new Size(rightPanelFlow.Width - 40, 0),
+                Margin = new Padding(0, 10, 0, 5)
             };
-            txtSearch = new TextBox
+            
+            // Helper for responsive textbox
+            TextBox CreateTextBox(int height = 35) => new TextBox
             {
-                Top = 45,
-                Left = 15,
-                Width = 270,
-                Height = 35,
+                Dock = DockStyle.Top,
+                Height = height,
                 Font = new Font("Segoe UI", 11),
                 BackColor = Theme.SoftWhite,
-                ForeColor = Theme.NearBlack
+                ForeColor = Theme.NearBlack,
+                Margin = new Padding(0, 5, 0, 10)
             };
-            Label lblSelected = new Label
+            
+            // Helper for responsive button
+            Button CreateButton(string text, Color bgColor) => new Button
             {
-                Text = "Selected File",
-                AutoSize = true,
-                Top = 95,
-                Left = 15,
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
-                ForeColor = Theme.NearBlack
+                Text = text,
+                Dock = DockStyle.Top,
+                Height = 40,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                BackColor = bgColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 5, 0, 5)
             };
+            
+            Label lblSearchTitle = CreateLabel("🔍 Search", true);
+            txtSearch = CreateTextBox(35);
+            
+            Label lblSelected = CreateLabel("Selected File", true);
             lblSelectedFile = new Label
             {
                 Text = "(none)",
                 AutoSize = false,
-                Top = 125,
-                Left = 15,
-                Width = 270,
+                Dock = DockStyle.Top,
                 Height = 60,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Theme.GetBackgroundTeal(),
                 ForeColor = Theme.NearBlack,
                 Font = new Font("Segoe UI", 10),
-                Padding = new Padding(8)
+                Padding = new Padding(8),
+                Margin = new Padding(0, 5, 0, 10)
             };
+            
             lblDateAdded = new Label
             {
                 Text = "📅 Added: N/A",
                 AutoSize = false,
-                Top = 195,
-                Left = 15,
-                Width = 270,
+                Dock = DockStyle.Top,
                 Height = 50,
                 Font = new Font("Segoe UI", 9),
                 ForeColor = Theme.NearBlack,
-                BackColor = Color.Transparent
+                BackColor = Color.Transparent,
+                Margin = new Padding(0, 5, 0, 10)
             };
+            
+            // Delete and Restore buttons in a row
+            FlowLayoutPanel deleteRestorePanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Dock = DockStyle.Top,
+                Height = 50,
+                AutoSize = false,
+                Margin = new Padding(0, 5, 0, 5)
+            };
+            
             btnDelete = new Button
             {
                 Text = "🗑️ Delete",
-                Top = 260,
-                Left = 15,
                 Width = 130,
                 Height = 40,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
@@ -151,11 +177,10 @@ namespace ReturnPoint
                 Cursor = Cursors.Hand
             };
             btnDelete.FlatAppearance.BorderSize = 0;
+            
             btnRestore = new Button
             {
                 Text = "✓ Restore",
-                Top = 260,
-                Left = 155,
                 Width = 130,
                 Height = 40,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
@@ -163,115 +188,44 @@ namespace ReturnPoint
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
-                Enabled = false
+                Enabled = false,
+                Margin = new Padding(5, 0, 0, 0)
             };
             btnRestore.FlatAppearance.BorderSize = 0;
-            btnPermanentlyDelete = new Button
-            {
-                Text = "❌ Delete Permanently",
-                Top = 310,
-                Left = 15,
-                Width = 270,
-                Height = 40,
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                BackColor = Theme.DeepRed,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnPermanentlyDelete.FlatAppearance.BorderSize = 0;
-            btnRefresh = new Button
-            {
-                Text = "🔄 Refresh",
-                Top = 360,
-                Left = 15,
-                Width = 270,
-                Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.AccentBlue,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnRefresh.FlatAppearance.BorderSize = 0;
-            btnImageDetails = new Button
-            {
-                Text = "📋 Image Details",
-                Top = 410,
-                Left = 15,
-                Width = 270,
-                Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.MediumTeal,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnImageDetails.FlatAppearance.BorderSize = 0;
-            btnTagManager = new Button
-            {
-                Text = "🏷️ Manage Tags",
-                Top = 460,
-                Left = 15,
-                Width = 270,
-                Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.TealGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnTagManager.FlatAppearance.BorderSize = 0;
-            btnInbox = new Button
-            {
-                Text = "📬 Inbox",
-                Top = 510,
-                Left = 15,
-                Width = 270,
-                Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.WarmGold,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnInbox.FlatAppearance.BorderSize = 0;
+            
+            deleteRestorePanel.Controls.Add(btnDelete);
+            deleteRestorePanel.Controls.Add(btnRestore);
+            
+            btnPermanentlyDelete = CreateButton("❌ Delete Permanently", Theme.DeepRed);
+            btnRefresh = CreateButton("🔄 Refresh", Theme.AccentBlue);
+            btnImageDetails = CreateButton("📋 Image Details", Theme.MediumTeal);
+            btnTagManager = CreateButton("🏷️ Manage Tags", Theme.TealGreen);
+            btnInbox = CreateButton("📬 Inbox", Theme.WarmGold);
+            
             Label lblPendingCount = new Label
             {
                 Text = "",
-                Top = 555,
-                Left = 15,
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 ForeColor = Theme.DeepRed,
-                BackColor = Color.Transparent
+                BackColor = Color.Transparent,
+                Margin = new Padding(0, -5, 0, 10)
             };
+            
             cbViewMode = new ComboBox
             {
-                Top = 560,
-                Left = 15,
-                Width = 270,
+                Dock = DockStyle.Top,
                 Height = 36,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 10),
-                BackColor = Theme.GetBackgroundTeal()
+                BackColor = Theme.GetBackgroundTeal(),
+                Margin = new Padding(0, 5, 0, 10)
             };
             cbViewMode.Items.AddRange(new[] { "Active Items", "Deleted Items" });
             cbViewMode.SelectedIndex = 0;
-            btnLogout = new Button
-            {
-                Text = "🚪 Logout",
-                Top = 610,
-                Left = 15,
-                Width = 270,
-                Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.DeepRed,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
-            };
-            btnLogout.FlatAppearance.BorderSize = 0;
+            
+            btnLogout = CreateButton("🚪 Logout", Theme.DeepRed);
+            
             btnLogout.Click += (s, e) =>
             {
                 if (MessageBox.Show("Logout and return to login?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
@@ -280,21 +234,23 @@ namespace ReturnPoint
                     Application.ExitThread();
                 }
             };
-            rightPanel.Controls.Add(lblSearchTitle);
-            rightPanel.Controls.Add(txtSearch);
-            rightPanel.Controls.Add(lblSelected);
-            rightPanel.Controls.Add(lblSelectedFile);
-            rightPanel.Controls.Add(lblDateAdded);
-            rightPanel.Controls.Add(btnDelete);
-            rightPanel.Controls.Add(btnRestore);
-            rightPanel.Controls.Add(btnPermanentlyDelete);
-            rightPanel.Controls.Add(btnRefresh);
-            rightPanel.Controls.Add(btnImageDetails);
-            rightPanel.Controls.Add(btnTagManager);
-            rightPanel.Controls.Add(btnInbox);
-            rightPanel.Controls.Add(lblPendingCount);
-            rightPanel.Controls.Add(cbViewMode);
-            rightPanel.Controls.Add(btnLogout);
+            
+            // Add all controls to the responsive panel
+            rightPanelFlow.Controls.Add(lblSearchTitle);
+            rightPanelFlow.Controls.Add(txtSearch);
+            rightPanelFlow.Controls.Add(lblSelected);
+            rightPanelFlow.Controls.Add(lblSelectedFile);
+            rightPanelFlow.Controls.Add(lblDateAdded);
+            rightPanelFlow.Controls.Add(deleteRestorePanel);
+            rightPanelFlow.Controls.Add(btnPermanentlyDelete);
+            rightPanelFlow.Controls.Add(btnRefresh);
+            rightPanelFlow.Controls.Add(btnImageDetails);
+            rightPanelFlow.Controls.Add(btnTagManager);
+            rightPanelFlow.Controls.Add(btnInbox);
+            rightPanelFlow.Controls.Add(lblPendingCount);
+            rightPanelFlow.Controls.Add(cbViewMode);
+            rightPanelFlow.Controls.Add(btnLogout);
+            
             Controls.Add(rightPanel);
             Controls.Add(outerPanel);
             cbViewMode.SelectedIndexChanged += (s, e) => LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
