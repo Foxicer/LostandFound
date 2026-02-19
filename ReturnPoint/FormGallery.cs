@@ -155,21 +155,95 @@ namespace ReturnPoint
             this.FormBorderStyle = FormBorderStyle.None;
             this.WindowState = FormWindowState.Maximized;
             this.BackColor = Theme.GetBackgroundTeal();
-            // Update background dynamically based on current size
             UpdateBackgroundImage();
             this.BackgroundImageLayout = ImageLayout.Stretch;
             this.Resize += (s, e) => UpdateBackgroundImage();
-            outerPanel = new Panel
+            
+            // ===== TOP HEADER PANEL =====
+            Panel headerPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 70,
+                BackColor = Theme.DarkTeal,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(15),
+                AutoScroll = false
+            };
+            
+            UploaderInfo currentUser = GetLoggedInUser();
+            string displayName = currentUser.Name ?? "User";
+            if (!string.IsNullOrWhiteSpace(currentUser.FirstName) || !string.IsNullOrWhiteSpace(currentUser.LastName))
+            {
+                var nameParts = new[] { currentUser.FirstName, currentUser.MiddleName, currentUser.LastName }
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToList();
+                if (nameParts.Count > 0)
+                    displayName = string.Join(" ", nameParts);
+            }
+            
+            // Logo/Welcome label on the left
+            Label lblWelcome = new Label
+            {
+                Text = $"📸 Welcome, {displayName}",
+                Dock = DockStyle.Left,
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = false,
+                Width = 400,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            
+            // Logout button on the right
+            btnLogout = new Button
+            {
+                Text = "🚪 Logout",
+                Dock = DockStyle.Right,
+                Width = 100,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = Theme.DeepRed,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(10, 0, 0, 0)
+            };
+            btnLogout.FlatAppearance.BorderSize = 0;
+            btnLogout.Click += (s, e) =>
+            {
+                if (MessageBox.Show("Logout and return to login?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    Application.Restart();
+                    Application.ExitThread();
+                }
+            };
+            
+            headerPanel.Controls.Add(btnLogout);
+            headerPanel.Controls.Add(lblWelcome);
+            
+            // ===== MAIN CONTENT CONTAINER =====
+            Panel mainContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.GetBackgroundTeal(),
+                Padding = new Padding(0)
+            };
+            
+            // ===== LEFT SIDE - GALLERY AREA =====
+            Panel galleryAreaPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Theme.GetBackgroundTeal(),
+                BorderStyle = BorderStyle.FixedSingle,
+                AutoScroll = false,
+                Padding = new Padding(0)
+            };
+            
+            // Scrollable container for gallery
+            Panel scrollableContainer = new Panel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
                 BackColor = Theme.GetBackgroundTeal(),
-                BackgroundImageLayout = ImageLayout.Stretch
-            };
-            // Update outer panel background dynamically
-            this.Resize += (s, e) => {
-                if (outerPanel.Width > 0 && outerPanel.Height > 0)
-                    outerPanel.BackgroundImage = Theme.CreateGradientBitmap(outerPanel.Width, outerPanel.Height, vertical: true);
+                Padding = new Padding(15)
             };
             
             galleryTable = new TableLayoutPanel
@@ -177,284 +251,226 @@ namespace ReturnPoint
                 ColumnCount = COLUMNS,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(30, 20, 30, 20),
+                Padding = new Padding(10),
                 BackColor = Theme.GetBackgroundTeal(),
-                Dock = DockStyle.Top
+                Dock = DockStyle.None,
+                Location = new Point(0, 0)
             };
             
-            // Set column styles
             for (int i = 0; i < COLUMNS; i++)
             {
                 galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             }
             
-            outerPanel.Controls.Add(galleryTable);
-            searchPanel = new Panel
+            scrollableContainer.Controls.Add(galleryTable);
+            galleryAreaPanel.Controls.Add(scrollableContainer);
+            
+            // ===== RIGHT SIDE - CONTROL PANEL =====
+            Panel controlPanel = new Panel
             {
                 Dock = DockStyle.Right,
-                Width = 340,
-                MinimumSize = new Size(300, 0),
+                Width = Math.Max(320, (int)(Screen.PrimaryScreen.Bounds.Width * 0.20)),
                 BackColor = Theme.MediumTeal,
-                BorderStyle = BorderStyle.None,
-                Padding = new Padding(20),
-                Visible = true,
+                BorderStyle = BorderStyle.FixedSingle,
+                Padding = new Padding(0),
                 AutoScroll = true
             };
-            this.Resize += (s, e) => {
-                // Make search panel responsive - scale width based on main window width
-                int newWidth = Math.Max(300, Math.Min(400, this.Width / 5));
-                searchPanel.Width = newWidth;
+            
+            // Create responsive control panel using FlowLayoutPanel
+            FlowLayoutPanel controlFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Padding = new Padding(15),
+                BackColor = Theme.MediumTeal
             };
             
-            // Create Profile Card
-            Panel profileCard = new Panel
+            // Helper function for section titles
+            Label CreateSectionTitle(string text) => new Label
             {
-                Width = 300,
-                Height = 140,
-                BackColor = Theme.DarkTeal,
-                BorderStyle = BorderStyle.FixedSingle,
-                Location = new Point(20, 20),
-                Padding = new Padding(10)
-            };
-            
-            // Profile Picture
-            PictureBox profilePic = new PictureBox
-            {
-                Width = 50,
-                Height = 50,
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Location = new Point(10, 10),
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-            
-            // Try to load profile picture or use default logo
-            try
-            {
-                string profilePicPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logo.png");
-                if (File.Exists(profilePicPath))
-                {
-                    profilePic.Image = Image.FromFile(profilePicPath);
-                }
-                else
-                {
-                    // Create a simple placeholder
-                    Bitmap placeholder = new Bitmap(50, 50);
-                    using (Graphics g = Graphics.FromImage(placeholder))
-                    {
-                        g.Clear(Theme.LightGray);
-                        g.DrawString("👤", new Font("Segoe UI", 24), Brushes.DarkGray, new PointF(5, 5));
-                    }
-                    profilePic.Image = placeholder;
-                }
-            }
-            catch
-            {
-                Bitmap placeholder = new Bitmap(50, 50);
-                using (Graphics g = Graphics.FromImage(placeholder))
-                {
-                    g.Clear(Theme.LightGray);
-                    g.DrawString("👤", new Font("Segoe UI", 24), Brushes.DarkGray, new PointF(5, 5));
-                }
-                profilePic.Image = placeholder;
-            }
-            
-            // Get user info
-            UploaderInfo currentUser = GetLoggedInUser();
-            
-            // Construct full display name
-            string displayName = currentUser.Name ?? "User";
-            if (!string.IsNullOrWhiteSpace(currentUser.FirstName) || !string.IsNullOrWhiteSpace(currentUser.LastName))
-            {
-                // If we have parsed name parts, use those
-                var nameParts = new[] { currentUser.FirstName, currentUser.MiddleName, currentUser.LastName }
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
-                    .ToList();
-                if (nameParts.Count > 0)
-                {
-                    displayName = string.Join(" ", nameParts);
-                }
-            }
-            
-            // User Name Label
-            Label lblUserName = new Label
-            {
-                Text = displayName,
-                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Text = text,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
                 ForeColor = Color.White,
-                AutoSize = false,
-                Location = new Point(70, 10),
-                Width = 220,
+                AutoSize = true,
+                Margin = new Padding(0, 15, 0, 10),
+                Dock = DockStyle.Top,
                 Height = 25
             };
             
-            // Grade Section Label - ensure it's not "N/A"
-            string gradeDisplay = currentUser.GradeSection ?? "N/A";
-            if (string.IsNullOrWhiteSpace(currentUser.GradeSection) || currentUser.GradeSection == "N/A")
+            // Helper for textbox
+            TextBox CreateInputBox(int height = 36) => new TextBox
             {
-                System.Diagnostics.Debug.WriteLine($"[Profile Card] Grade section is null/N/A. Full user info: Name={currentUser.Name}, Grade={currentUser.GradeSection}");
-            }
+                Dock = DockStyle.Top,
+                Height = height,
+                Font = new Font("Segoe UI", 10),
+                BackColor = Theme.LightGray,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            
+            // Helper for button
+            Button CreateButton(string text, Color bgColor, int height = 36) => new Button
+            {
+                Text = text,
+                Dock = DockStyle.Top,
+                Height = height,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                BackColor = bgColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            
+            // --- PROFILE SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("👤 Profile"));
             
             Label lblGradeSection = new Label
             {
-                Text = gradeDisplay,
+                Text = $"Grade: {currentUser.GradeSection ?? "N/A"}",
+                Dock = DockStyle.Top,
                 Font = new Font("Segoe UI", 9),
-                ForeColor = Theme.LightGray,
+                ForeColor = Color.White,
                 AutoSize = false,
-                Location = new Point(70, 35),
-                Width = 220,
-                Height = 40
+                Height = 30,
+                Margin = new Padding(0, 5, 0, 10)
             };
             
-            // Edit Profile Button
-            Button btnEditProfile = new Button
-            {
-                Text = "Edit Profile",
-                Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                BackColor = Theme.AccentBlue,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Location = new Point(10, 105),
-                Width = 280,
-                Height = 25,
-                Cursor = Cursors.Hand
-            };
-            btnEditProfile.FlatAppearance.BorderSize = 0;
+            Button btnEditProfile = CreateButton("Edit Profile", Theme.AccentBlue);
             btnEditProfile.Click += (s, e) => MessageBox.Show("Profile editing feature coming soon!", "Edit Profile", MessageBoxButtons.OK, MessageBoxIcon.Information);
             
-            profileCard.Controls.Add(profilePic);
-            profileCard.Controls.Add(lblUserName);
-            profileCard.Controls.Add(lblGradeSection);
-            profileCard.Controls.Add(btnEditProfile);
+            controlFlow.Controls.Add(lblGradeSection);
+            controlFlow.Controls.Add(btnEditProfile);
             
-            searchPanel.Controls.Add(profileCard);
+            // --- SEARCH SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("🔍 Search Items"));
             
-            Label lblSearch = new Label 
-            { 
-                Text = "🔍 Search", 
-                AutoSize = true, 
-                Top = 180, 
-                Left = 20, 
-                Font = new Font("Segoe UI", 13, FontStyle.Bold),
-                ForeColor = Theme.NearBlack
+            txtSearch = CreateInputBox();
+            txtSearch.PlaceholderText = "Search by name...";
+            
+            btnSearch = CreateButton("Search", Theme.TealGreen);
+            btnSearch.Click += (s, e) => PerformSearch(txtSearch.Text.Trim());
+            
+            btnClearSearch = CreateButton("Clear", Theme.DarkGray);
+            btnClearSearch.Click += (s, e) =>
+            {
+                txtSearch.Text = "";
+                LoadSavedImagesAsync();
             };
-            txtSearch = new TextBox 
-            { 
-                Top = 210, 
-                Left = 20, 
-                Width = 290, 
-                Height = 38,
-                Font = new Font("Segoe UI", 10),
-                BackColor = Theme.LightGray,
-                BorderStyle = BorderStyle.FixedSingle,
-                ForeColor = Theme.NearBlack
-            };
-            btnSearch = new Button 
-            { 
-                Text = "Search", 
-                Top = 255, 
-                Left = 20, 
-                Width = 135, 
-                Height = 36, 
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Theme.TealGreen,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnSearch.FlatAppearance.BorderSize = 0;
-            btnClearSearch = new Button 
-            { 
-                Text = "Clear", 
-                Top = 255, 
-                Left = 175, 
-                Width = 135, 
-                Height = 36, 
-                Font = new Font("Segoe UI", 10),
-                BackColor = Theme.DarkGray,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnClearSearch.FlatAppearance.BorderSize = 0;
-            Label lblTags = new Label 
-            { 
-                Text = "📌 Tags", 
-                AutoSize = true, 
-                Top = 305, 
-                Left = 20, 
-                Font = new Font("Segoe UI", 13, FontStyle.Bold),
-                ForeColor = Theme.NearBlack
-            };
-            lstTags = new ListBox 
-            { 
-                Top = 335, 
-                Left = 20, 
-                Width = 290, 
-                Height = 140, 
-                Font = new Font("Segoe UI", 10),
+            
+            controlFlow.Controls.Add(txtSearch);
+            controlFlow.Controls.Add(btnSearch);
+            controlFlow.Controls.Add(btnClearSearch);
+            
+            // --- TAGS SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("🏷️ Tags"));
+            
+            lstTags = new ListBox
+            {
+                Dock = DockStyle.Top,
+                Height = 120,
+                Font = new Font("Segoe UI", 9),
                 BackColor = Theme.LightGray,
                 ForeColor = Theme.NearBlack,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 5, 0, 10)
+            };
+            
+            FlowLayoutPanel tagInputPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 45,
+                AutoSize = false,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Margin = new Padding(0, 5, 0, 10),
+                BackColor = Theme.MediumTeal
+            };
+            
+            txtNewTag = new TextBox
+            {
+                Width = 200,
+                Height = 36,
+                Font = new Font("Segoe UI", 9),
+                BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
             };
-            txtNewTag = new TextBox 
-            { 
-                Top = 485, 
-                Left = 20, 
-                Width = 200, 
+            txtNewTag.PlaceholderText = "Add tag...";
+            
+            btnAddTag = new Button
+            {
+                Text = "Add",
+                Width = 80,
                 Height = 36,
-                Font = new Font("Segoe UI", 10),
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle,
-                ForeColor = Theme.NearBlack,
-                PlaceholderText = "Add tags for image here"
-            };
-            btnAddTag = new Button 
-            { 
-                Text = "Add", 
-                Top = 485, 
-                Left = 230, 
-                Width = 80, 
-                Height = 36, 
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 BackColor = Theme.AccentBlue,
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat
-            };
-            btnAddTag.FlatAppearance.BorderSize = 0;
-            searchPanel.Controls.Add(lblSearch);
-            searchPanel.Controls.Add(txtSearch);
-            searchPanel.Controls.Add(btnSearch);
-            searchPanel.Controls.Add(btnClearSearch);
-            searchPanel.Controls.Add(lblTags);
-            searchPanel.Controls.Add(lstTags);
-            searchPanel.Controls.Add(txtNewTag);
-            searchPanel.Controls.Add(btnAddTag);
-            this.Controls.Add(searchPanel);
-            openCameraButton = new RoundedButton
-            {
-                Text = "+",
-                Width = 100,
-                Height = 100,
-                BackColor = Theme.TealGreen,
-                ForeColor = Theme.SoftWhite,
-                Font = new Font("Arial", 40, FontStyle.Bold),
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
-                CornerRadius = 25
+                Margin = new Padding(5, 0, 0, 0)
+            };
+            btnAddTag.FlatAppearance.BorderSize = 0;
+            btnAddTag.Click += (s, e) =>
+            {
+                if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
+                var tag = txtNewTag.Text.Trim();
+                if (string.IsNullOrEmpty(tag)) return;
+                SaveTagForCard((string)selectedCard.Tag, tag);
+                LoadTagsForCard(selectedCard);
+                txtNewTag.Text = "";
+            };
+            
+            tagInputPanel.Controls.Add(txtNewTag);
+            tagInputPanel.Controls.Add(btnAddTag);
+            
+            controlFlow.Controls.Add(lstTags);
+            controlFlow.Controls.Add(tagInputPanel);
+            
+            // --- HELP SECTION ---
+            controlFlow.Controls.Add(CreateSectionTitle("ℹ️ Help"));
+            
+            Button btnHelp = CreateButton("View Instructions", Theme.AccentBlue);
+            btnHelp.Click += (s, e) => MessageBox.Show("📸 Lost and Found Gallery\n\nCapture lost items to the gallery.\nUsers can upload photos of found items.\n\nUse the + button to add photos.", "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            
+            controlFlow.Controls.Add(btnHelp);
+            
+            controlPanel.Controls.Add(controlFlow);
+            
+            // ===== COMBINE MAIN CONTENT =====
+            mainContainer.Controls.Add(galleryAreaPanel);
+            mainContainer.Controls.Add(controlPanel);
+            
+            // ===== ADD ALL TO FORM =====
+            this.Controls.Add(mainContainer);
+            this.Controls.Add(headerPanel);
+            
+            // ===== FLOATING CAMERA BUTTON =====
+            openCameraButton = new RoundedButton
+            {
+                Text = "📷",
+                Width = 65,
+                Height = 65,
+                BackColor = Theme.TealGreen,
+                ForeColor = Theme.SoftWhite,
+                Font = new Font("Arial", 28, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                CornerRadius = 15
             };
             openCameraButton.FlatAppearance.BorderSize = 0;
             openCameraButton.Click += OpenCameraButton_Click;
-            this.Controls.Add(outerPanel);
-            
             this.Controls.Add(openCameraButton);
             openCameraButton.BringToFront();
             openCameraButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            openCameraButton.Location = new Point(this.ClientSize.Width - 110, this.ClientSize.Height - 110);
+            
             this.Resize += (s, e) =>
             {
-                openCameraButton.Location = new Point(this.ClientSize.Width - 110, this.ClientSize.Height - 110);
-                outerPanel.PerformLayout();
+                openCameraButton.Location = new Point(this.ClientSize.Width - 85, this.ClientSize.Height - 85);
+                
                 // Recalculate columns based on new width
-                int newColumns = CalculateColumnsForWidth(outerPanel.Width - 60); // 60 for padding
+                int newColumns = CalculateColumnsForWidth(galleryAreaPanel.Width - 60);
                 if (newColumns != COLUMNS)
                 {
                     COLUMNS = newColumns;
@@ -468,72 +484,7 @@ namespace ReturnPoint
                     }
                 }
             };
-            btnSearch.Click += (s, e) => PerformSearch(txtSearch.Text.Trim());
-            btnClearSearch.Click += (s, e) =>
-            {
-                txtSearch.Text = "";
-                LoadSavedImagesAsync();
-            };
-            btnAddTag.Click += (s, e) =>
-            {
-                if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
-                var tag = txtNewTag.Text.Trim();
-                if (string.IsNullOrEmpty(tag)) return;
-                SaveTagForCard((string)selectedCard.Tag, tag);
-                LoadTagsForCard(selectedCard);
-                txtNewTag.Text = "";
-            };
-            Button btnHelp = new Button
-            {
-                Text = "Help",
-                Width = 100,
-                Height = 36,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                BackColor = Theme.AccentBlue,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnHelp.FlatAppearance.BorderSize = 0;
-            btnHelp.Click += (s, e) => ShowTutorial();
-            this.Controls.Add(btnHelp);
             
-            btnLogout = new Button
-            {
-                Text = "Logout",
-                Width = 100,
-                Height = 36,
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                BackColor = Theme.DeepRed,
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Cursor = Cursors.Hand
-            };
-            btnLogout.FlatAppearance.BorderSize = 0;
-            btnLogout.Click += (s, e) =>
-            {
-                if (MessageBox.Show("Logout and return to login?", "Confirm", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    Application.Restart();
-                    Application.ExitThread();
-                }
-            };
-            this.Controls.Add(btnLogout);
-            this.Load += (s, e) => PositionButtons();
-            this.Resize += (s, e) => PositionButtons();
-            void PositionButtons()
-            {
-                int rightMargin = 20;
-                int x = searchPanel.Left - btnLogout.Width - btnHelp.Width - 30;
-                btnLogout.Location = new System.Drawing.Point(Math.Max(20, x + btnHelp.Width + 10), 16);
-                btnHelp.Location = new System.Drawing.Point(Math.Max(20, x), 16);
-                btnLogout.BringToFront();
-                btnHelp.BringToFront();
-            }
-            galleryTable.BackColor = Theme.GetBackgroundTeal();
-            outerPanel.BackColor = Theme.GetBackgroundTeal();
             // Load images asynchronously after form is shown
             this.Load += (s, e) => LoadSavedImagesAsync();
             Theme.Apply(this);

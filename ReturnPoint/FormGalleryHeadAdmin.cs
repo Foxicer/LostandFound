@@ -63,9 +63,11 @@ namespace ReturnPoint
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                AutoScroll = true,
                 BackColor = Theme.GetBackgroundTeal(),
-                BackgroundImageLayout = ImageLayout.Stretch
+                BackgroundImageLayout = ImageLayout.Stretch,
+                AutoScroll = false,
+                Padding = new Padding(0),
+                BorderStyle = BorderStyle.FixedSingle
             };
             // Update outer panel background dynamically
             this.Resize += (s, e) => {
@@ -73,7 +75,35 @@ namespace ReturnPoint
                     outerPanel.BackgroundImage = Theme.CreateGradientBitmap(outerPanel.Width, outerPanel.Height, vertical: true);
             };
             
-            outerPanel.Controls.Add(galleryTable);
+            // Create a scrollable container for the gallery table
+            Panel scrollableContainer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = Theme.GetBackgroundTeal(),
+                BackgroundImageLayout = ImageLayout.Stretch,
+                Padding = new Padding(0)
+            };
+            
+            galleryTable = new TableLayoutPanel
+            {
+                ColumnCount = COLUMNS,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(30, 20, 30, 20),
+                BackColor = Theme.GetBackgroundTeal(),
+                Dock = DockStyle.None,
+                Location = new Point(0, 0)
+            };
+            
+            // Set column styles
+            for (int i = 0; i < COLUMNS; i++)
+            {
+                galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            }
+            
+            scrollableContainer.Controls.Add(galleryTable);
+            outerPanel.Controls.Add(scrollableContainer);
             
             // Create responsive right panel using FlowLayoutPanel
             FlowLayoutPanel rightPanelFlow = new FlowLayoutPanel
