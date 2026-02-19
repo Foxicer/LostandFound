@@ -30,8 +30,16 @@ namespace ReturnPoint
         private Panel panelMain;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
-        private const int COLUMNS = 5;
-        private const int IMAGE_SIZE = 220;
+        private int COLUMNS = 5;
+        private int IMAGE_SIZE = 220;
+        private int CalculateColumnsForWidth(int availableWidth)
+        {
+            // Minimum space per column: IMAGE_SIZE + margins + padding
+            int minSpacePerColumn = IMAGE_SIZE + 30; // 220 + 10 margins on each side + some padding
+            int cols = Math.Max(1, availableWidth / minSpacePerColumn);
+            return Math.Min(cols, 8); // Cap at 8 columns maximum
+        }
+        
         public class RoundedPanel : Panel
         {
             public int CornerRadius { get; set; } = 20;
@@ -147,15 +155,21 @@ namespace ReturnPoint
             this.FormBorderStyle = FormBorderStyle.None;
             this.WindowState = FormWindowState.Maximized;
             this.BackColor = Theme.GetBackgroundTeal();
-            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            // Update background dynamically based on current size
+            UpdateBackgroundImage();
             this.BackgroundImageLayout = ImageLayout.Stretch;
+            this.Resize += (s, e) => UpdateBackgroundImage();
             outerPanel = new Panel
             {
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
                 BackColor = Theme.GetBackgroundTeal(),
-                BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
                 BackgroundImageLayout = ImageLayout.Stretch
+            };
+            // Update outer panel background dynamically
+            this.Resize += (s, e) => {
+                if (outerPanel.Width > 0 && outerPanel.Height > 0)
+                    outerPanel.BackgroundImage = Theme.CreateGradientBitmap(outerPanel.Width, outerPanel.Height, vertical: true);
             };
             
             galleryTable = new TableLayoutPanel
@@ -179,11 +193,17 @@ namespace ReturnPoint
             {
                 Dock = DockStyle.Right,
                 Width = 340,
+                MinimumSize = new Size(300, 0),
                 BackColor = Theme.MediumTeal,
                 BorderStyle = BorderStyle.None,
                 Padding = new Padding(20),
                 Visible = true,
                 AutoScroll = true
+            };
+            this.Resize += (s, e) => {
+                // Make search panel responsive - scale width based on main window width
+                int newWidth = Math.Max(300, Math.Min(400, this.Width / 5));
+                searchPanel.Width = newWidth;
             };
             
             // Create Profile Card
@@ -433,6 +453,20 @@ namespace ReturnPoint
             {
                 openCameraButton.Location = new Point(this.ClientSize.Width - 110, this.ClientSize.Height - 110);
                 outerPanel.PerformLayout();
+                // Recalculate columns based on new width
+                int newColumns = CalculateColumnsForWidth(outerPanel.Width - 60); // 60 for padding
+                if (newColumns != COLUMNS)
+                {
+                    COLUMNS = newColumns;
+                    galleryTable.ColumnCount = COLUMNS;
+                    for (int i = 0; i < COLUMNS; i++)
+                    {
+                        if (i < galleryTable.ColumnStyles.Count)
+                            galleryTable.ColumnStyles[i] = new ColumnStyle(SizeType.AutoSize);
+                        else
+                            galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                    }
+                }
             };
             btnSearch.Click += (s, e) => PerformSearch(txtSearch.Text.Trim());
             btnClearSearch.Click += (s, e) =>
@@ -506,6 +540,20 @@ namespace ReturnPoint
             AddLogoCopyright();
             SetLogoTransparentBackground();
         }
+        
+        private void UpdateBackgroundImage()
+        {
+            try
+            {
+                if (this.Width > 0 && this.Height > 0)
+                {
+                    this.BackgroundImage?.Dispose();
+                    this.BackgroundImage = Theme.CreateGradientBitmap(this.Width, this.Height, vertical: true);
+                }
+            }
+            catch { /* Ignore errors updating background */ }
+        }
+        
         private void OpenCameraButton_Click(object sender, EventArgs e)
         {
             ShowLoadingScreen("Initializing camera...");

@@ -34,17 +34,28 @@ namespace ReturnPoint
         private Panel selectedCard;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
-        private const int COLUMNS = 5;
+        private int COLUMNS = 5;
         private const int IMAGE_SIZE = 220;
         private Form? loadingForm;
         private bool isLoading = false;
+        
+        private int CalculateColumnsForWidth(int availableWidth)
+        {
+            // Minimum space per column: IMAGE_SIZE + margins + padding
+            int minSpacePerColumn = IMAGE_SIZE + 30; // 220 + 10 margins on each side + some padding
+            int cols = Math.Max(1, availableWidth / minSpacePerColumn);
+            return Math.Min(cols, 8); // Cap at 8 columns maximum
+        }
+        
         public FormGalleryHeadAdmin()
         {
             Text = "Gallery HeadAdmin - ReturnPoint";
             WindowState = FormWindowState.Maximized;
             BackColor = Theme.GetBackgroundTeal();
-            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            // Update background dynamically based on current size
+            UpdateBackgroundImage();
             this.BackgroundImageLayout = ImageLayout.Stretch;
+            this.Resize += (s, e) => UpdateBackgroundImage();
             saveFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages");
             deletedFolder = Path.Combine(saveFolder, "Deleted");
             Directory.CreateDirectory(saveFolder);
@@ -54,8 +65,12 @@ namespace ReturnPoint
                 Dock = DockStyle.Fill,
                 AutoScroll = true,
                 BackColor = Theme.GetBackgroundTeal(),
-                BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true),
                 BackgroundImageLayout = ImageLayout.Stretch
+            };
+            // Update outer panel background dynamically
+            this.Resize += (s, e) => {
+                if (outerPanel.Width > 0 && outerPanel.Height > 0)
+                    outerPanel.BackgroundImage = Theme.CreateGradientBitmap(outerPanel.Width, outerPanel.Height, vertical: true);
             };
             
             galleryTable = new TableLayoutPanel
@@ -79,10 +94,25 @@ namespace ReturnPoint
             {
                 Dock = DockStyle.Right,
                 Width = 320,
+                MinimumSize = new Size(280, 0),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.None,
                 Padding = new Padding(15),
                 AutoScroll = true
+            };
+            // Make right panel responsive - scale width based on main window width
+            this.Resize += (s, e) => {
+                int newWidth = Math.Max(280, Math.Min(400, this.Width / 5));
+                rightPanel.Width = newWidth;
+                // Update button widths in right panel dynamically
+                int btnWidth = newWidth - 30; // Account for padding
+                foreach (Control ctrl in rightPanel.Controls)
+                {
+                    if (ctrl is Button btn && btn.Left + btn.Width > newWidth - 20)
+                    {
+                        btn.Width = btnWidth;
+                    }
+                }
             };
             Label lblSearchTitle = new Label
             {
@@ -842,6 +872,19 @@ namespace ReturnPoint
             }
         }
         
+        private void UpdateBackgroundImage()
+        {
+            try
+            {
+                if (this.Width > 0 && this.Height > 0)
+                {
+                    this.BackgroundImage?.Dispose();
+                    this.BackgroundImage = Theme.CreateGradientBitmap(this.Width, this.Height, vertical: true);
+                }
+            }
+            catch { /* Ignore errors updating background */ }
+        }
+        
         private void LoadImages(bool showDeleted, string searchQuery = "")
         {
             ShowLoadingScreen("Loading images...");
@@ -871,6 +914,22 @@ namespace ReturnPoint
         
         private void LoadImagesSync(bool showDeleted, string searchQuery)
         {
+            // Recalculate columns based on current width
+            int availableWidth = outerPanel.Width - 60; // 60 for padding
+            int newColumns = CalculateColumnsForWidth(availableWidth);
+            if (newColumns != COLUMNS)
+            {
+                COLUMNS = newColumns;
+                galleryTable.ColumnCount = COLUMNS;
+                for (int i = 0; i < COLUMNS; i++)
+                {
+                    if (i < galleryTable.ColumnStyles.Count)
+                        galleryTable.ColumnStyles[i] = new ColumnStyle(SizeType.AutoSize);
+                    else
+                        galleryTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                }
+            }
+            
             Invoke((MethodInvoker)delegate
             {
                 galleryTable.Controls.Clear();
