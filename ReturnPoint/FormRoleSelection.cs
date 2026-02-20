@@ -16,7 +16,7 @@ namespace ReturnPoint
             FormBorderStyle = FormBorderStyle.None;
             WindowState = FormWindowState.Maximized;
             BackColor = Theme.GetBackgroundTeal();
-            BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            BackgroundImage = Theme.CreateGradientBitmap(1366, 768, vertical: true);
             BackgroundImageLayout = ImageLayout.Stretch;
 
             // ===== TOP HEADER WITH TITLE =====
@@ -52,7 +52,7 @@ namespace ReturnPoint
             Panel studentPanel = new Panel
             {
                 Dock = DockStyle.Left,
-                Width = 960,
+                Width = 683,
                 BackColor = Color.FromArgb(41, 128, 128),
                 Cursor = Cursors.Hand
             };
@@ -146,7 +146,7 @@ namespace ReturnPoint
             Panel adminPanel = new Panel
             {
                 Dock = DockStyle.Right,
-                Width = 960,
+                Width = 683,
                 BackColor = Color.FromArgb(100, 80, 120),
                 Cursor = Cursors.Hand
             };

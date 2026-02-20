@@ -38,11 +38,11 @@ namespace ReturnPoint
             };
 
             Text = roleDisplayText + " - ReturnPoint";
-            Width = 950;
-            Height = 800;
+            Width = 1200;
+            Height = 750;
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Theme.GetBackgroundTeal();
-            BackgroundImage = Theme.CreateGradientBitmap(950, 800, vertical: true);
+            BackgroundImage = Theme.CreateGradientBitmap(1200, 750, vertical: true);
             BackgroundImageLayout = ImageLayout.Stretch;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;

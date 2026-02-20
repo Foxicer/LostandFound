@@ -24,11 +24,11 @@ namespace ReturnPoint
         public FormLogin(bool isAdminLogin = false)
         {
             Text = isAdminLogin ? "Admin Login - ReturnPoint" : "Login - ReturnPoint";
-            Width = 900;
-            Height = 700;
+            Width = 1200;
+            Height = 680;
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Theme.GetBackgroundTeal();
-            BackgroundImage = Theme.CreateGradientBitmap(900, 700, vertical: true);
+            BackgroundImage = Theme.CreateGradientBitmap(1200, 680, vertical: true);
             BackgroundImageLayout = ImageLayout.Stretch;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;

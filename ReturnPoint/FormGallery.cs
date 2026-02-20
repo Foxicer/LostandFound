@@ -181,16 +181,15 @@ namespace ReturnPoint
                     displayName = string.Join(" ", nameParts);
             }
             
-            // Logo/Welcome label on the left
+            // Logo/Welcome label centered
             Label lblWelcome = new Label
             {
                 Text = $"📸 Welcome, {displayName}",
-                Dock = DockStyle.Left,
+                Dock = DockStyle.Fill,
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoSize = false,
-                Width = 400,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleCenter
             };
             
             // Logout button on the right
@@ -398,6 +397,19 @@ namespace ReturnPoint
                 BorderStyle = BorderStyle.FixedSingle
             };
             txtNewTag.PlaceholderText = "Add tag...";
+            txtNewTag.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Return)
+                {
+                    e.Handled = true;
+                    if (selectedCard == null) { MessageBox.Show("Select an image first."); return; }
+                    var tag = txtNewTag.Text.Trim();
+                    if (string.IsNullOrEmpty(tag)) return;
+                    SaveTagForCard((string)selectedCard.Tag, tag);
+                    LoadTagsForCard(selectedCard);
+                    txtNewTag.Text = "";
+                }
+            };
             
             btnAddTag = new Button
             {

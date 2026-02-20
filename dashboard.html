@@ -20,8 +20,8 @@
         --deep-red: #DC3545;
         --success: #27AE60;
         --warm-gold: #E67E22;
-        --right-panel-w: 340px;
-        --card-w: 220px;
+        --right-panel-w: 320px;
+        --card-w: 200px;
     }
     
     html, body {
@@ -46,7 +46,7 @@
     .top-actions {
         position: fixed;
         top: 16px;
-        right: 360px;
+        right: 320px;
         z-index: 1200;
         display: flex;
         gap: 8px;
@@ -381,7 +381,7 @@
     /* Floating camera button */
     .fab {
         position: fixed;
-        right: 370px;
+        right: 330px;
         bottom: 30px;
         width: 60px;
         height: 60px;
@@ -443,16 +443,26 @@
         line-height: 1.5;
     }
 
-    /* responsive: 3 cols on smaller screens, 2 on tablets, 1 on very small */
-    @media (max-width: 1400px) {
+    /* responsive: 5 cols at full width (1366+), 4 cols at 1366x768, 3 cols on smaller screens */
+    @media (max-width: 1366px) {
         .gallery {
             grid-template-columns: repeat(4, var(--card-w));
         }
     }
     
-    @media (max-width: 1100px) {
+    @media (max-width: 1200px) {
         .gallery {
             grid-template-columns: repeat(3, var(--card-w));
+        }
+    }
+    
+    @media (max-width: 1000px) {
+        .gallery {
+            grid-template-columns: repeat(3, minmax(180px, 1fr));
+        }
+        
+        :root {
+            --card-w: 180px;
         }
     }
     

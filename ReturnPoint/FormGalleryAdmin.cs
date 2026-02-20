@@ -26,8 +26,9 @@ namespace ReturnPoint
         private Button btnTagManager;
         private Button btnInbox;
         private Button btnLogout;
+        private Button openCameraButton;
         private string saveFolder;
-        private string deletedFolder;
+        private string claimedFolder;
         private Panel? selectedCard;
         private PictureBox? logoPictureBox;
         private Bitmap? backgroundBitmap;
@@ -49,12 +50,12 @@ namespace ReturnPoint
             Text = "Gallery Admin - ReturnPoint";
             WindowState = FormWindowState.Maximized;
             BackColor = Theme.GetBackgroundTeal();
-            this.BackgroundImage = Theme.CreateGradientBitmap(1920, 1080, vertical: true);
+            this.BackgroundImage = Theme.CreateGradientBitmap(1366, 768, vertical: true);
             this.BackgroundImageLayout = ImageLayout.Stretch;
             saveFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CapturedImages");
-            deletedFolder = Path.Combine(saveFolder, "Deleted");
+            claimedFolder = Path.Combine(saveFolder, "Claimed");
             Directory.CreateDirectory(saveFolder);
-            Directory.CreateDirectory(deletedFolder);
+            Directory.CreateDirectory(claimedFolder);
             
             // ===== TOP HEADER PANEL =====
             Panel headerPanel = new Panel
@@ -70,12 +71,11 @@ namespace ReturnPoint
             Label lblWelcome = new Label
             {
                 Text = "🔐 Admin Gallery Manager",
-                Dock = DockStyle.Left,
+                Dock = DockStyle.Fill,
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoSize = false,
-                Width = 400,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleCenter
             };
             
             btnLogout = new Button
@@ -310,7 +310,7 @@ namespace ReturnPoint
             controlFlow.Controls.Add(CreateSectionTitle("🎨 Gallery Tools"));
             
             btnRefresh = CreateButton("🔄 Refresh", Theme.AccentBlue);
-            btnImageDetails = CreateButton("📋 Image Details", Theme.MediumTeal);
+            btnImageDetails = CreateButton("📋 Claim Logs", Theme.MediumTeal);
             btnTagManager = CreateButton("🏷️ Manage Tags", Theme.TealGreen);
             
             controlFlow.Controls.Add(btnRefresh);
@@ -343,6 +343,29 @@ namespace ReturnPoint
             // ===== ADD ALL TO FORM =====
             this.Controls.Add(mainContainer);
             this.Controls.Add(headerPanel);
+            
+            // ===== FLOATING CAMERA BUTTON =====
+            openCameraButton = new Button
+            {
+                Text = "📷 Add Item",
+                Width = 120,
+                Height = 65,
+                BackColor = Theme.TealGreen,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            openCameraButton.FlatAppearance.BorderSize = 0;
+            openCameraButton.Click += OpenCameraButton_Click;
+            this.Controls.Add(openCameraButton);
+            openCameraButton.BringToFront();
+            openCameraButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            
+            this.Resize += (s, e) =>
+            {
+                openCameraButton.Location = new Point(this.ClientSize.Width - 140, this.ClientSize.Height - 85);
+            };
             
             // ===== EVENT HANDLERS =====
             rightPanel = controlPanel;  // Keep reference for compatibility
@@ -488,6 +511,72 @@ namespace ReturnPoint
             }
         }
         
+        private void OpenCameraButton_Click(object sender, EventArgs e)
+        {
+            ShowLoadingScreen("Initializing camera...");
+            
+            string? selectedDevice = null;
+            try
+            {
+                var videoDevices = new AForge.Video.DirectShow.FilterInfoCollection(AForge.Video.DirectShow.FilterCategory.VideoInputDevice);
+                
+                HideLoadingScreen();
+                
+                if (videoDevices.Count == 0)
+                {
+                    MessageBox.Show("No camera devices found!", "Camera Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                if (videoDevices.Count > 1)
+                {
+                    using (var selectForm = new FormSelectCamera(videoDevices))
+                    {
+                        if (selectForm.ShowDialog(this) == DialogResult.OK)
+                        {
+                            selectedDevice = selectForm.SelectedDeviceMoniker;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    selectedDevice = videoDevices[0].MonikerString;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error detecting cameras: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            FormCamera camForm = new FormCamera(saveFolder, selectedDevice);
+            camForm.PhotoSaved += (filePath) =>
+            {
+                try
+                {
+                    // Create metadata info file for captured image
+                    string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
+                        Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
+                    var lines = new[]
+                    {
+                        $"Uploader: Admin",
+                        $"GradeSection: Admin",
+                        $"Location: Admin Added",
+                        $"Date: {DateTime.Now:yyyy-MM-dd HH:mm}"
+                    };
+                    File.WriteAllLines(infoPath, lines);
+                }
+                catch { }
+                LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
+                camForm.Close();
+            };
+            camForm.ShowDialog();
+        }
+        
         private void LoadImages(bool showDeleted, string searchQuery = "")
         {
             ShowLoadingScreen("Loading images...");
@@ -529,7 +618,7 @@ namespace ReturnPoint
                 btnPermanentlyDelete.Enabled = false;
             });
             
-            string folder = showDeleted ? deletedFolder : saveFolder;
+            string folder = showDeleted ? claimedFolder : saveFolder;
             if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
             
             string[] files = Directory.GetFiles(folder, "*.jpg").ToArray();
@@ -538,6 +627,36 @@ namespace ReturnPoint
             var list = files.Select(f => new { File = f, Date = File.GetCreationTime(f) })
                 .OrderByDescending(x => x.Date)
                 .ToList();
+
+            // When showing active items, filter out confirmed/rejected claims
+            if (!showDeleted)
+            {
+                list = list.Where(item =>
+                {
+                    string baseName = Path.GetFileNameWithoutExtension(item.File);
+                    string claimPath = Path.Combine(saveFolder, baseName + "_claim.txt");
+                    
+                    if (File.Exists(claimPath))
+                    {
+                        try
+                        {
+                            string[] lines = File.ReadAllLines(claimPath);
+                            foreach (var line in lines)
+                            {
+                                if (line.Contains("Status:"))
+                                {
+                                    string status = line.Split("Status:")[1].Trim().ToLower();
+                                    // Skip if claim is confirmed or rejected
+                                    if (status == "confirmed" || status == "rejected")
+                                        return false;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                    return true;
+                }).ToList();
+            }
 
             // Apply search filter
             if (!string.IsNullOrWhiteSpace(searchQuery))
@@ -763,44 +882,98 @@ namespace ReturnPoint
         }
         private void ShowFileInfo(string filePath)
         {
-            string infoPath = Path.Combine(Path.GetDirectoryName(filePath),
+            string infoPath = Path.Combine(Path.GetDirectoryName(filePath) ?? saveFolder,
                 Path.GetFileNameWithoutExtension(filePath) + "_info.txt");
-            string infoText = File.Exists(infoPath) ? File.ReadAllText(infoPath) : "(no info file)";
-            DateTime created = File.GetCreationTime(filePath);
-            DateTime modified = File.GetLastWriteTime(filePath);
-            string addedBy = null;
-            if (!string.IsNullOrWhiteSpace(infoText))
+            if (!File.Exists(infoPath))
             {
-                var lines = infoText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
+                MessageBox.Show("No information available for this item.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var lines = File.ReadAllLines(infoPath);
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ln in lines)
+            {
+                var idx = ln.IndexOf(':');
+                if (idx > -1)
                 {
-                    var trimmed = line.Trim();
-                    if (trimmed.StartsWith("AddedBy:", StringComparison.OrdinalIgnoreCase))
-                    {
-                        addedBy = trimmed.Substring("AddedBy:".Length).Trim();
-                        break;
-                    }
+                    var k = ln.Substring(0, idx).Trim();
+                    var v = ln.Substring(idx + 1).Trim();
+                    map[k] = v;
                 }
             }
+            string uploaderName = map.TryGetValue("Uploader", out var u) ? u : "N/A";
+            string gradeSection = map.TryGetValue("GradeSection", out var g) ? g : "N/A";
+            string location = map.TryGetValue("Location", out var l) ? l : "N/A";
+            string dateFound = map.TryGetValue("Date", out var d) ? d : (map.TryGetValue("DateFound", out var d2) ? d2 : "N/A");
+            
+            // Load tags from _tags.txt file
+            string tagsPath = Path.Combine(Path.GetDirectoryName(filePath) ?? saveFolder,
+                Path.GetFileNameWithoutExtension(filePath) + "_tags.txt");
+            string tagsText = "No tags";
+            if (File.Exists(tagsPath))
+            {
+                var tags = File.ReadAllLines(tagsPath).Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+                if (tags.Count > 0)
+                {
+                    tagsText = string.Join(", ", tags.Select(t => t.Trim()));
+                }
+            }
+            
             Form infoForm = new Form
             {
-                Text = "File Info",
-                Size = new Size(480, 360),
-                StartPosition = FormStartPosition.CenterParent
+                Text = "Item Information",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(420, 320)
             };
-            TextBox tb = new TextBox
+            Label uploaderLabel = new Label
             {
-                Multiline = true,
-                ReadOnly = true,
-                Dock = DockStyle.Fill,
-                Text = $"File: {Path.GetFileName(filePath)}{Environment.NewLine}" +
-                       $"Path: {filePath}{Environment.NewLine}" +
-                       $"Created: {created:g}{Environment.NewLine}" +
-                       $"Last Modified: {modified:g}{Environment.NewLine}{Environment.NewLine}" +
-                       $"Added by: {(string.IsNullOrEmpty(addedBy) ? "(unknown)" : addedBy)}{Environment.NewLine}{Environment.NewLine}" +
-                       $"Info file contents:{Environment.NewLine}{infoText}"
+                Text = $"Uploader: {uploaderName}",
+                Top = 16,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold),
             };
-            infoForm.Controls.Add(tb);
+            Label gradeLabel = new Label
+            {
+                Text = $"Grade/Section: {gradeSection}",
+                Top = 48,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold)
+            };
+            Label locationLabel = new Label
+            {
+                Text = $"Location: {location}",
+                Top = 80,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold)
+            };
+            Label dateLabel = new Label
+            {
+                Text = $"Date Found: {dateFound}",
+                Top = 112,
+                Left = 20,
+                AutoSize = true,
+                Font = new Font("Arial", 11, FontStyle.Bold)
+            };
+            Label tagsLabel = new Label
+            {
+                Text = $"Tags: {tagsText}",
+                Top = 144,
+                Left = 20,
+                AutoSize = false,
+                Width = 380,
+                Height = 100,
+                Font = new Font("Arial", 10),
+                BackColor = Theme.LightGray,
+                Padding = new Padding(5)
+            };
+            infoForm.Controls.Add(uploaderLabel);
+            infoForm.Controls.Add(gradeLabel);
+            infoForm.Controls.Add(locationLabel);
+            infoForm.Controls.Add(dateLabel);
+            infoForm.Controls.Add(tagsLabel);
             infoForm.ShowDialog();
         }
         private void DeleteSelected()
@@ -811,11 +984,11 @@ namespace ReturnPoint
             if (MessageBox.Show($"Move '{Path.GetFileName(filePath)}' to Deleted folder?", "Confirm", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
             try
             {
-                Directory.CreateDirectory(deletedFolder);
-                string dest = Path.Combine(deletedFolder, Path.GetFileName(filePath));
+                Directory.CreateDirectory(claimedFolder);
+                string dest = Path.Combine(claimedFolder, Path.GetFileName(filePath));
                 File.Move(filePath, dest);
-                MoveIfExists(Path.ChangeExtension(filePath, null) + "_tags.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_tags.txt"));
-                MoveIfExists(Path.ChangeExtension(filePath, null) + "_info.txt", Path.Combine(deletedFolder, Path.GetFileNameWithoutExtension(filePath) + "_info.txt"));
+                MoveIfExists(Path.ChangeExtension(filePath, null) + "_tags.txt", Path.Combine(claimedFolder, Path.GetFileNameWithoutExtension(filePath) + "_tags.txt"));
+                MoveIfExists(Path.ChangeExtension(filePath, null) + "_info.txt", Path.Combine(claimedFolder, Path.GetFileNameWithoutExtension(filePath) + "_info.txt"));
                 TagManager.DeleteImageTags(filePath);
                 DeleteImageFromGoogleSheets(Path.GetFileName(filePath));
                 LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
@@ -836,8 +1009,8 @@ namespace ReturnPoint
                 string dest = Path.Combine(saveFolder, Path.GetFileName(filePath));
                 File.Move(filePath, dest);
                 string baseName = Path.GetFileNameWithoutExtension(filePath);
-                MoveIfExists(Path.Combine(deletedFolder, baseName + "_tags.txt"), Path.Combine(saveFolder, baseName + "_tags.txt"));
-                MoveIfExists(Path.Combine(deletedFolder, baseName + "_info.txt"), Path.Combine(saveFolder, baseName + "_info.txt"));
+                MoveIfExists(Path.Combine(claimedFolder, baseName + "_tags.txt"), Path.Combine(saveFolder, baseName + "_tags.txt"));
+                MoveIfExists(Path.Combine(claimedFolder, baseName + "_info.txt"), Path.Combine(saveFolder, baseName + "_info.txt"));
                 RestoreImageInGoogleSheets(Path.GetFileName(filePath));
                 LoadImages(cbViewMode.SelectedIndex == 1, txtSearch.Text);
             }
@@ -884,60 +1057,122 @@ namespace ReturnPoint
         }
         private void OpenImageDetailsForm()
         {
-            Form detailsForm = new Form
+            Form logsForm = new Form
             {
-                Text = "Item Details - Lost & Found",
-                Width = 1400,
+                Text = "Claim Logs - ReturnPoint",
+                Width = 1000,
                 Height = 700,
                 StartPosition = FormStartPosition.CenterParent,
-                BackColor = Theme.LightGray,
-                Font = new Font("Segoe UI", 11),
+                BackColor = Theme.SoftWhite,
+                Font = new Font("Segoe UI", 10),
                 Owner = this
             };
-            DataGridView dgv = new DataGridView
+
+            // Scrollable panel for claims
+            FlowLayoutPanel claimsPanel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                BackgroundColor = Theme.SoftWhite,
-                ForeColor = Theme.NearBlack,
-                ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
-                {
-                    BackColor = Theme.MediumTeal,
-                    ForeColor = Theme.SoftWhite,
-                    Font = new Font("Segoe UI", 11, FontStyle.Bold)
-                }
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                BackColor = Theme.SoftWhite,
+                Padding = new Padding(10)
             };
-            dgv.Columns.AddRange(
-                new DataGridViewColumn[]
-                {
-                    new DataGridViewTextBoxColumn { HeaderText = "Item", DataPropertyName = "Item", Width = 180, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Finder", DataPropertyName = "Finder", Width = 180, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Date Found", DataPropertyName = "DateFound", Width = 150, ReadOnly = true },
-                    new DataGridViewTextBoxColumn { HeaderText = "Claimant", DataPropertyName = "Claimant", Width = 150, ReadOnly = false },
-                    new DataGridViewTextBoxColumn { HeaderText = "Date Claimed", DataPropertyName = "DateClaimed", Width = 130, ReadOnly = false },
-                    new DataGridViewTextBoxColumn { HeaderText = "Grade & Section", DataPropertyName = "GradeSection", Width = 130, ReadOnly = false }
-                }
-            );
-            List<ImageDetailRow> rows = new List<ImageDetailRow>();
-            LoadImageDetailsData(saveFolder, "Active", rows);
-            LoadImageDetailsData(deletedFolder, "Deleted", rows);
-            foreach (var row in rows.OrderByDescending(r => r.DateFoundObj))
+
+            // Load all claims (confirmed and rejected)
+            List<ClaimData> allClaims = LoadClaimsData();
+            var completedClaims = allClaims.Where(c => c.Status == "confirmed" || c.Status == "rejected").ToList();
+
+            if (completedClaims.Count == 0)
             {
-                dgv.Rows.Add(row.Item, row.Finder, row.DateFound, row.Claimant, row.DateClaimed, row.GradeSection);
+                Label emptyLabel = new Label
+                {
+                    Text = "No completed claims yet.",
+                    Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                    ForeColor = Theme.NearBlack,
+                    AutoSize = true,
+                    Padding = new Padding(10)
+                };
+                claimsPanel.Controls.Add(emptyLabel);
             }
-            dgv.CellValueChanged += (s, e) =>
+            else
             {
-                if (e.ColumnIndex >= 3 && e.RowIndex >= 0)  
+                foreach (var claim in completedClaims.OrderByDescending(c => c.DateClaimed))
                 {
-                    SaveClaimantInfo(dgv, e.RowIndex, rows);
+                    // Create a card for each claim
+                    Panel claimCard = new Panel
+                    {
+                        Width = claimsPanel.Width - 30,
+                        Height = 120,
+                        Margin = new Padding(0, 5, 0, 5),
+                        Padding = new Padding(10),
+                        BorderStyle = BorderStyle.FixedSingle,
+                        BackColor = claim.Status == "confirmed" ? Color.FromArgb(200, 230, 200) : Color.FromArgb(255, 200, 200),
+                        AutoSize = false
+                    };
+
+                    // Status label
+                    Label statusLabel = new Label
+                    {
+                        Text = claim.Status == "confirmed" ? "✓ CONFIRMED" : "✗ REJECTED",
+                        Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                        ForeColor = claim.Status == "confirmed" ? Color.DarkGreen : Color.DarkRed,
+                        AutoSize = true,
+                        Location = new Point(10, 10)
+                    };
+
+                    // Claimant name
+                    Label claimantLabel = new Label
+                    {
+                        Text = $"Claimant: {claim.ClaimantName}",
+                        Font = new Font("Segoe UI", 9),
+                        ForeColor = Theme.NearBlack,
+                        AutoSize = true,
+                        Location = new Point(10, 35)
+                    };
+
+                    // Email
+                    Label emailLabel = new Label
+                    {
+                        Text = $"Email: {claim.ClaimantEmail}",
+                        Font = new Font("Segoe UI", 9),
+                        ForeColor = Theme.NearBlack,
+                        AutoSize = true,
+                        Location = new Point(10, 55)
+                    };
+
+                    // Item and grade
+                    Label itemLabel = new Label
+                    {
+                        Text = $"Item: {claim.Item} | Grade: {claim.ClaimantGradeSection}",
+                        Font = new Font("Segoe UI", 9),
+                        ForeColor = Theme.NearBlack,
+                        AutoSize = true,
+                        Location = new Point(10, 75)
+                    };
+
+                    // Date claimed and confirmed by
+                    Label dateLabel = new Label
+                    {
+                        Text = $"Date: {claim.DateClaimed} | Confirmed by: {claim.ConfirmedBy}",
+                        Font = new Font("Segoe UI", 8),
+                        ForeColor = Color.Gray,
+                        AutoSize = true,
+                        Location = new Point(10, 95)
+                    };
+
+                    claimCard.Controls.Add(statusLabel);
+                    claimCard.Controls.Add(claimantLabel);
+                    claimCard.Controls.Add(emailLabel);
+                    claimCard.Controls.Add(itemLabel);
+                    claimCard.Controls.Add(dateLabel);
+
+                    claimsPanel.Controls.Add(claimCard);
                 }
-            };
-            detailsForm.Controls.Add(dgv);
-            detailsForm.ShowDialog(this);
+            }
+
+            logsForm.Controls.Add(claimsPanel);
+            logsForm.ShowDialog(this);
         }
         private void LoadImageDetailsData(string folder, string status, List<ImageDetailRow> rows)
         {
@@ -1534,7 +1769,9 @@ namespace ReturnPoint
                 }
             );
 
-            foreach (var claim in claims.Where(c => c.Status == "pending"))
+            // Create a separate list of pending claims to properly map grid rows
+            List<ClaimData> pendingClaims = claims.Where(c => c.Status == "pending").ToList();
+            foreach (var claim in pendingClaims)
             {
                 dgvClaims.Rows.Add(
                     claim.ClaimantName,
@@ -1556,77 +1793,89 @@ namespace ReturnPoint
                 AutoScroll = true
             };
 
-            // Details content
-            Panel detailsContent = new Panel
+            // Details content - use FlowLayoutPanel instead of relying on Dock to maintain proper order
+            FlowLayoutPanel detailsContent = new FlowLayoutPanel
             {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                BackColor = Theme.MediumTeal
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                BackColor = Theme.MediumTeal,
+                Padding = new Padding(10)
             };
 
             // Image preview
             PictureBox picItemImage = new PictureBox
             {
-                Dock = DockStyle.Top,
-                Height = 250,
+                Width = detailsContent.Width - 20,
+                Height = 200,
                 BackColor = Theme.DarkTeal,
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 Margin = new Padding(0, 0, 0, 15)
             };
 
-            // Create labels for details
-            Label CreateDetailLabel(string label) => new Label
+            // Helper to create label-input pairs
+            Panel CreateLabelInputPair(string labelText, out Label valueLabel)
             {
-                Dock = DockStyle.Top,
-                Height = 25,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.White,
-                BackColor = Theme.MediumTeal,
-                Margin = new Padding(0, 10, 0, 5),
-                AutoSize = false,
-                Text = label
-            };
+                Panel pair = new Panel
+                {
+                    Width = detailsContent.Width - 20,
+                    Height = 75,
+                    BackColor = Theme.MediumTeal,
+                    Margin = new Padding(0, 5, 0, 5)
+                };
 
-            Label CreateValueLabel() => new Label
-            {
-                Dock = DockStyle.Top,
-                Height = 45,
-                Font = new Font("Segoe UI", 9),
-                ForeColor = Theme.LightGray,
-                BackColor = Theme.DarkTeal,
-                Margin = new Padding(5, 0, 5, 5),
-                BorderStyle = BorderStyle.FixedSingle,
-                AutoSize = false,
-                TextAlign = ContentAlignment.TopLeft
-            };
+                Label lbl = new Label
+                {
+                    Text = labelText,
+                    Dock = DockStyle.Top,
+                    Height = 25,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    ForeColor = Color.White,
+                    BackColor = Theme.MediumTeal,
+                    AutoSize = false
+                };
+
+                valueLabel = new Label
+                {
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Segoe UI", 9),
+                    ForeColor = Theme.LightGray,
+                    BackColor = Theme.DarkTeal,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    AutoSize = false,
+                    TextAlign = ContentAlignment.TopLeft,
+                    Padding = new Padding(5)
+                };
+
+                pair.Controls.Add(valueLabel);
+                pair.Controls.Add(lbl);
+                return pair;
+            }
 
             detailsContent.Controls.Add(picItemImage);
 
-            Label lblItemDetails = CreateDetailLabel("📦 Item Details");
-            Label txtItem = CreateValueLabel();
-            detailsContent.Controls.Add(lblItemDetails);
-            detailsContent.Controls.Add(txtItem);
+            Panel pairItem = CreateLabelInputPair("📦 Item Details", out Label txtItem);
+            detailsContent.Controls.Add(pairItem);
 
-            Label lblItemFinder = CreateDetailLabel("🔍 Found By");
-            Label txtFinder = CreateValueLabel();
-            detailsContent.Controls.Add(lblItemFinder);
-            detailsContent.Controls.Add(txtFinder);
+            Panel pairFinder = CreateLabelInputPair("🔍 Found By", out Label txtFinder);
+            detailsContent.Controls.Add(pairFinder);
 
-            Label lblItemDate = CreateDetailLabel("📅 Date Found");
-            Label txtDateFound = CreateValueLabel();
-            detailsContent.Controls.Add(lblItemDate);
-            detailsContent.Controls.Add(txtDateFound);
+            Panel pairDateFound = CreateLabelInputPair("📅 Date Found", out Label txtDateFound);
+            detailsContent.Controls.Add(pairDateFound);
 
-            Label lblClaimDetails = CreateDetailLabel("👤 Claimant Details");
-            Label txtClaimant = CreateValueLabel();
-            detailsContent.Controls.Add(lblClaimDetails);
-            detailsContent.Controls.Add(txtClaimant);
+            Panel pairClaimant = CreateLabelInputPair("👤 Claimant Details", out Label txtClaimant);
+            detailsContent.Controls.Add(pairClaimant);
 
-            Label lblClaimEmail = CreateDetailLabel("📧 Email");
-            Label txtEmail = CreateValueLabel();
-            detailsContent.Controls.Add(lblClaimEmail);
-            detailsContent.Controls.Add(txtEmail);
+            Panel pairEmail = CreateLabelInputPair("📧 Email", out Label txtEmail);
+            detailsContent.Controls.Add(pairEmail);
+
+            Panel pairGrade = CreateLabelInputPair("🎓 Grade/Section", out Label txtGrade);
+            detailsContent.Controls.Add(pairGrade);
+
+            Panel pairDateClaimed = CreateLabelInputPair("📅 Date Claimed", out Label txtDateClaimed);
+            detailsContent.Controls.Add(pairDateClaimed);
 
             rightPanel.Controls.Add(detailsContent);
 
@@ -1636,12 +1885,12 @@ namespace ReturnPoint
                 if (dgvClaims.SelectedRows.Count > 0)
                 {
                     int rowIndex = dgvClaims.SelectedRows[0].Index;
-                    if (rowIndex < claims.Count)
+                    if (rowIndex >= 0 && rowIndex < pendingClaims.Count)
                     {
-                        var claim = claims[rowIndex];
+                        var claim = pendingClaims[rowIndex];
 
-                        // Load image
-                        string imagePath = claim.FilePath.Replace("_claim.txt", "");
+                        // Load image - replace _claim.txt with .jpg to get the actual image file
+                        string imagePath = claim.FilePath.Replace("_claim.txt", ".jpg");
                         if (File.Exists(imagePath))
                         {
                             try
@@ -1651,12 +1900,35 @@ namespace ReturnPoint
                             catch { }
                         }
 
+                        // Read info from _info.txt file
+                        string infoPath = claim.FilePath.Replace("_claim.txt", "_info.txt");
+                        string uploaderName = "N/A";
+                        string dateFoundFromInfo = "N/A";
+                        
+                        if (File.Exists(infoPath))
+                        {
+                            try
+                            {
+                                var infoLines = File.ReadAllLines(infoPath);
+                                foreach (var line in infoLines)
+                                {
+                                    if (line.StartsWith("Uploader:"))
+                                        uploaderName = line.Substring("Uploader:".Length).Trim();
+                                    else if (line.StartsWith("Date:"))
+                                        dateFoundFromInfo = line.Substring("Date:".Length).Trim();
+                                }
+                            }
+                            catch { }
+                        }
+
                         // Update details
                         txtItem.Text = claim.Item ?? "N/A";
-                        txtFinder.Text = claim.Finder ?? "N/A";
-                        txtDateFound.Text = claim.DateFound ?? "N/A";
+                        txtFinder.Text = uploaderName;
+                        txtDateFound.Text = dateFoundFromInfo;
                         txtClaimant.Text = claim.ClaimantName ?? "N/A";
                         txtEmail.Text = claim.ClaimantEmail ?? "N/A";
+                        txtGrade.Text = claim.ClaimantGradeSection ?? "N/A";
+                        txtDateClaimed.Text = claim.DateClaimed ?? "N/A";
                     }
                 }
             };
@@ -1720,10 +1992,10 @@ namespace ReturnPoint
                 if (dgvClaims.SelectedRows.Count > 0)
                 {
                     int rowIndex = dgvClaims.SelectedRows[0].Index;
-                    if (rowIndex < claims.Count)
+                    if (rowIndex >= 0 && rowIndex < pendingClaims.Count)
                     {
-                        var claim = claims[rowIndex];
-                        ConfirmClaim(claim);
+                        var claim = pendingClaims[rowIndex];
+                        ConfirmClaim(claim, picItemImage);
                         inboxForm.Close();
                         OpenInbox(); // Refresh the inbox
                     }
@@ -1739,9 +2011,9 @@ namespace ReturnPoint
                 if (dgvClaims.SelectedRows.Count > 0)
                 {
                     int rowIndex = dgvClaims.SelectedRows[0].Index;
-                    if (rowIndex < claims.Count)
+                    if (rowIndex >= 0 && rowIndex < pendingClaims.Count)
                     {
-                        var claim = claims[rowIndex];
+                        var claim = pendingClaims[rowIndex];
                         RejectClaim(claim);
                         inboxForm.Close();
                         OpenInbox(); // Refresh the inbox
@@ -1856,10 +2128,17 @@ namespace ReturnPoint
             return claims;
         }
 
-        private void ConfirmClaim(ClaimData claim)
+        private void ConfirmClaim(ClaimData claim, PictureBox picItemImage = null)
         {
             try
             {
+                // Dispose image before moving file to unlock it
+                if (picItemImage != null)
+                {
+                    picItemImage.Image?.Dispose();
+                    picItemImage.Image = null;
+                }
+
                 string adminName = Program.CurrentUser?.Name ?? "Unknown Admin";
                 string[] claimLines = File.ReadAllLines(claim.FilePath);
                 var updatedLines = new List<string>();
@@ -1883,8 +2162,8 @@ namespace ReturnPoint
                 // Update claim file with confirmed status
                 File.WriteAllLines(claim.FilePath, updatedLines);
 
-                // Move image and all associated files to deleted folder (marked as claimed)
-                MoveClaimedImageToDeleted(claim);
+                // Move image and all associated files to claimed folder
+                MoveClaimedImageToClaimed(claim);
 
                 MessageBox.Show("Claim confirmed successfully! Image moved to claimed items.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -1929,7 +2208,7 @@ namespace ReturnPoint
             }
         }
 
-        private void MoveClaimedImageToDeleted(ClaimData claim)
+        private void MoveClaimedImageToClaimed(ClaimData claim)
         {
             try
             {
@@ -1946,10 +2225,10 @@ namespace ReturnPoint
                 }
 
                 string baseName = Path.GetFileNameWithoutExtension(imagePath);
-                string destinationPath = Path.Combine(deletedFolder, Path.GetFileName(imagePath));
+                string destinationPath = Path.Combine(claimedFolder, Path.GetFileName(imagePath));
                 
-                // Ensure deleted folder exists
-                Directory.CreateDirectory(deletedFolder);
+                // Ensure claimed folder exists
+                Directory.CreateDirectory(claimedFolder);
 
                 // Move the image file
                 if (File.Exists(imagePath))
@@ -1964,7 +2243,7 @@ namespace ReturnPoint
                 foreach (var ext in associatedExtensions)
                 {
                     string sourcePath = Path.Combine(saveFolder, baseName + ext);
-                    string destPath = Path.Combine(deletedFolder, baseName + ext);
+                    string destPath = Path.Combine(claimedFolder, baseName + ext);
                     
                     if (File.Exists(sourcePath))
                     {
@@ -1974,7 +2253,7 @@ namespace ReturnPoint
                     }
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[ConfirmClaim] Moved image {claim.ImageName} to deleted folder");
+                System.Diagnostics.Debug.WriteLine($"[ConfirmClaim] Moved image {claim.ImageName} to claimed folder");
             }
             catch (Exception ex)
             {

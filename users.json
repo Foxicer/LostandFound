@@ -106,5 +106,37 @@
     "password": "Password",
     "profile_picture": "",
     "role": "headadmin"
+  },
+  {
+    "name": "dummy dummy account",
+    "email": "dummy@gmail.com",
+    "grade_section": "Grade 12",
+    "password": "Dummyaccount",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Xean Pogi 123",
+    "email": "xeanpogi@gmail.com",
+    "grade_section": "Grade 12 - Steve Jobs",
+    "password": "xeanpogi123",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Rauk Liwanagan Tinaya",
+    "email": "ghilmarbaka@gmail.com",
+    "grade_section": "12 Donatello",
+    "password": "Bepososoyummy",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Coreen Phoebe Ili",
+    "email": "rmel11826@gmail.com",
+    "grade_section": "Grade 11-Oracle",
+    "password": "ryonni22",
+    "profile_picture": "",
+    "role": "user"
   }
 ]

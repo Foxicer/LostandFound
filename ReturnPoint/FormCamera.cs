@@ -29,7 +29,7 @@ namespace ReturnPoint
             selectedDeviceMoniker = deviceMoniker;
             this.Text = "Capture Photo - ReturnPoint";
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Size = new Size(900, 700);
+            this.Size = new Size(1200, 680);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.BackColor = Theme.GetBackgroundTeal();
             SetLogoTransparentBackground();
