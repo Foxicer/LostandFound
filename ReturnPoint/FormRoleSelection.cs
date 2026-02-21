@@ -78,7 +78,7 @@ namespace ReturnPoint
 
             Label lblStudentIcon = new Label
             {
-                Text = "👨‍🎓",
+                Text = "👨",
                 Font = new Font("Segoe UI", 80),
                 ForeColor = Color.White,
                 AutoSize = true,
@@ -89,7 +89,7 @@ namespace ReturnPoint
 
             Label lblStudentTitle = new Label
             {
-                Text = "STUDENT",
+                Text = "USER",
                 Font = new Font("Segoe UI", 32, FontStyle.Bold),
                 ForeColor = Color.White,
                 AutoSize = true,
@@ -111,7 +111,7 @@ namespace ReturnPoint
 
             btnStudent = new Button
             {
-                Text = "→ Enter as Student",
+                Text = "→ Enter as User",
                 Width = 300,
                 Height = 60,
                 Font = new Font("Segoe UI", 14, FontStyle.Bold),
