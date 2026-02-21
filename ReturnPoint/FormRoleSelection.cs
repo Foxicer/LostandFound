@@ -42,17 +42,21 @@ namespace ReturnPoint
             Controls.Add(headerPanel);
 
             // ===== MAIN CONTAINER - 50/50 SPLIT =====
-            Panel mainContainer = new Panel
+            TableLayoutPanel mainContainer = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Transparent
+                BackColor = Color.Transparent,
+                ColumnCount = 2,
+                RowCount = 1,
+                Padding = new Padding(0)
             };
+            mainContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            mainContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
 
-            // ===== LEFT SIDE - STUDENT =====
+            // ===== LEFT SIDE - USER =====
             Panel studentPanel = new Panel
             {
-                Dock = DockStyle.Left,
-                Width = 683,
+                Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(41, 128, 128),
                 Cursor = Cursors.Hand
             };
@@ -140,13 +144,12 @@ namespace ReturnPoint
             studentLayout.SetCellPosition(btnStudent, new TableLayoutPanelCellPosition(1, 4));
 
             studentPanel.Controls.Add(studentLayout);
-            mainContainer.Controls.Add(studentPanel);
+            mainContainer.Controls.Add(studentPanel, 0, 0);
 
             // ===== RIGHT SIDE - ADMIN =====
             Panel adminPanel = new Panel
             {
-                Dock = DockStyle.Right,
-                Width = 683,
+                Dock = DockStyle.Fill,
                 BackColor = Color.FromArgb(100, 80, 120),
                 Cursor = Cursors.Hand
             };
@@ -233,7 +236,7 @@ namespace ReturnPoint
             adminLayout.Controls.Add(btnAdmin, 1, 4);
 
             adminPanel.Controls.Add(adminLayout);
-            mainContainer.Controls.Add(adminPanel);
+            mainContainer.Controls.Add(adminPanel, 1, 0);
 
             Controls.Add(mainContainer);
 
