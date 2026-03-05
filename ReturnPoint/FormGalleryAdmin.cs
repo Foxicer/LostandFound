@@ -56,8 +56,6 @@ namespace ReturnPoint
             claimedFolder = Path.Combine(saveFolder, "Claimed");
             Directory.CreateDirectory(saveFolder);
             Directory.CreateDirectory(claimedFolder);
-            
-            // ===== TOP HEADER PANEL =====
             Panel headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
@@ -102,16 +100,12 @@ namespace ReturnPoint
             
             headerPanel.Controls.Add(btnLogout);
             headerPanel.Controls.Add(lblWelcome);
-            
-            // ===== MAIN CONTENT CONTAINER =====
             Panel mainContainer = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = Theme.GetBackgroundTeal(),
                 Padding = new Padding(0)
             };
-            
-            // ===== LEFT SIDE - GALLERY AREA =====
             Panel galleryAreaPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -147,8 +141,6 @@ namespace ReturnPoint
             
             scrollableContainer.Controls.Add(galleryTable);
             galleryAreaPanel.Controls.Add(scrollableContainer);
-            
-            // ===== RIGHT SIDE - CONTROL PANEL =====
             Panel controlPanel = new Panel
             {
                 Dock = DockStyle.Right,
@@ -335,16 +327,10 @@ namespace ReturnPoint
             controlFlow.Controls.Add(lblPendingCount);
             
             controlPanel.Controls.Add(controlFlow);
-            
-            // ===== COMBINE MAIN CONTENT =====
             mainContainer.Controls.Add(galleryAreaPanel);
             mainContainer.Controls.Add(controlPanel);
-            
-            // ===== ADD ALL TO FORM =====
             this.Controls.Add(mainContainer);
             this.Controls.Add(headerPanel);
-            
-            // ===== FLOATING CAMERA BUTTON =====
             openCameraButton = new Button
             {
                 Text = "📷 Add Item",
@@ -366,8 +352,6 @@ namespace ReturnPoint
             {
                 openCameraButton.Location = new Point(this.ClientSize.Width - 140, this.ClientSize.Height - 85);
             };
-            
-            // ===== EVENT HANDLERS =====
             rightPanel = controlPanel;  // Keep reference for compatibility
             outerPanel = galleryAreaPanel;  // Keep reference for compatibility
             
@@ -1670,7 +1654,7 @@ namespace ReturnPoint
                     logoPictureBox.BringToFront();
                 }
             }
-            catch { /* Logo not found, continue without it */ }
+            catch {  }
         }
 
         private void SetLogoTransparentBackground()

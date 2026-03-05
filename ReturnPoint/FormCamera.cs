@@ -412,7 +412,7 @@ namespace ReturnPoint
                     this.Controls.Add(copyrightLabel);
                 }
             }
-            catch { /* Logo not found, continue without it */ }
+            catch {  }
         }
 
         private void SetLogoTransparentBackground()

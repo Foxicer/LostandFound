@@ -1,8 +1,3 @@
-"""
-Test script to verify Google Sheets integration
-Run this to debug connection issues
-"""
-
 import os
 from google_sheets_manager import GoogleSheetsManager
 

@@ -19,7 +19,6 @@ namespace ReturnPoint
             BackgroundImage = Theme.CreateGradientBitmap(1366, 768, vertical: true);
             BackgroundImageLayout = ImageLayout.Stretch;
 
-            // ===== TOP HEADER WITH TITLE =====
             Panel headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
@@ -41,7 +40,6 @@ namespace ReturnPoint
 
             Controls.Add(headerPanel);
 
-            // ===== MAIN CONTAINER - 50/50 SPLIT =====
             TableLayoutPanel mainContainer = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -53,7 +51,6 @@ namespace ReturnPoint
             mainContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             mainContainer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
 
-            // ===== LEFT SIDE - USER =====
             Panel studentPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -146,7 +143,6 @@ namespace ReturnPoint
             studentPanel.Controls.Add(studentLayout);
             mainContainer.Controls.Add(studentPanel, 0, 0);
 
-            // ===== RIGHT SIDE - ADMIN =====
             Panel adminPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -240,7 +236,6 @@ namespace ReturnPoint
 
             Controls.Add(mainContainer);
 
-            // ===== LOGO IN TOP-LEFT =====
             AddLogoTopLeft();
         }
 
@@ -265,7 +260,7 @@ namespace ReturnPoint
                     logoPictureBox.BringToFront();
                 }
             }
-            catch { /* Logo not found, continue without it */ }
+            catch { }
         }
 
         private void BtnStudent_Click(object sender, EventArgs e)

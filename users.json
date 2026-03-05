@@ -6,7 +6,7 @@
     "last_name": "Villarias",
     "email": "nickalisonvillarias@gmail.com",
     "grade_section": "12 ICT - Python",
-    "password": "pb\u0026jthelongway",
+    "password": "pb&jthelongway",
     "profile_picture": "",
     "role": "user"
   },
@@ -136,6 +136,17 @@
     "email": "rmel11826@gmail.com",
     "grade_section": "Grade 11-Oracle",
     "password": "ryonni22",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Ghil Mar HAHA",
+    "first_name": "Ghil",
+    "middle_name": "Mar",
+    "last_name": "HAHA",
+    "email": "ghil@gmail.com",
+    "grade_section": "12-python",
+    "password": "bayag",
     "profile_picture": "",
     "role": "user"
   }

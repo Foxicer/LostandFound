@@ -46,8 +46,6 @@ namespace ReturnPoint
             BackgroundImageLayout = ImageLayout.Stretch;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
-
-            // ===== MAIN CONTAINER =====
             Panel mainContainer = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -55,8 +53,6 @@ namespace ReturnPoint
                 Padding = new Padding(40),
                 AutoScroll = true
             };
-
-            // ===== BORDERED REGISTRATION AREA =====
             Panel registerBox = new Panel
             {
                 Dock = DockStyle.Top,
@@ -74,8 +70,6 @@ namespace ReturnPoint
                 AutoSize = true,
                 BackColor = Theme.DarkTeal
             };
-
-            // ===== HEADER =====
             Label lblTitle = new Label
             {
                 Text = roleDisplayText,
@@ -99,8 +93,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 0, 0, 20)
             };
             formFlow.Controls.Add(lblSubtitle);
-
-            // ===== FULL NAME SECTION =====
             Label lblName = new Label
             {
                 Text = "👤 Full Name",
@@ -183,8 +175,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 0, 0, 15)
             };
             formFlow.Controls.Add(txtLast);
-
-            // ===== EMAIL SECTION =====
             Label lblEmail = new Label
             {
                 Text = "📧 Email Address",
@@ -207,8 +197,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 0, 0, 15)
             };
             formFlow.Controls.Add(txtEmail);
-
-            // ===== GRADE/SECTION - Only for students =====
             if (defaultRole == "user")
             {
                 Label lblGrade = new Label
@@ -241,8 +229,6 @@ namespace ReturnPoint
                 txtGradeSection = new TextBox { Visible = false };
                 txtGradeSection.Text = defaultRole;
             }
-
-            // ===== PASSWORD SECTION =====
             Label lblPassword = new Label
             {
                 Text = "🔒 Password",
@@ -298,8 +284,6 @@ namespace ReturnPoint
             passwordPanel.Controls.Add(txtPassword);
             passwordPanel.Controls.Add(btnTogglePassword);
             formFlow.Controls.Add(passwordPanel);
-
-            // ===== CONFIRM PASSWORD SECTION =====
             Label lblConfirm = new Label
             {
                 Text = "🔒 Confirm Password",
@@ -355,8 +339,6 @@ namespace ReturnPoint
             confirmPanel.Controls.Add(txtConfirm);
             confirmPanel.Controls.Add(btnToggleConfirm);
             formFlow.Controls.Add(confirmPanel);
-
-            // ===== ERROR MESSAGE =====
             lblMsg = new Label
             {
                 Width = 350,
@@ -370,8 +352,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 10, 0, 20)
             };
             formFlow.Controls.Add(lblMsg);
-
-            // ===== BUTTONS =====
             FlowLayoutPanel buttonPanel = new FlowLayoutPanel
             {
                 Width = 350,
@@ -414,8 +394,6 @@ namespace ReturnPoint
             registerBox.Controls.Add(formFlow);
             mainContainer.Controls.Add(registerBox);
             Controls.Add(mainContainer);
-
-            // ===== EVENT HANDLERS =====
             btnRegister.Click += (s, e) => DoRegister();
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
             AcceptButton = btnRegister;
@@ -662,7 +640,7 @@ namespace ReturnPoint
                     this.Controls.Add(copyrightLabel);
                 }
             }
-            catch { /* Logo not found, continue without it */ }
+            catch {  }
         }
 
         private void SetLogoTransparentBackground()

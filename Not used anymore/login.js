@@ -23,9 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'dashboard.html';
         return;
       }
-    } catch (ex) { /* ignore parse errors */ }
+    } catch (ex) { }
 
-    // 2) fallback: fetch users.json
+    try {
     try {
       const res = await fetch('users.json', { cache: 'no-store' });
       if (!res.ok) { showError('Could not load users.json'); return; }

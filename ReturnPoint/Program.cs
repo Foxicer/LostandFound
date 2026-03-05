@@ -33,7 +33,7 @@ namespace ReturnPoint
                         roleSelection.Icon = new System.Drawing.Icon(logoPath);
                     }
                 }
-                catch { /* Logo not found, continue without icon */ }
+                catch {  }
 
                 var dr = roleSelection.ShowDialog();
                 if (dr != DialogResult.OK || CurrentUser == null)
@@ -67,7 +67,7 @@ namespace ReturnPoint
                             adminForm.Icon = new System.Drawing.Icon(logoPath);
                         }
                     }
-                    catch { /* Logo not found, continue without icon */ }
+                    catch {  }
                     Application.Run(adminForm);
                 }
                 else if (string.Equals(role, "headadmin", StringComparison.OrdinalIgnoreCase))
@@ -81,7 +81,7 @@ namespace ReturnPoint
                             headAdminForm.Icon = new System.Drawing.Icon(logoPath);
                         }
                     }
-                    catch { /* Logo not found, continue without icon */ }
+                    catch {  }
                     Application.Run(headAdminForm);
                 }
                 else
@@ -95,7 +95,7 @@ namespace ReturnPoint
                             galleryForm.Icon = new System.Drawing.Icon(logoPath);
                         }
                     }
-                    catch { /* Logo not found, continue without icon */ }
+                    catch {  }
                     Application.Run(galleryForm);
                 }
             }

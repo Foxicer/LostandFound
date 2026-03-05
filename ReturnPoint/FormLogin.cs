@@ -32,16 +32,12 @@ namespace ReturnPoint
             BackgroundImageLayout = ImageLayout.Stretch;
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
-
-            // ===== MAIN CONTAINER =====
             Panel mainContainer = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent,
                 Padding = new Padding(40)
             };
-
-            // ===== BORDERED LOGIN AREA =====
             Panel loginBox = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -58,8 +54,6 @@ namespace ReturnPoint
                 AutoSize = true,
                 BackColor = Theme.DarkTeal
             };
-
-            // ===== HEADER =====
             Label lblTitle = new Label
             {
                 Text = isAdminLogin ? "🔐 Admin Login" : "🔓 User Login",
@@ -83,8 +77,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 0, 0, 20)
             };
             formFlow.Controls.Add(lblSubtitle);
-
-            // ===== EMAIL FIELD =====
             Label lblEmail = new Label
             {
                 Text = "📧 Email Address",
@@ -107,8 +99,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 0, 0, 15)
             };
             formFlow.Controls.Add(txtEmail);
-
-            // ===== PASSWORD FIELD =====
             Label lblPassword = new Label
             {
                 Text = "🔒 Password",
@@ -164,8 +154,6 @@ namespace ReturnPoint
             passwordPanel.Controls.Add(txtPass);
             passwordPanel.Controls.Add(btnTogglePassword);
             formFlow.Controls.Add(passwordPanel);
-
-            // ===== ERROR MESSAGE =====
             lblMsg = new Label
             {
                 Width = 350,
@@ -179,8 +167,6 @@ namespace ReturnPoint
                 Margin = new Padding(0, 10, 0, 15)
             };
             formFlow.Controls.Add(lblMsg);
-
-            // ===== BUTTONS =====
             FlowLayoutPanel buttonPanel = new FlowLayoutPanel
             {
                 Width = 350,
@@ -242,8 +228,6 @@ namespace ReturnPoint
             loginBox.Controls.Add(formFlow);
             mainContainer.Controls.Add(loginBox);
             Controls.Add(mainContainer);
-
-            // ===== EVENT HANDLERS =====
             btnLogin.Click += (s, e) => TryLogin();
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
 
@@ -592,7 +576,7 @@ namespace ReturnPoint
                     this.Controls.Add(copyrightLabel);
                 }
             }
-            catch { /* Logo not found, continue without it */ }
+            catch {  }
         }
 
         private void SetLogoTransparentBackground()
