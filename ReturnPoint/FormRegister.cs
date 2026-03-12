@@ -213,7 +213,7 @@ namespace ReturnPoint
             {
                 Label lblGrade = new Label
                 {
-                    Text = "🏫 Grade and Section",
+                    Text = "🏫 Grade and Secti(if teacher put Teacher)",
                     Dock = DockStyle.Top,
                     Height = 20,
                     Font = new Font("Segoe UI", 10, FontStyle.Bold),

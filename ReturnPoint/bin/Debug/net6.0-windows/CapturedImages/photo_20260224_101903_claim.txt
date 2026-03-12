@@ -1,0 +1,5 @@
+ClaimantEmail: 
+ClaimantName: Jorielle Daliva Malanday
+ClaimantGradeSection: 12 - Aristotle
+DateClaimed: 2026-02-24 10:19:49
+Status: pending

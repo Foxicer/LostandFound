@@ -138,5 +138,133 @@
     "password": "ryonni22",
     "profile_picture": "",
     "role": "user"
+  },
+  {
+    "name": "Keith Phillip Par Montalban",
+    "email": "keithmontalban08@gmail.com",
+    "grade_section": "12-Okada",
+    "password": "keith18",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Jorielle Daliva Malanday",
+    "email": "joriellemalanday@gmail.com",
+    "grade_section": "12 - Aristotle",
+    "password": "122607",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "yeshua Pusod Umali",
+    "email": "yeshuaasim17@gmail.com",
+    "grade_section": "11",
+    "password": "yeshuabaho",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Coreen Phoebe Ili",
+    "email": "rmel1826@gmail.com",
+    "grade_section": "11 - Oracle",
+    "password": "ryonni22",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "christan concepcion badion",
+    "email": "christanbadion",
+    "grade_section": "11-tvl he buffet",
+    "password": "badion2007",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "christan concepcion badion",
+    "email": "christanbadion@gmail.com",
+    "grade_section": "11-tvl he buffet",
+    "password": "badion2007",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Stephen Jayzon Carumber Legaspi",
+    "email": "stephenjayzonlegaapi@gmail.com",
+    "grade_section": "11 STEM Kapnayan",
+    "password": "STEPHENJAYZON_09",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Jan Benedict Del Rosario Ramolete",
+    "email": "janbenedictramolete8@gmail.com",
+    "grade_section": "Grade 12-PYTHON teacher",
+    "password": "jimbopogi",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "gab d pogi",
+    "email": "gabpogi@gmail.com",
+    "grade_section": "Teacher",
+    "password": "Pogigab",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Dustine Kerbie Dioneda Bautista",
+    "email": "alwaystineee@gmail.com",
+    "grade_section": "12 - STEM Edison",
+    "password": "09112006",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Maureen Loudavette Lautan",
+    "email": "mloudavette@gmail.com",
+    "grade_section": "12-Newton",
+    "password": "Mauweng123108",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "redefense sila Python",
+    "email": "Pythonredefense@gmail.com",
+    "grade_section": "Teacher",
+    "password": "123456",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Laurence Perez Aben",
+    "email": "laurenceaben08@gmail.com",
+    "grade_section": "12 HUMSS VAN GOGH",
+    "password": "Laurenceaben080807",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Vanjo Hipolito Rivero",
+    "email": "vanjorivero2@gmail.com",
+    "grade_section": "Grade 11",
+    "password": "12345678",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Jello Bodiongan Seco",
+    "email": "secojello8@gmail.com",
+    "grade_section": "Grade 12",
+    "password": "11202007",
+    "profile_picture": "",
+    "role": "user"
+  },
+  {
+    "name": "Xean Yvan Guzman Rafael",
+    "email": "xean@gmail.com",
+    "grade_section": "12-Python",
+    "password": "123456",
+    "profile_picture": "",
+    "role": "user"
   }
 ]
